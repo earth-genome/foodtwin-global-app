@@ -1,113 +1,30 @@
-"use client";
-
 import React from "react";
 
-import DeckGL from "@deck.gl/react";
-import { MapView } from "@deck.gl/core";
-import { TileLayer } from "@deck.gl/geo-layers";
-import { BitmapLayer, PathLayer } from "@deck.gl/layers";
-
-import type { Position, MapViewState } from "@deck.gl/core";
-import type { TileLayerPickingInfo } from "@deck.gl/geo-layers";
-
-const INITIAL_VIEW_STATE: MapViewState = {
-  latitude: 47.65,
-  longitude: 7,
-  zoom: 4.5,
-  maxZoom: 20,
-  maxPitch: 89,
-  bearing: 0,
-};
-
-const COPYRIGHT_LICENSE_STYLE: React.CSSProperties = {
-  position: "absolute",
-  right: 0,
-  bottom: 0,
-  backgroundColor: "hsla(0,0%,100%,.5)",
-  padding: "0 5px",
-  font: "12px/20px Helvetica Neue,Arial,Helvetica,sans-serif",
-};
-
-const LINK_STYLE: React.CSSProperties = {
-  textDecoration: "none",
-  color: "rgba(0,0,0,.75)",
-  cursor: "grab",
-};
-
-/* global window */
-const devicePixelRatio =
-  (typeof window !== "undefined" && window.devicePixelRatio) || 1;
-
-export default function Home({
-  showBorder = false,
-  onTilesLoad,
-}: {
-  showBorder?: boolean;
-  onTilesLoad?: () => void;
-}) {
-  const tileLayer = new TileLayer<ImageBitmap>({
-    // https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Tile_servers
-    data: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-
-    // Since these OSM tiles support HTTP/2, we can make many concurrent requests
-    // and we aren't limited by the browser to a certain number per domain.
-    maxRequests: 20,
-
-    pickable: true,
-    onViewportLoad: onTilesLoad,
-    autoHighlight: showBorder,
-    highlightColor: [60, 60, 60, 40],
-    // https://wiki.openstreetmap.org/wiki/Zoom_levels
-    minZoom: 0,
-    maxZoom: 19,
-    tileSize: 256,
-    zoomOffset: devicePixelRatio === 1 ? -1 : 0,
-    renderSubLayers: (props) => {
-      const [[west, south], [east, north]] = props.tile.boundingBox;
-      const { data, ...otherProps } = props;
-
-      return [
-        new BitmapLayer(otherProps, {
-          image: data,
-          bounds: [west, south, east, north],
-        }),
-        showBorder &&
-          new PathLayer<Position[]>({
-            id: `${props.id}-border`,
-            data: [
-              [
-                [west, north],
-                [west, south],
-                [east, south],
-                [east, north],
-                [west, north],
-              ],
-            ],
-            getPath: (d) => d,
-            getColor: [255, 0, 0],
-            widthMinPixels: 4,
-          }),
-      ];
-    },
-  });
-
+export default function Home({}: {}) {
   return (
-    <DeckGL
-      layers={[tileLayer]}
-      views={new MapView({ repeat: true })}
-      initialViewState={INITIAL_VIEW_STATE}
-      controller={true}
-    >
-      <div style={COPYRIGHT_LICENSE_STYLE}>
-        {"© "}
-        <a
-          style={LINK_STYLE}
-          href="http://www.openstreetmap.org/copyright"
-          target="blank"
-        >
-          OpenStreetMap contributors
-        </a>
-      </div>
-    </DeckGL>
+    <div>
+      <h1>Home</h1>
+      <p>
+        Praesent hendrerit ac neque sed auctor. Nam at ultrices dui, eu
+        vulputate lacus. Aliquam ac auctor arcu. Aenean ut euismod nisl, sed
+        accumsan nisl. Praesent porttitor neque eget malesuada consectetur.
+        Fusce tempus risus leo, in malesuada nulla placerat sit amet. Mauris in
+        sodales est. Maecenas venenatis placerat ultricies. Cras felis mi,
+        pulvinar ac fermentum in, rhoncus sit amet purus. Proin vehicula varius
+        venenatis. Aenean id ipsum augue. Duis orci nisl, iaculis eget ante eu,
+        hendrerit tincidunt mauris. Morbi sagittis urna orci, vitae tincidunt
+        risus interdum vitae.
+      </p>
+      <p>
+        Sed vel nulla molestie, ultrices enim vitae, finibus sapien. Nulla enim
+        ligula, consectetur quis nisl et, finibus fringilla libero. Vestibulum
+        congue metus eget ipsum convallis, sed euismod turpis molestie. Morbi a
+        congue ipsum, at laoreet massa. Nulla et euismod velit. Aenean ac metus
+        bibendum, tincidunt sapien at, faucibus ante. Mauris arcu tortor,
+        vehicula nec convallis eu, posuere et augue. Mauris turpis arcu,
+        interdum ac mauris vel, vulputate ullamcorper dolor. Maecenas convallis
+        nisi augue. Donec egestas dolor et faucibus semper.{" "}
+      </p>
+    </div>
   );
 }
