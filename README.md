@@ -8,7 +8,8 @@ The steps below will walk you through setting up your own instance of the projec
 
 To set up the development environment for this website, you'll need to install the following on your system:
 
-- [Node](http://nodejs.org/) (see [.nvmrc](./.nvmrc)) (To manage multiple node versions we recommend [nvm](https://github.com/creationix/nvm))
+- [Node](http://nodejs.org/) (see version in [.nvmrc](./.nvmrc)) (To manage multiple node versions we recommend [nvm](https://github.com/creationix/nvm))
+- [pnpm](https://pnpm.io/installation)
 
 ### Initialize `.env.local` File
 
@@ -35,7 +36,7 @@ pnpm install
 Start development server:
 
 ```sh
-yarn dev
+pnpm dev
 ```
 
 ✨ You can now access the app at [http://localhost:3000](http://localhost:3000)
