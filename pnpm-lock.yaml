@@ -13,16 +13,16 @@ importers:
         version: 9.0.6
       '@deck.gl/geo-layers':
         specifier: ^9.0.6
-        version: 9.0.6(@deck.gl/core@9.0.6)(@deck.gl/extensions@9.0.6)(@deck.gl/layers@9.0.6)(@deck.gl/mesh-layers@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9)
+        version: 9.0.6(@deck.gl/core@9.0.6)(@deck.gl/extensions@9.0.6(@deck.gl/core@9.0.6)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9)))(@deck.gl/layers@9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9)))(@deck.gl/mesh-layers@9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9)))(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9))
       '@deck.gl/layers':
         specifier: ^9.0.6
-        version: 9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9)
+        version: 9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9))
       '@deck.gl/react':
         specifier: ^9.0.6
-        version: 9.0.6(@deck.gl/core@9.0.6)(react-dom@18.2.0)(react@18.2.0)
+        version: 9.0.6(@deck.gl/core@9.0.6)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       next:
         specifier: 14.1.4
-        version: 14.1.4(react-dom@18.2.0)(react@18.2.0)
+        version: 14.1.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react:
         specifier: ^18
         version: 18.2.0
@@ -40,7 +40,7 @@ importers:
         specifier: ^18
         version: 18.2.24
       autoprefixer:
-        specifier: ^10.0.1
+        specifier: ^10.4.19
         version: 10.4.19(postcss@8.4.38)
       eslint:
         specifier: ^8
@@ -49,10 +49,10 @@ importers:
         specifier: 14.1.4
         version: 14.1.4(eslint@8.57.0)(typescript@5.4.4)
       postcss:
-        specifier: ^8
+        specifier: ^8.4.38
         version: 8.4.38
       tailwindcss:
-        specifier: ^3.3.0
+        specifier: ^3.4.3
         version: 3.4.3
       typescript:
         specifier: ^5
@@ -1964,7 +1964,7 @@ snapshots:
       gl-matrix: 3.4.3
       mjolnir.js: 2.7.1
 
-  '@deck.gl/extensions@9.0.6(@deck.gl/core@9.0.6)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9)':
+  '@deck.gl/extensions@9.0.6(@deck.gl/core@9.0.6)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9))':
     dependencies:
       '@deck.gl/core': 9.0.6
       '@luma.gl/constants': 9.0.9
@@ -1973,12 +1973,12 @@ snapshots:
       '@luma.gl/shadertools': 9.0.9(@luma.gl/core@9.0.9)
       '@math.gl/core': 4.0.1
 
-  '@deck.gl/geo-layers@9.0.6(@deck.gl/core@9.0.6)(@deck.gl/extensions@9.0.6)(@deck.gl/layers@9.0.6)(@deck.gl/mesh-layers@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9)':
+  '@deck.gl/geo-layers@9.0.6(@deck.gl/core@9.0.6)(@deck.gl/extensions@9.0.6(@deck.gl/core@9.0.6)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9)))(@deck.gl/layers@9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9)))(@deck.gl/mesh-layers@9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9)))(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9))':
     dependencies:
       '@deck.gl/core': 9.0.6
-      '@deck.gl/extensions': 9.0.6(@deck.gl/core@9.0.6)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9)
-      '@deck.gl/layers': 9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9)
-      '@deck.gl/mesh-layers': 9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9)
+      '@deck.gl/extensions': 9.0.6(@deck.gl/core@9.0.6)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9))
+      '@deck.gl/layers': 9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9))
+      '@deck.gl/mesh-layers': 9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9))
       '@loaders.gl/3d-tiles': 4.2.0(@loaders.gl/core@4.2.0)
       '@loaders.gl/core': 4.2.0
       '@loaders.gl/gis': 4.2.0(@loaders.gl/core@4.2.0)
@@ -1990,7 +1990,7 @@ snapshots:
       '@loaders.gl/wms': 4.2.0(@loaders.gl/core@4.2.0)
       '@luma.gl/core': 9.0.9
       '@luma.gl/engine': 9.0.9(@luma.gl/core@9.0.9)
-      '@luma.gl/gltf': 9.0.9(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9)
+      '@luma.gl/gltf': 9.0.9(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9))
       '@luma.gl/shadertools': 9.0.9(@luma.gl/core@9.0.9)
       '@math.gl/core': 4.0.1
       '@math.gl/culling': 4.0.1
@@ -1999,7 +1999,7 @@ snapshots:
       h3-js: 4.1.0
       long: 3.2.0
 
-  '@deck.gl/layers@9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9)':
+  '@deck.gl/layers@9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9))':
     dependencies:
       '@deck.gl/core': 9.0.6
       '@loaders.gl/core': 4.2.0
@@ -2013,18 +2013,18 @@ snapshots:
       '@math.gl/web-mercator': 4.0.1
       earcut: 2.2.4
 
-  '@deck.gl/mesh-layers@9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9)':
+  '@deck.gl/mesh-layers@9.0.6(@deck.gl/core@9.0.6)(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9))':
     dependencies:
       '@deck.gl/core': 9.0.6
       '@loaders.gl/gltf': 4.2.0(@loaders.gl/core@4.2.0)
       '@luma.gl/core': 9.0.9
       '@luma.gl/engine': 9.0.9(@luma.gl/core@9.0.9)
-      '@luma.gl/gltf': 9.0.9(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9)
+      '@luma.gl/gltf': 9.0.9(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9))
       '@luma.gl/shadertools': 9.0.9(@luma.gl/core@9.0.9)
     transitivePeerDependencies:
       - '@loaders.gl/core'
 
-  '@deck.gl/react@9.0.6(@deck.gl/core@9.0.6)(react-dom@18.2.0)(react@18.2.0)':
+  '@deck.gl/react@9.0.6(@deck.gl/core@9.0.6)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
     dependencies:
       '@deck.gl/core': 9.0.6
       react: 18.2.0
@@ -2278,7 +2278,7 @@ snapshots:
       '@probe.gl/log': 4.0.9
       '@probe.gl/stats': 4.0.9
 
-  '@luma.gl/gltf@9.0.9(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9)':
+  '@luma.gl/gltf@9.0.9(@loaders.gl/core@4.2.0)(@luma.gl/core@9.0.9)(@luma.gl/engine@9.0.9(@luma.gl/core@9.0.9))':
     dependencies:
       '@loaders.gl/textures': 4.2.0(@loaders.gl/core@4.2.0)
       '@luma.gl/core': 9.0.9
@@ -2460,6 +2460,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 6.21.0
       debug: 4.3.4
       eslint: 8.57.0
+    optionalDependencies:
       typescript: 5.4.4
     transitivePeerDependencies:
       - supports-color
@@ -2481,6 +2482,7 @@ snapshots:
       minimatch: 9.0.3
       semver: 7.6.0
       ts-api-utils: 1.3.0(typescript@5.4.4)
+    optionalDependencies:
       typescript: 5.4.4
     transitivePeerDependencies:
       - supports-color
@@ -2916,11 +2918,12 @@ snapshots:
       '@typescript-eslint/parser': 6.21.0(eslint@8.57.0)(typescript@5.4.4)
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1)(eslint@8.57.0)
-      eslint-plugin-import: 2.29.1(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.4))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1)(eslint@8.57.0)
+      eslint-plugin-import: 2.29.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.4))(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
       eslint-plugin-jsx-a11y: 6.8.0(eslint@8.57.0)
       eslint-plugin-react: 7.34.1(eslint@8.57.0)
       eslint-plugin-react-hooks: 4.6.0(eslint@8.57.0)
+    optionalDependencies:
       typescript: 5.4.4
     transitivePeerDependencies:
       - eslint-import-resolver-webpack
@@ -2934,13 +2937,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1)(eslint@8.57.0):
+  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.4))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1)(eslint@8.57.0):
     dependencies:
       debug: 4.3.4
       enhanced-resolve: 5.16.0
       eslint: 8.57.0
-      eslint-module-utils: 2.8.1(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
-      eslint-plugin-import: 2.29.1(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
+      eslint-module-utils: 2.8.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.4))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.4))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1)(eslint@8.57.0))(eslint@8.57.0)
+      eslint-plugin-import: 2.29.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.4))(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.7.3
       is-core-module: 2.13.1
@@ -2951,19 +2954,19 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.8.1(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0):
+  eslint-module-utils@2.8.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.4))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.4))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1)(eslint@8.57.0))(eslint@8.57.0):
     dependencies:
-      '@typescript-eslint/parser': 6.21.0(eslint@8.57.0)(typescript@5.4.4)
       debug: 3.2.7
+    optionalDependencies:
+      '@typescript-eslint/parser': 6.21.0(eslint@8.57.0)(typescript@5.4.4)
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1)(eslint@8.57.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.4))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1)(eslint@8.57.0)
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.29.1(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0):
+  eslint-plugin-import@2.29.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.4))(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0):
     dependencies:
-      '@typescript-eslint/parser': 6.21.0(eslint@8.57.0)(typescript@5.4.4)
       array-includes: 3.1.8
       array.prototype.findlastindex: 1.2.5
       array.prototype.flat: 1.3.2
@@ -2972,7 +2975,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.8.1(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
+      eslint-module-utils: 2.8.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.4))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.4.4))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1)(eslint@8.57.0))(eslint@8.57.0)
       hasown: 2.0.2
       is-core-module: 2.13.1
       is-glob: 4.0.3
@@ -2982,6 +2985,8 @@ snapshots:
       object.values: 1.2.0
       semver: 6.3.1
       tsconfig-paths: 3.15.0
+    optionalDependencies:
+      '@typescript-eslint/parser': 6.21.0(eslint@8.57.0)(typescript@5.4.4)
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
@@ -3557,7 +3562,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next@14.1.4(react-dom@18.2.0)(react@18.2.0):
+  next@14.1.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
     dependencies:
       '@next/env': 14.1.4
       '@swc/helpers': 0.5.2
@@ -3706,8 +3711,9 @@ snapshots:
   postcss-load-config@4.0.2(postcss@8.4.38):
     dependencies:
       lilconfig: 3.1.1
-      postcss: 8.4.38
       yaml: 2.4.1
+    optionalDependencies:
+      postcss: 8.4.38
 
   postcss-nested@6.0.1(postcss@8.4.38):
     dependencies:
