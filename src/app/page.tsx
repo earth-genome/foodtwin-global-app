@@ -1,9 +1,11 @@
 import React from "react";
+import { Button } from "@nextui-org/button";
 
 export default function Home({}: {}) {
   return (
     <div>
       <h1>Home</h1>
+      <Button>Click me</Button>
       <p>
         Praesent hendrerit ac neque sed auctor. Nam at ultrices dui, eu
         vulputate lacus. Aliquam ac auctor arcu. Aenean ut euismod nisl, sed
