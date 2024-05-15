@@ -34,11 +34,15 @@ export default function GlobePanel() {
       }),
       new GeoJsonLayer({
         id: "earth-land",
-        data: "https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_land.geojson",
-        stroked: false,
-        filled: true,
+        data: "https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson",
+        pickable: true,
         opacity: 1,
         getFillColor: [211, 211, 211],
+        getLineWidth: 10000,
+        onClick: (info) => {
+          const areaName = info.object.properties.name;
+          alert(`Clicked on ${areaName}`);
+        },
       }),
     ],
     []
