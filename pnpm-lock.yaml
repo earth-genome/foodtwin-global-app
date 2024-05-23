@@ -45,6 +45,9 @@ importers:
       '@eslint/js':
         specifier: ^9.3.0
         version: 9.3.0
+      '@types/geojson':
+        specifier: ^7946.0.14
+        version: 7946.0.14
       '@types/node':
         specifier: ^20.12.12
         version: 20.12.12

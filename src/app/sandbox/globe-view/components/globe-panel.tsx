@@ -1,13 +1,11 @@
 import { useMemo } from "react";
 import { DeckGL } from "@deck.gl/react";
-
 import { GeoJsonLayer } from "@deck.gl/layers";
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { COORDINATE_SYSTEM, _GlobeView as GlobeView } from "@deck.gl/core";
-
 import { SphereGeometry } from "@luma.gl/engine";
-
 import type { GlobeViewState } from "@deck.gl/core";
+import { CountriesGeoJSON } from "@/types/countries";
 
 const EARTH_RADIUS_METERS = 6.3e6;
 
@@ -17,7 +15,7 @@ const INITIAL_VIEW_STATE: GlobeViewState = {
   zoom: 0.8,
 };
 
-export default function GlobePanel() {
+export default function GlobePanel({ data }: { data: CountriesGeoJSON }) {
   const backgroundLayers = useMemo(
     () => [
       new SimpleMeshLayer({
@@ -34,7 +32,7 @@ export default function GlobePanel() {
       }),
       new GeoJsonLayer({
         id: "earth-land",
-        data: "/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson",
+        data,
         pickable: true,
         opacity: 1,
         getFillColor: [211, 211, 211],
@@ -45,7 +43,7 @@ export default function GlobePanel() {
         },
       }),
     ],
-    [],
+    []
   );
 
   return (
