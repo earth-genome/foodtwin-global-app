@@ -5,10 +5,9 @@ import React from "react";
 import DeckGL from "@deck.gl/react";
 import { MapView } from "@deck.gl/core";
 import { TileLayer } from "@deck.gl/geo-layers";
-import { BitmapLayer, PathLayer } from "@deck.gl/layers";
+import { BitmapLayer } from "@deck.gl/layers";
 
-import type { Position, MapViewState } from "@deck.gl/core";
-import type { TileLayerPickingInfo } from "@deck.gl/geo-layers";
+import type { MapViewState } from "@deck.gl/core";
 
 const INITIAL_VIEW_STATE: MapViewState = {
   latitude: 47.65,
@@ -38,13 +37,7 @@ const LINK_STYLE: React.CSSProperties = {
 const devicePixelRatio =
   (typeof window !== "undefined" && window.devicePixelRatio) || 1;
 
-export default function Home({
-  showBorder = false,
-  onTilesLoad,
-}: {
-  showBorder?: boolean;
-  onTilesLoad?: () => void;
-}) {
+export default function SimpleMap() {
   const tileLayer = new TileLayer<ImageBitmap>({
     // https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Tile_servers
     data: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
@@ -54,8 +47,8 @@ export default function Home({
     maxRequests: 20,
 
     pickable: true,
-    onViewportLoad: onTilesLoad,
-    autoHighlight: showBorder,
+    // onViewportLoad: onTilesLoad,
+    // autoHighlight: showBorder,
     highlightColor: [60, 60, 60, 40],
     // https://wiki.openstreetmap.org/wiki/Zoom_levels
     minZoom: 0,
@@ -71,22 +64,6 @@ export default function Home({
           image: data,
           bounds: [west, south, east, north],
         }),
-        showBorder &&
-          new PathLayer<Position[]>({
-            id: `${props.id}-border`,
-            data: [
-              [
-                [west, north],
-                [west, south],
-                [east, south],
-                [east, north],
-                [west, north],
-              ],
-            ],
-            getPath: (d) => d,
-            getColor: [255, 0, 0],
-            widthMinPixels: 4,
-          }),
       ];
     },
   });
