@@ -33,7 +33,6 @@ const LINK_STYLE: React.CSSProperties = {
   cursor: "grab",
 };
 
-/* global window */
 const devicePixelRatio =
   (typeof window !== "undefined" && window.devicePixelRatio) || 1;
 

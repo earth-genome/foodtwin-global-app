@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { DeckGL } from "@deck.gl/react";
 
 import { GeoJsonLayer } from "@deck.gl/layers";

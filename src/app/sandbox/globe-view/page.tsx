@@ -8,7 +8,7 @@ export default function Page() {
     title: generateLoremIpsum(3),
     content: (
       <>
-        <p>{generateLoremIpsum(50)}</p>
+        <p key={`lorem-${index}`}>{generateLoremIpsum(50)}</p>
       </>
     ),
   }));

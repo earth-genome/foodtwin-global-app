@@ -8,8 +8,8 @@ interface LinkButtonProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
 }
 
 const LinkButton = React.forwardRef<HTMLAnchorElement, LinkButtonProps>(
-  (props, ref) => {
-    const { href, children, ...rest } = props;
+  (props) => {
+    const { href, children } = props;
     return (
       <Link href={href} passHref>
         <Button>{children}</Button>
