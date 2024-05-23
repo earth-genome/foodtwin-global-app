@@ -3,7 +3,30 @@
     "next/core-web-vitals",
     "eslint:recommended",
     "plugin:@typescript-eslint/strict",
-    "plugin:@typescript-eslint/stylistic"
+    "plugin:@typescript-eslint/stylistic",
+    "plugin:react/recommended",
+    "plugin:jsx-a11y/recommended",
+    "plugin:prettier/recommended",
+    "prettier"
   ],
-  "plugins": ["@typescript-eslint"]
+  "plugins": ["@typescript-eslint", "react", "jsx-a11y"],
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react/jsx-uses-react": "off",
+    "no-console": "error",
+    "prettier/prettier": ["error"]
+  },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "react/prop-types": "off"
+      }
+    }
+  ],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
 }

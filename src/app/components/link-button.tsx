@@ -15,7 +15,7 @@ const LinkButton = React.forwardRef<HTMLAnchorElement, LinkButtonProps>(
         <Button>{children}</Button>
       </Link>
     );
-  }
+  },
 );
 
 LinkButton.displayName = "LinkButton";
