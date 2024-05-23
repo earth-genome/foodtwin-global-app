@@ -6,7 +6,7 @@ export default function generateLoremIpsum(wordCount: number): string {
   const words = loremIpsum.split(" ");
 
   // Create an array to hold the words for the generated Lorem Ipsum
-  let generatedText = [];
+  const generatedText = [];
 
   // Loop through the number of words requested
   for (let i = 0; i < wordCount; i++) {
@@ -16,7 +16,7 @@ export default function generateLoremIpsum(wordCount: number): string {
   }
 
   // Join the array of words back into a single string with spaces
-  let finalText = generatedText.join(" ");
+  const finalText = generatedText.join(" ");
 
   // Ensure the first character is uppercase
   return finalText.charAt(0).toUpperCase() + finalText.slice(1);
