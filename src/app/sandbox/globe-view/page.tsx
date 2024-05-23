@@ -1,6 +1,6 @@
 "use client";
 
-import generateLoremIpsum from "../_utils/generate-lorem-ipsum";
+import generateLoremIpsum from "../../_utils/generate-lorem-ipsum";
 import GlobePanel from "./components/globe-panel";
 
 export default function Page() {

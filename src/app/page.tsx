@@ -3,8 +3,8 @@ import LinkButton from "./components/link-button";
 
 const currentPages = [
   { href: "/about", label: "About" },
-  { href: "/simple-map", label: "Simple Map" },
-  { href: "/globe-view", label: "Globe View" },
+  { href: "/sandbox/simple-map", label: "Simple Map" },
+  { href: "/sandbox/globe-view", label: "Globe View" },
 ];
 
 export default function Home() {
