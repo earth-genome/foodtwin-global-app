@@ -2,20 +2,52 @@
 
 import { useEffect, useState } from "react";
 import GlobePanel from "./components/globe-panel";
-import { CountriesGeoJSON } from "@/types/countries";
+import {
+  CountryCapitalsGeoJSON,
+  CountryLimitsGeoJSON,
+} from "@/types/countries";
 
 export default function Page() {
-  const [countriesGeojson, setCountriesGeojson] =
-    useState<CountriesGeoJSON | null>(null);
+  const [countryLimitsGeojson, setCountryLimitsGeojson] =
+    useState<CountryLimitsGeoJSON | null>(null);
+
+  const [countryCapitalsGeojson, setCountryCapitalsGeojson] =
+    useState<CountryCapitalsGeoJSON | null>(null);
 
   useEffect(() => {
     // Fetch the JSON data from the public directory
     fetch("/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson")
-      .then((response) => response.json() as Promise<CountriesGeoJSON>)
-      .then((data) => setCountriesGeojson(data));
+      .then((response) => response.json() as Promise<CountryLimitsGeoJSON>)
+      .then((data) =>
+        setCountryLimitsGeojson({
+          ...data,
+          features: data.features.map((feature) => ({
+            ...feature,
+            properties: {
+              ...feature.properties,
+              id: feature.properties.iso_a2,
+            },
+          })),
+        })
+      );
+
+    fetch("/naturalearth-3.3.0/ne_50m_populated_places_adm0cap.geojson")
+      .then((response) => response.json() as Promise<CountryCapitalsGeoJSON>)
+      .then((data) =>
+        setCountryCapitalsGeojson({
+          ...data,
+          features: data.features.map((feature) => ({
+            ...feature,
+            properties: {
+              ...feature.properties,
+              id: feature.properties.ISO_A2,
+            },
+          })),
+        })
+      );
   }, []);
 
-  if (!countriesGeojson) {
+  if (!countryLimitsGeojson || !countryCapitalsGeojson) {
     return (
       <div className="flex items-center justify-center h-screen">
         Loading...
@@ -26,10 +58,13 @@ export default function Page() {
   return (
     <div className="flex h-screen">
       <div className="flex-1 bg-gray-100 flex items-center justify-center">
-        <GlobePanel data={countriesGeojson} />
+        <GlobePanel
+          countryLimitsGeojson={countryLimitsGeojson}
+          countryCapitalsGeojson={countryCapitalsGeojson}
+        />
       </div>
       <div className="overflow-y-auto w-128 p-4 space-y-4">
-        {countriesGeojson?.features.map(
+        {countryLimitsGeojson?.features.map(
           ({
             properties: {
               name,

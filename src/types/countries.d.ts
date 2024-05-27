@@ -1,6 +1,11 @@
-import type { Feature, FeatureCollection, Geometry } from "geojson";
+import type { Feature, FeatureCollection, Point, Polygon } from "geojson";
 
-interface CountryProperties {
+type CountryLimitFeature = Feature<Polygon, CountryLimitProperties>;
+
+export interface CountryLimitsGeoJSON extends FeatureCollection {
+  features: CountryLimitFeature[];
+}
+interface CountryLimitProperties {
   scalerank: number;
   labelrank: number;
   sovereignt: string;
@@ -66,10 +71,149 @@ interface CountryProperties {
   featureclass: string;
 }
 
-interface CountriesGeoJSON extends FeatureCollection {
-  features: CountryFeature[];
+export type CountryCapitalFeature = Feature<Point, CountryCapitalProperties>;
+
+export interface CountryCapitalsGeoJSON extends FeatureCollection {
+  features: CountryCapitalFeature[];
 }
 
-interface CountryFeature extends Feature<Geometry, CountryProperties> {}
-
-export type { CountriesGeoJSON, CountryFeature, CountryProperties };
+interface CountryCapitalProperties {
+  id: string;
+  SCALERANK: number;
+  NATSCALE: number;
+  LABELRANK: number;
+  FEATURECLA: string;
+  NAME: string;
+  NAMEPAR: string | null;
+  NAMEALT: string | null;
+  NAMEASCII: string;
+  ADM0CAP: number;
+  CAPIN: string | null;
+  WORLDCITY: number;
+  MEGACITY: number;
+  SOV0NAME: string;
+  SOV_A3: string;
+  ADM0NAME: string;
+  ADM0_A3: string;
+  ADM1NAME: string;
+  ISO_A2: string;
+  NOTE: string | null;
+  LATITUDE: number;
+  LONGITUDE: number;
+  POP_MAX: number;
+  POP_MIN: number;
+  POP_OTHER: number;
+  RANK_MAX: number;
+  RANK_MIN: number;
+  MEGANAME: string | null;
+  LS_NAME: string;
+  MAX_POP10: number;
+  MAX_POP20: number;
+  MAX_POP50: number;
+  MAX_POP300: number;
+  MAX_POP310: number;
+  MAX_NATSCA: number;
+  MIN_AREAKM: number;
+  MAX_AREAKM: number;
+  MIN_AREAMI: number;
+  MAX_AREAMI: number;
+  MIN_PERKM: number;
+  MAX_PERKM: number;
+  MIN_PERMI: number;
+  MAX_PERMI: number;
+  MIN_BBXMIN: number;
+  MAX_BBXMIN: number;
+  MIN_BBXMAX: number;
+  MAX_BBXMAX: number;
+  MIN_BBYMIN: number;
+  MAX_BBYMIN: number;
+  MIN_BBYMAX: number;
+  MAX_BBYMAX: number;
+  MEAN_BBXC: number;
+  MEAN_BBYC: number;
+  TIMEZONE: string;
+  UN_FID: number;
+  POP1950: number;
+  POP1955: number;
+  POP1960: number;
+  POP1965: number;
+  POP1970: number;
+  POP1975: number;
+  POP1980: number;
+  POP1985: number;
+  POP1990: number;
+  POP1995: number;
+  POP2000: number;
+  POP2005: number;
+  POP2010: number;
+  POP2015: number;
+  POP2020: number;
+  POP2025: number;
+  POP2050: number;
+  MIN_ZOOM: number;
+  WIKIDATAID: string;
+  WOF_ID: number;
+  CAPALT: number;
+  NAME_EN: string;
+  NAME_DE: string;
+  NAME_ES: string;
+  NAME_FR: string;
+  NAME_PT: string;
+  NAME_RU: string;
+  NAME_ZH: string;
+  LABEL: string | null;
+  NAME_AR: string;
+  NAME_BN: string;
+  NAME_EL: string;
+  NAME_HI: string;
+  NAME_HU: string;
+  NAME_ID: string;
+  NAME_IT: string;
+  NAME_JA: string;
+  NAME_KO: string;
+  NAME_NL: string;
+  NAME_PL: string;
+  NAME_SV: string;
+  NAME_TR: string;
+  NAME_VI: string;
+  NE_ID: number;
+  NAME_FA: string;
+  NAME_HE: string;
+  NAME_UK: string;
+  NAME_UR: string;
+  NAME_ZHT: string;
+  GEONAMESID: number;
+  FCLASS_ISO: string | null;
+  FCLASS_US: string | null;
+  FCLASS_FR: string | null;
+  FCLASS_RU: string | null;
+  FCLASS_ES: string | null;
+  FCLASS_CN: string | null;
+  FCLASS_TW: string | null;
+  FCLASS_IN: string | null;
+  FCLASS_NP: string | null;
+  FCLASS_PK: string | null;
+  FCLASS_DE: string | null;
+  FCLASS_GB: string | null;
+  FCLASS_BR: string | null;
+  FCLASS_IL: string | null;
+  FCLASS_PS: string | null;
+  FCLASS_SA: string | null;
+  FCLASS_EG: string | null;
+  FCLASS_MA: string | null;
+  FCLASS_PT: string | null;
+  FCLASS_AR: string | null;
+  FCLASS_JP: string | null;
+  FCLASS_KO: string | null;
+  FCLASS_VN: string | null;
+  FCLASS_TR: string | null;
+  FCLASS_ID: string | null;
+  FCLASS_PL: string | null;
+  FCLASS_GR: string | null;
+  FCLASS_IT: string | null;
+  FCLASS_NL: string | null;
+  FCLASS_SE: string | null;
+  FCLASS_BD: string | null;
+  FCLASS_UA: string | null;
+  FCLASS_TLC: string | null;
+}
