@@ -45,7 +45,7 @@ export default function GlobePanel() {
         },
       }),
     ],
-    [],
+    []
   );
 
   return (
