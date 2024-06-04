@@ -6,6 +6,7 @@ export interface CountryLimitsGeoJSON extends FeatureCollection {
   features: CountryLimitFeature[];
 }
 interface CountryLimitProperties {
+  id: string;
   scalerank: number;
   labelrank: number;
   sovereignt: string;
