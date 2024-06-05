@@ -6,7 +6,7 @@ import { assign, createMachine, assertEvent, fromPromise } from "xstate";
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQCyAhgA4AEusV6ZEuAdlAMQRrNhEsBuaANY8AZmAAuAYwAW5CgBEy4sgG0ADAF1EoCmli5xuLtpAAPRAEYALAFYiAThsB2J-YAc9gGxqATF4DMTgA0IACeiAC0bhZE-jZuTv7+9u5uVm7+VgC+WSGomDj4xHI0dAxMrGxgAE7VaNVEFChKIvUAtkRiUrKUisrqWkgguvqGxkPmCMluRBY2VmrWFvZWPpkWIeEIERZunkRONn7RLnE+Pp6eOXnoWHiERACSzAa4ZChU+VhUfEVsAMpgFBgSTiKiSNAAV2Y4mqoQGJhGr3GoEm1jUDk89gsLjUbgSe08wTClnsGOc-h8RzUXhs-jUROuIC+hQeAGEoTC4aUqLAgSDxJA2GzgWRquDObDQrz+aCjMwEUMkWNmCZJnEZmorOlonNsd43JtSeTElSfDTPHSGU4mSz7sQOdCpTy+cDQULAW6wRCnXDFTo9MjVRNIvZ-EQ1P4LJ5-J4fFZPFZ7E5o0aEDinERLY54ykFlHskzmGgIHATHaiojAyq1ZElhGozG4wmkynPGmIn57BGEwyFhY4lYnJdbbdWcVKDzyiwoFXRvLawgnFYswm-GcLGpEisOz4LDE3PEXDYvBY9xZRwV7U8XoZ3p8xz9K0rqwuQ+m6URorGyWot254zTRwv2XIl8TDaJ8QvXJmTHa9HS5aVaBlL1IDnINF2jDEnEjOJLmPLENhJKYowcSkfCcc1vEjYdLzuIoiAAVW4UwKAFSAqBqOpqnQmt32o2YVkWGxqWWKx-A7XYZhsXYwypNIvEOK4ciyIA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQCyAhgA4AEusV6ZEuAdlAMQRrNhEsBuaANY8AZmAAuAYwAW5CgBEy4sgG0ADAF1EoCmli5xuLtpAAPRAEYALAFYiAThsB2J-YAc9gGxqATF4DMTgA0IACeiAC0bhZE-jZuTv7+9u5uVm7+VgC+WSGomDj4xHI0dAxMrGxgAE7VaNVEFChKIvUAtkRiUrKUisrqWkgguvqGxkPmCMluRBY2VmrWFvZWPpkWIeEIERZunkRONn7RLnE+Pp6eOXnoWHiERACSzAa4ZChU+VhUfEVsAMpgFBgSTiKiSNAAV2Y4mqoQGJhGr3GoEm1jUDk89gsLjUbgSe08wTClnsGOc-h8RzUXhs-jUROuIC+hQeAGEoTC4aUqLAgSDxJA2GzgWRquDObDQrz+aCjMwEUMkWNmCZJnEZmorOlonNsd43JtSeTElSfDTPHSGU4mSz7sQOdCpTy+cDQULAW6wRCnXDFTo9MjVRNImsiAykhZPJHzm4LjYjQgrBZ-OGtWotfZ-JaoxYcrkQMw0BA4CY7UVEYGVWrIk4YhH-FGYz4455ExE-PZw1ZvJ4Fin5k5LrbbqzipQeeUWFBK6N5TWEE4rEQ+54-GcLGpEit2z4LDE3PEXDYvBY93mC+WHs9Xu9PqOfhWlVX5yGEHNU9Fs2SM0441ZE0cIgEh7P8PH8aJ8QvG4CntIhHS5aVaBlL1IFnIMFyjDEnDUJIbEuY8sQ2EkpkbBxKR8JxzW8XChxHWCiiIABVbhTAoAVICoGo6mqdDqzfGjZhWRYbGpZYrH8dtdhmGxdizKk0i8Q4rnzIA */
     id: "globeView",
 
     types: {
@@ -84,8 +84,7 @@ export const globeViewMachine = createMachine(
           },
 
           "Select country": {
-            target: "Initial globe view",
-            reenter: true,
+            target: "Country is selected",
             actions: "setSelectedCountryId",
           },
         },
