@@ -1,6 +1,7 @@
 import { CountryLimitProperties } from "@/types/countries";
 
 export function CountryCard({
+  id,
   name,
   sovereignt,
   admin,
@@ -13,7 +14,7 @@ export function CountryCard({
   income_grp,
 }: CountryLimitProperties) {
   return (
-    <div key={name} className="p-4 bg-white shadow-md rounded-lg">
+    <div key={id} className="p-4 bg-white shadow-md rounded-lg">
       <h2>{name}</h2>
       <table>
         <tbody>

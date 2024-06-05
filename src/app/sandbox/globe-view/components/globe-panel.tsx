@@ -10,6 +10,7 @@ import {
   CountryLimitsGeoJSON,
 } from "@/types/countries";
 import { Position } from "geojson";
+import { MachineContext } from "../state";
 
 const EARTH_RADIUS_METERS = 6.3e6;
 
@@ -33,6 +34,8 @@ export default function GlobePanel({
   countryLimitsGeojson,
   countryCapitalsGeojson,
 }: GlobePanelProps) {
+  const actorRef = MachineContext.useActorRef();
+
   const [arcs, setArcs] = useState<ArcData[]>([]);
 
   const backgroundLayers = useMemo(
@@ -57,6 +60,10 @@ export default function GlobePanel({
         getFillColor: [211, 211, 211],
         getLineWidth: 10000,
         onClick: (info) => {
+          actorRef.send({
+            type: "Select country",
+            countryId: info.object.properties.id,
+          });
           const originCountry = countryCapitalsGeojson.features.find(
             (feature) => feature.properties.id === info.object.properties.id
           );
@@ -109,6 +116,11 @@ export default function GlobePanel({
         initialViewState={INITIAL_VIEW_STATE}
         controller={true}
         layers={[...backgroundLayers, arcLayer]}
+        onLoad={() =>
+          actorRef.send({
+            type: "Deck.gl was loaded",
+          })
+        }
       />
     </div>
   );

@@ -7,8 +7,16 @@ import {
   CountryLimitsGeoJSON,
 } from "@/types/countries";
 import { CountryCard } from "./components/country-card";
+import { MachineContext, MachineProvider } from "./state";
+import { Button } from "@nextui-org/react";
 
-export default function Page() {
+function InnerPage() {
+  const actorRef = MachineContext.useActorRef();
+
+  const displaySidePanel = MachineContext.useSelector((state) =>
+    state.matches("Country is selected")
+  );
+
   const [countryLimitsGeojson, setCountryLimitsGeojson] =
     useState<CountryLimitsGeoJSON | null>(null);
 
@@ -22,13 +30,15 @@ export default function Page() {
       .then((data) =>
         setCountryLimitsGeojson({
           ...data,
-          features: data.features.map((feature) => ({
-            ...feature,
-            properties: {
-              ...feature.properties,
-              id: feature.properties.iso_a2,
-            },
-          })),
+          features: data.features
+            .map((feature) => ({
+              ...feature,
+              properties: {
+                ...feature.properties,
+                id: feature.properties.iso_a2,
+              },
+            }))
+            .filter((feature) => feature.properties.id !== "-99"),
         })
       );
 
@@ -46,6 +56,10 @@ export default function Page() {
           })),
         })
       );
+
+    actorRef.send({
+      type: "Deck.gl was loaded",
+    });
   }, []);
 
   if (!countryLimitsGeojson || !countryCapitalsGeojson) {
@@ -64,11 +78,28 @@ export default function Page() {
           countryCapitalsGeojson={countryCapitalsGeojson}
         />
       </div>
-      <div className="overflow-y-auto w-128 p-4 space-y-4">
-        {countryLimitsGeojson?.features.map((c) => (
-          <CountryCard key={c.properties.id} {...c.properties} />
-        ))}
-      </div>
+      {displaySidePanel && (
+        <div className="overflow-y-auto w-128 p-4 space-y-4">
+          <Button
+            isIconOnly
+            aria-label="Close"
+            onClick={() => actorRef.send({ type: "Clear country selection" })}
+          >
+            X
+          </Button>
+          {countryLimitsGeojson?.features.map((c) => (
+            <CountryCard key={c.properties.id} {...c.properties} />
+          ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <MachineProvider>
+      <InnerPage />
+    </MachineProvider>
   );
 }
