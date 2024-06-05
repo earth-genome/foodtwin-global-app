@@ -1,11 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import GlobePanel from "./components/globe-panel";
-import {
-  CountryCapitalsGeoJSON,
-  CountryLimitsGeoJSON,
-} from "@/types/countries";
 import { CountryCard } from "./components/country-card";
 import { MachineContext, MachineProvider } from "./state";
 import { Button } from "@nextui-org/react";
@@ -16,51 +11,12 @@ function InnerPage() {
   const displaySidePanel = MachineContext.useSelector((state) =>
     state.matches("Country is selected")
   );
-
-  const [countryLimitsGeojson, setCountryLimitsGeojson] =
-    useState<CountryLimitsGeoJSON | null>(null);
-
-  const [countryCapitalsGeojson, setCountryCapitalsGeojson] =
-    useState<CountryCapitalsGeoJSON | null>(null);
-
-  useEffect(() => {
-    // Fetch the JSON data from the public directory
-    fetch("/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson")
-      .then((response) => response.json() as Promise<CountryLimitsGeoJSON>)
-      .then((data) =>
-        setCountryLimitsGeojson({
-          ...data,
-          features: data.features
-            .map((feature) => ({
-              ...feature,
-              properties: {
-                ...feature.properties,
-                id: feature.properties.iso_a2,
-              },
-            }))
-            .filter((feature) => feature.properties.id !== "-99"),
-        })
-      );
-
-    fetch("/naturalearth-3.3.0/ne_50m_populated_places_adm0cap.geojson")
-      .then((response) => response.json() as Promise<CountryCapitalsGeoJSON>)
-      .then((data) =>
-        setCountryCapitalsGeojson({
-          ...data,
-          features: data.features.map((feature) => ({
-            ...feature,
-            properties: {
-              ...feature.properties,
-              id: feature.properties.ISO_A2,
-            },
-          })),
-        })
-      );
-
-    actorRef.send({
-      type: "Deck.gl was loaded",
-    });
-  }, []);
+  const countryLimitsGeojson = MachineContext.useSelector(
+    (state) => state.context.countryLimitsGeoJSON
+  );
+  const countryCapitalsGeojson = MachineContext.useSelector(
+    (state) => state.context.countryCapitalsGeoJSON
+  );
 
   if (!countryLimitsGeojson || !countryCapitalsGeojson) {
     return (
