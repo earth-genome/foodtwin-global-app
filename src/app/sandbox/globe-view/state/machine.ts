@@ -11,9 +11,9 @@ export const globeViewMachine = createMachine(
 
     types: {
       context: {} as {
-        selectedCountryId: string | undefined;
-        countryLimitsGeoJSON: CountryLimitsGeoJSON | undefined;
-        countryCapitalsGeoJSON: CountryCapitalsGeoJSON | undefined;
+        selectedCountryId: string | null;
+        countryLimitsGeoJSON: CountryLimitsGeoJSON | null;
+        countryCapitalsGeoJSON: CountryCapitalsGeoJSON | null;
       },
       events: {} as
         | {
@@ -42,9 +42,9 @@ export const globeViewMachine = createMachine(
     },
 
     context: {
-      selectedCountryId: undefined,
-      countryLimitsGeoJSON: undefined,
-      countryCapitalsGeoJSON: undefined,
+      selectedCountryId: null,
+      countryLimitsGeoJSON: null,
+      countryCapitalsGeoJSON: null,
     },
 
     states: {
