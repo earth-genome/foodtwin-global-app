@@ -6,7 +6,7 @@ import { assign, createMachine, assertEvent, fromPromise } from "xstate";
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQAKAhjAAS6yVkDG9cskAxBGgHZhG6cBuaANY8AZmAAu9ABYBZMgAcAImQlkA2gAYAuolAK0sXBNxc9IAB6IAjABYArEQCc9gOyuAHADYAzE9seAEzBHgA0IACeiK5Eml7Wrj6uvtY+qU5eAL6Z4aiYOPjE5FQ0dIzMbGAATlVoVUQKKKqidQC2ROJScooqalq6SCAGRiZmg1YIfk5E9rbxPoFpPh5OGeFRCAC0TjELSfaa1h6aC-Ze9tm56Fh4hEQAkpzGuGQolHlYlPyFrADKYCgwPQJJR6GgAK6cCRVCL9czDZ5jUATOyaZxeJwJVyaDweTxeLyudY2JxotynQKaDL2HxxVyXEAfAp3ADCEKhMOotBYgOBbBZgLIVVB7OhEUoPKBo04cMGCOl5gmPnsHlitgCHms1nsmK8OOJCGspJmiUC9kp1NphOyORAnDQEDg5iZtwI8MMiM4isQPlssTxK00Z2sgSC+siiE2FqI8S8HiSOKSticKwZLsKpAoYC5ZSYsBYEHdI1MXvGiCC-s8pODocpYQjWxDgSItkCLlmKqSx2TaeuzOIj2er3efa+hSLnu9hppRE1PgxmkXnkCtgNLlnrjmnhWyyOmt7+VdRDZkLFOclfMLco9CrLhr1RGxPmVBPcZ0xBuf1mcC0CrkpeonMkB43BmACq3AWAoUqQJQ1S1FUE63siiAqtMrYrpoDhaiseIGts0w4hkqytoS3i+jamRAA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQCyAhgA4AEusV6ZEuAdlAMQRrNhEsBuaANY8AZmAAuAYwAW5CgBEy4sgG0ADAF1EoCmli5xuLtpAAPRAEYALAFYiAThsB2J-YAc9gGxqATF4DMTgA0IACeiAC0bhZE-jZuTv7+9u5uVm7+VgC+WSGomDj4xHI0dAxMrGxgAE7VaNVEFChKIvUAtkRiUrKUisrqWkgguvqGxkPmCMluRBY2VmrWFvZWPpkWIeEIERZunkRONn7RLnE+Pp6eOXnoWHiERACSzAa4ZChU+VhUfEVsAMpgFBgSTiKiSNAAV2Y4mqoQGJhGr3GoEm1jUDk89gsLjUbgSe08wTClnsGOc-h8RzUXhs-jUROuIC+hQeAGEoTC4aUqLAgSDxJA2GzgWRquDObDQrz+aCjMwEUMkWNmCZJnEZmorOlonNsd43JtSeTElSfDTPHSGU4mSz7sQOdCpTy+cDQULAW6wRCnXDFTo9MjVRNIvZ-EQ1P4LJ5-J4fFZPFZ7E5o0aEDinERLY54ykFlHskzmGgIHATHaiojAyq1ZElhGozG4wmkynPGmIn57BGEwyFhY4lYnJdbbdWcVKDzyiwoFXRvLawgnFYswm-GcLGpEisOz4LDE3PEXDYvBY9xZRwV7U8XoZ3p8xz9K0rqwuQ+m6URorGyWot254zTRwv2XIl8TDaJ8QvXJmTHa9HS5aVaBlL1IDnINF2jDEnEjOJLmPLENhJKYowcSkfCcc1vEjYdLzuIoiAAVW4UwKAFSAqBqOpqnQmt32o2YVkWGxqWWKx-A7XYZhsXYwypNIvEOK4ciyIA */
     id: "globeView",
 
     types: {
@@ -48,7 +48,7 @@ export const globeViewMachine = createMachine(
     },
 
     states: {
-      "Page is accessed": {
+      "Map is loading": {
         invoke: {
           id: "fetchMapData",
           src: "fetchMapData",
@@ -82,13 +82,19 @@ export const globeViewMachine = createMachine(
             target: "Initial globe view",
             actions: "clearSelectedCountryId",
           },
+
+          "Select country": {
+            target: "Initial globe view",
+            reenter: true,
+            actions: "setSelectedCountryId",
+          },
         },
       },
 
       "Unexpected error": {},
     },
 
-    initial: "Page is accessed",
+    initial: "Map is loading",
   },
   {
     actions: {

@@ -1,16 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { DeckGL } from "@deck.gl/react";
 import { ArcLayer, GeoJsonLayer } from "@deck.gl/layers";
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { COORDINATE_SYSTEM, _GlobeView as GlobeView } from "@deck.gl/core";
 import { SphereGeometry } from "@luma.gl/engine";
 import type { GlobeViewState } from "@deck.gl/core";
-import {
-  CountryCapitalsGeoJSON,
-  CountryLimitsGeoJSON,
-} from "@/types/countries";
-import { Position } from "geojson";
 import { MachineContext } from "../state";
+import { selectors } from "../state/selectors";
 
 const EARTH_RADIUS_METERS = 6.3e6;
 
@@ -20,83 +16,52 @@ const INITIAL_VIEW_STATE: GlobeViewState = {
   zoom: 0.8,
 };
 
-interface GlobePanelProps {
-  countryLimitsGeojson: CountryLimitsGeoJSON;
-  countryCapitalsGeojson: CountryCapitalsGeoJSON;
-}
-
-interface ArcData {
-  sourcePosition: Position;
-  targetPosition: Position;
-}
-
-export default function GlobePanel({
-  countryLimitsGeojson,
-  countryCapitalsGeojson,
-}: GlobePanelProps) {
+export default function GlobePanel() {
   const actorRef = MachineContext.useActorRef();
-
-  const [arcs, setArcs] = useState<ArcData[]>([]);
+  const arcs = MachineContext.useSelector(selectors.currentCountryArcs);
+  const countryLimitsGeoJSON = MachineContext.useSelector(
+    (s) => s.context.countryLimitsGeoJSON
+  );
 
   const backgroundLayers = useMemo(
-    () => [
-      new SimpleMeshLayer({
-        id: "earth-sphere",
-        data: [0],
-        mesh: new SphereGeometry({
-          radius: EARTH_RADIUS_METERS,
-          nlat: 18,
-          nlong: 36,
-        }),
-        coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-        getPosition: [0, 0, 0],
-        getColor: [173, 216, 230],
-      }),
-      new GeoJsonLayer({
-        id: "country-limits",
-        data: countryLimitsGeojson,
-        pickable: true,
-        opacity: 1,
-        getFillColor: [211, 211, 211],
-        getLineWidth: 10000,
-        onClick: (info) => {
-          actorRef.send({
-            type: "Select country",
-            countryId: info.object.properties.id,
-          });
-          const originCountry = countryCapitalsGeojson.features.find(
-            (feature) => feature.properties.id === info.object.properties.id
-          );
-
-          if (!originCountry) {
-            return;
-          }
-
-          const targetCountries = countryCapitalsGeojson.features
-            .filter(
-              (feature) => feature.properties.id !== info.object.properties.id
-            )
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 10);
-
-          if (targetCountries.length === 0) {
-            return;
-          }
-
-          const arcs = targetCountries.map((feature) => ({
-            sourcePosition: originCountry?.geometry.coordinates,
-            targetPosition: feature.geometry.coordinates,
-          }));
-
-          setArcs(arcs);
-        },
-      }),
-    ],
-    [countryCapitalsGeojson, countryLimitsGeojson]
+    () =>
+      countryLimitsGeoJSON
+        ? [
+            new SimpleMeshLayer({
+              id: "earth-sphere",
+              data: [0],
+              mesh: new SphereGeometry({
+                radius: EARTH_RADIUS_METERS,
+                nlat: 18,
+                nlong: 36,
+              }),
+              coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+              getPosition: [0, 0, 0],
+              getColor: [173, 216, 230],
+            }),
+            new GeoJsonLayer({
+              id: "country-limits",
+              data: countryLimitsGeoJSON,
+              pickable: true,
+              opacity: 1,
+              getFillColor: [211, 211, 211],
+              getLineWidth: 10000,
+              onClick: (info) => {
+                actorRef.send({
+                  type: "Select country",
+                  countryId: info.object.properties.id,
+                });
+              },
+            }),
+          ]
+        : [],
+    [actorRef, countryLimitsGeoJSON]
   );
 
   const arcLayer = useMemo(
     () =>
+      arcs &&
+      arcs.length > 0 &&
       new ArcLayer({
         id: "arcs",
         data: arcs,

@@ -4,21 +4,23 @@ import GlobePanel from "./components/globe-panel";
 import { CountryCard } from "./components/country-card";
 import { MachineContext, MachineProvider } from "./state";
 import { Button } from "@nextui-org/react";
+import { selectors } from "./state/selectors";
 
 function InnerPage() {
   const actorRef = MachineContext.useActorRef();
 
   const displaySidePanel = MachineContext.useSelector((state) =>
-    state.matches("Country is selected")
-  );
-  const countryLimitsGeojson = MachineContext.useSelector(
-    (state) => state.context.countryLimitsGeoJSON
-  );
-  const countryCapitalsGeojson = MachineContext.useSelector(
-    (state) => state.context.countryCapitalsGeoJSON
+    state.context.selectedCountryId ? true : false
   );
 
-  if (!countryLimitsGeojson || !countryCapitalsGeojson) {
+  const mapIsLoading = MachineContext.useSelector((state) =>
+    state.matches("Map is loading")
+  );
+  const currentCountryLimit = MachineContext.useSelector(
+    selectors.currentCountryLimit
+  );
+
+  if (mapIsLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         Loading...
@@ -29,10 +31,7 @@ function InnerPage() {
   return (
     <div className="flex h-screen">
       <div className="flex-1 bg-gray-100 flex items-center justify-center">
-        <GlobePanel
-          countryLimitsGeojson={countryLimitsGeojson}
-          countryCapitalsGeojson={countryCapitalsGeojson}
-        />
+        <GlobePanel />
       </div>
       {displaySidePanel && (
         <div className="overflow-y-auto w-128 p-4 space-y-4">
@@ -43,9 +42,12 @@ function InnerPage() {
           >
             X
           </Button>
-          {countryLimitsGeojson?.features.map((c) => (
-            <CountryCard key={c.properties.id} {...c.properties} />
-          ))}
+          {currentCountryLimit && (
+            <CountryCard
+              key={currentCountryLimit.properties.id}
+              {...currentCountryLimit?.properties}
+            />
+          )}
         </div>
       )}
     </div>
