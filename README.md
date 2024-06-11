@@ -10,6 +10,7 @@ To set up the development environment for this website, you'll need to install t
 
 - [Node](http://nodejs.org/) (see version in [.nvmrc](./.nvmrc)) (To manage multiple node versions we recommend [nvm](https://github.com/creationix/nvm))
 - [pnpm](https://pnpm.io/installation)
+- [Docker](https://www.docker.com/)
 
 ### Initialize `.env.local` File
 
@@ -31,6 +32,18 @@ Install Node modules:
 
 ```sh
 pnpm install
+```
+
+Start database server:
+
+```sh
+docker-compose up
+```
+
+Migrate the database:
+
+```sh
+pnpm migrate
 ```
 
 Start development server:

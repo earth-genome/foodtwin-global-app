@@ -1,0 +1,17 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis()]
+}
+
+model Area {
+  id       String                                       @id
+  name     String
+  centroid Unsupported("geometry(Point, 4326)")?
+  limits   Unsupported("geometry(MultiPolygon, 4326)")?
+}

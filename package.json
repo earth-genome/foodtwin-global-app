@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate": "prisma migrate",
+    "studio": "prisma studio"
   },
   "dependencies": {
     "@deck.gl/core": "^9.0.14",
@@ -16,10 +18,12 @@
     "@deck.gl/react": "^9.0.14",
     "@luma.gl/engine": "^9.0.14",
     "@nextui-org/react": "^2.3.6",
+    "@prisma/client": "5.15.0",
     "@statelyai/inspect": "^0.3.1",
     "@xstate/react": "^4.1.1",
     "framer-motion": "^11.2.0",
     "next": "14.1.4",
+    "prisma": "^5.15.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "xstate": "^5.13.1"
