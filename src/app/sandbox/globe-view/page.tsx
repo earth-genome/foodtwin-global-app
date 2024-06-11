@@ -1,34 +1,63 @@
 "use client";
 
-import generateLoremIpsum from "../../_utils/generate-lorem-ipsum";
 import GlobePanel from "./components/globe-panel";
+import { CountryCard } from "./components/country-card";
+import { MachineContext, MachineProvider } from "./state";
+import { Button } from "@nextui-org/react";
+import { selectors } from "./state/selectors";
 
-export default function Page() {
-  const cards = new Array(10).fill(null).map((_, index) => ({
-    title: generateLoremIpsum(3),
-    content: (
-      <>
-        <p key={`lorem-${index}`}>{generateLoremIpsum(50)}</p>
-      </>
-    ),
-  }));
+function InnerPage() {
+  const actorRef = MachineContext.useActorRef();
+
+  const displaySidePanel = MachineContext.useSelector((state) =>
+    state.context.selectedCountryId ? true : false
+  );
+
+  const mapIsLoading = MachineContext.useSelector((state) =>
+    state.matches("Map is loading")
+  );
+  const currentCountryLimit = MachineContext.useSelector(
+    selectors.currentCountryLimit
+  );
+
+  if (mapIsLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen">
       <div className="flex-1 bg-gray-100 flex items-center justify-center">
         <GlobePanel />
       </div>
-      <div className="overflow-y-auto w-128 p-4 space-y-4">
-        {cards.map((card) => (
-          <div
-            key={card.title}
-            className="h-3/4 p-4 bg-white shadow-md rounded-lg"
+      {displaySidePanel && (
+        <div className="overflow-y-auto w-128 p-4 space-y-4">
+          <Button
+            isIconOnly
+            aria-label="Close"
+            onClick={() => actorRef.send({ type: "Clear country selection" })}
           >
-            <h4 className="font-bold mb-2">{card.title}</h4>
-            {card.content}
-          </div>
-        ))}
-      </div>
+            X
+          </Button>
+          {currentCountryLimit && (
+            <CountryCard
+              key={currentCountryLimit.properties.id}
+              {...currentCountryLimit?.properties}
+            />
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <MachineProvider>
+      <InnerPage />
+    </MachineProvider>
   );
 }
