@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "migrate": "prisma migrate",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+    "ingest": "node utils/ingest-data.js"
   },
   "dependencies": {
     "@deck.gl/core": "^9.0.14",

@@ -6,7 +6,7 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [postgis()]
+  extensions = [postgis]
 }
 
 model Area {
@@ -14,4 +14,16 @@ model Area {
   name     String
   centroid Unsupported("geometry(Point, 4326)")?
   limits   Unsupported("geometry(MultiPolygon, 4326)")?
+
+  @@index([centroid], name: "centroid_idx", type: Gist)
+  @@index([limits], name: "limits_idx", type: Gist)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
 }
