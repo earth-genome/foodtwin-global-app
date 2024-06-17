@@ -1,7 +1,8 @@
-import * as fs from "fs";
-import { PrismaClient } from "@prisma/client";
-
 /* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-var-requires */
+
+const fs = require("fs");
+const { PrismaClient } = require("@prisma/client");
 
 const AREA_LIMITS_PATH =
   "./public/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson";
