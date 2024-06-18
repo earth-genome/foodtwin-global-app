@@ -37,7 +37,12 @@ async function ingestData() {
 
       await prisma.$executeRaw`
         INSERT INTO "Area" (id, name, centroid, limits)
-        VALUES (${id}, ${name}, ST_GeomFromGeoJSON(${centroidGeometry}), ST_GeomFromGeoJSON(${limitsGeometry}))
+        VALUES (
+          ${id}, 
+          ${name}, 
+          ST_Transform(ST_GeomFromGeoJSON(${centroidGeometry}), 3857), 
+          ST_Transform(ST_GeomFromGeoJSON(${limitsGeometry}), 3857)
+        )
         ON CONFLICT (id) DO NOTHING
       `;
     }

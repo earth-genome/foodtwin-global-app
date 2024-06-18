@@ -12,8 +12,8 @@ datasource db {
 model Area {
   id       String                                       @id
   name     String
-  centroid Unsupported("geometry(Point, 4326)")?
-  limits   Unsupported("geometry(MultiPolygon, 4326)")?
+  centroid Unsupported("geometry(Point, 3857)")?
+  limits   Unsupported("geometry(MultiPolygon, 3857)")?
 
   @@index([centroid], name: "centroid_idx", type: Gist)
   @@index([limits], name: "limits_idx", type: Gist)
