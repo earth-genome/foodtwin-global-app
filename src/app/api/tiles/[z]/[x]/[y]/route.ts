@@ -37,13 +37,12 @@ export async function GET(
           name,
           ST_AsMVTGeom(
             limits,
-            ST_TileEnvelope(${zNum}, ${xNum}, ${yNum}, margin => 64.0 / 4096),
-            extent => 4096, buffer => 128, clip_geom => false
+            ST_TileEnvelope(${zNum}, ${xNum}, ${yNum})
           ) AS geom
         FROM "Area"
         WHERE ST_Intersects(
           limits,
-          ST_TileEnvelope(${zNum}, ${xNum}, ${yNum}, margin => 64.0 / 4096)
+          ST_TileEnvelope(${zNum}, ${xNum}, ${yNum})
         )
       ) AS tile;
     `;
