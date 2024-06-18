@@ -46,6 +46,12 @@ Migrate the database:
 pnpm migrate
 ```
 
+Ingest seed data:
+
+```sh
+pnpm ingest
+```
+
 Start development server:
 
 ```sh
