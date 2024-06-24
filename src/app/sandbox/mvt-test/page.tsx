@@ -19,7 +19,7 @@ const INITIAL_VIEW_STATE: GlobeViewState = {
 };
 
 export default function GlobePanel() {
-  const [isGlobeView, setIsGlobeView] = useState(false);
+  const [isGlobeView, setIsGlobeView] = useState(true);
 
   const layers = useMemo(
     () =>
