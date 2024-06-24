@@ -6,4 +6,11 @@ CREATE TABLE "Area" (
     "limits" geometry(MultiPolygon, 3857),
 
     CONSTRAINT "Area_pkey" PRIMARY KEY ("id")
+
 );
+
+-- CreateIndex
+CREATE INDEX "centroid_idx" ON "Area" USING GIST ("centroid");
+
+-- CreateIndex
+CREATE INDEX "limits_idx" ON "Area" USING GIST ("limits");

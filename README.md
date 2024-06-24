@@ -40,16 +40,10 @@ Start database server:
 docker-compose up
 ```
 
-Migrate the database:
+Apply migrations and ingest seed data:
 
 ```sh
-pnpm migrate
-```
-
-Ingest seed data:
-
-```sh
-pnpm ingest
+pnpm seed
 ```
 
 Start development server:

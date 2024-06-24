@@ -24,7 +24,7 @@ async function ingestData() {
       const { iso_a3: id, name } = feature.properties;
 
       const centroid = centroids.features.find(
-        (c) => c.properties.SOV_A3 === id
+        (c: GeoJSON.Feature) => c.properties?.SOV_A3 === id
       );
 
       if (!centroid) {
