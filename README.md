@@ -4,6 +4,10 @@
 
 The steps below will walk you through setting up your own instance of the project.
 
+## Download seed data
+
+Download and place the seed files to the `data` folder.
+
 ### Install Project Dependencies
 
 To set up the development environment for this website, you'll need to install the following on your system:
@@ -11,6 +15,7 @@ To set up the development environment for this website, you'll need to install t
 - [Node](http://nodejs.org/) (see version in [.nvmrc](./.nvmrc)) (To manage multiple node versions we recommend [nvm](https://github.com/creationix/nvm))
 - [pnpm](https://pnpm.io/installation)
 - [Docker](https://www.docker.com/)
+- [GDAL](https://gdal.org/)
 
 ### Initialize `.env.local` File
 
