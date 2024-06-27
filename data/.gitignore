@@ -1,0 +1,5 @@
+# Ignore everything, this folder should only contain seed files, which should
+# not be commited to the repository
+
+*
+!.gitignore

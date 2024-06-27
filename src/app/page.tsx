@@ -5,6 +5,7 @@ const currentPages = [
   { href: "/about", label: "About" },
   { href: "/sandbox/simple-map", label: "Simple Map" },
   { href: "/sandbox/globe-view", label: "Globe View" },
+  { href: "/sandbox/mvt-test", label: "MVT View" },
 ];
 
 export default function Home() {
