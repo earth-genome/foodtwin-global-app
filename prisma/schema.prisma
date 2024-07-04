@@ -10,13 +10,64 @@ datasource db {
 }
 
 model Area {
-  id       String                                       @id
-  name     String
-  centroid Unsupported("geometry(Point, 3857)")?
-  limits   Unsupported("geometry(MultiPolygon, 3857)")?
+  id        String                                       @id
+  name      String
+  flowsFrom Flow[]                                       @relation("FromArea")
+  flowsTo   Flow[]                                       @relation("ToArea")
+  centroid  Unsupported("geometry(Point, 3857)")?
+  limits    Unsupported("geometry(MultiPolygon, 3857)")?
+  nodes     Node[]
 
   @@index([centroid], name: "centroid_idx", type: Gist)
   @@index([limits], name: "limits_idx", type: Gist)
+}
+
+enum NodeType {
+  AIR
+  MARITIME
+  ROAD
+  RAIL
+  MULTIMODAL
+  OTHER
+}
+
+model Node {
+  id               String        @id
+  name             String
+  type             NodeType
+  area             Area          @relation(fields: [areaId], references: [id])
+  areaId           String
+  flowSegmentsFrom FlowSegment[] @relation("FromNode")
+  flowSegmentsTo   FlowSegment[] @relation("ToNode")
+}
+
+model Food {
+  id    String @id
+  name  String
+  flows Flow[]
+}
+
+model FlowSegment {
+  id         String @id
+  type       String
+  fromNode   Node   @relation("FromNode", fields: [fromNodeId], references: [id])
+  fromNodeId String
+  toNode     Node   @relation("ToNode", fields: [toNodeId], references: [id])
+  toNodeId   String
+  flow       Flow   @relation(fields: [flowId], references: [id])
+  flowId     String
+}
+
+model Flow {
+  id         String        @id
+  fromArea   Area          @relation("FromArea", fields: [fromAreaId], references: [id])
+  fromAreaId String
+  toArea     Area          @relation("ToArea", fields: [toAreaId], references: [id])
+  toAreaId   String
+  food       Food          @relation(fields: [foodId], references: [id])
+  foodId     String
+  amount     Float
+  segments   FlowSegment[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -26,4 +77,8 @@ model spatial_ref_sys {
   auth_srid Int?
   srtext    String? @db.VarChar(2048)
   proj4text String? @db.VarChar(2048)
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
 }

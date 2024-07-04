@@ -10,6 +10,7 @@ const prisma = new PrismaClient();
 const SEED_DATA_PATH = process.env.SEED_DATA_PATH as string;
 const ADMIN_CENTROIDS_PATH = path.join(SEED_DATA_PATH, "admin_centroids.gpkg");
 const ADMIN_LIMITS_PATH = path.join(SEED_DATA_PATH, "admin_polygons.gpkg");
+const ADMIN_LIMITS_TABLENAME = "admin_polygons_lowerscale";
 const POSTGRES_CONNECTION_STRING = process.env.DATABASE_URL;
 
 async function ingestData() {
@@ -48,7 +49,7 @@ async function ingestData() {
 
     await runOgr2Ogr(
       ADMIN_LIMITS_PATH,
-      '-nln Area_limits -overwrite -nlt MULTIPOLYGON -lco GEOMETRY_NAME=limits -sql "SELECT ID as id, geom as limits FROM admin_polygons"'
+      `-nln Area_limits -overwrite -nlt MULTIPOLYGON -lco GEOMETRY_NAME=limits -sql "SELECT ID as id, geom as limits FROM ${ADMIN_LIMITS_TABLENAME}"`
     );
 
     await prisma.$executeRaw`UPDATE "Area" SET "limits" = (SELECT ST_Transform(limits, 3857) FROM "area_limits" WHERE "Area"."id" = "area_limits"."id")`;
