@@ -10,15 +10,22 @@ const prisma = new PrismaClient();
 const SEED_DATA_PATH = process.env.SEED_DATA_PATH as string;
 const ADMIN_CENTROIDS_PATH = path.join(SEED_DATA_PATH, "admin_centroids.gpkg");
 const ADMIN_LIMITS_PATH = path.join(SEED_DATA_PATH, "admin_polygons.gpkg");
-const ADMIN_LIMITS_TABLENAME = "admin_polygons_lowerscale";
+const ADMIN_LIMITS_TABLENAME = "admin_polygons";
 const POSTGRES_CONNECTION_STRING = process.env.DATABASE_URL;
 
 async function ingestData() {
   try {
     // Check if data path is defined
+    if (!SEED_DATA_PATH) {
+      console.error(
+        "SEED_DATA_PATH not defined. Please refer to the README for more information."
+      );
+      return;
+    }
+
     if (!fs.existsSync(SEED_DATA_PATH)) {
       console.error(
-        "Data path not found, you must define the SEED_DATA_PATH. Please refer to the README for more information."
+        `Path ${SEED_DATA_PATH} was not found, a valid path must be defined to the SEED_DATA_PATH environment variable. Please refer to the README for more information.`
       );
       return;
     }
