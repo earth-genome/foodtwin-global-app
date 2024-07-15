@@ -27,41 +27,42 @@ enum NodeType {
 }
 
 model Node {
-  id               String                               @id
+  id               Int                                  @id @default(autoincrement())
+  id_str           String
   name             String?
   type             NodeType
   centroid         Unsupported("geometry(Point, 3857)")
-  flowSegmentsFrom FlowSegment[]                        @relation("FromNode")
-  flowSegmentsTo   FlowSegment[]                        @relation("ToNode")
+  flowSegmentsFrom Edge[]                               @relation("FromNode")
+  flowSegmentsTo   Edge[]                               @relation("ToNode")
+}
+
+model Edge {
+  id         Int                                       @id @default(autoincrement())
+  distance   Float
+  geom       Unsupported("geometry(LineString, 3857)")
+  fromNode   Node                                      @relation("FromNode", fields: [fromNodeId], references: [id])
+  fromNodeId Int
+  toNode     Node                                      @relation("ToNode", fields: [toNodeId], references: [id])
+  toNodeId   Int
+  flows      Flow[]
+}
+
+model Flow {
+  id         String @id
+  fromArea   Area   @relation("FromArea", fields: [fromAreaId], references: [id])
+  fromAreaId String
+  toArea     Area   @relation("ToArea", fields: [toAreaId], references: [id])
+  toAreaId   String
+  food       Food   @relation(fields: [foodId], references: [id])
+  foodId     String
+  amount     Float
+  segments   Edge[]
 }
 
 model Food {
   id    String @id
   name  String
   flows Flow[]
-}
-
-model FlowSegment {
-  id         String @id
-  type       String
-  fromNode   Node   @relation("FromNode", fields: [fromNodeId], references: [id])
-  fromNodeId String
-  toNode     Node   @relation("ToNode", fields: [toNodeId], references: [id])
-  toNodeId   String
-  flow       Flow   @relation(fields: [flowId], references: [id])
-  flowId     String
-}
-
-model Flow {
-  id         String        @id
-  fromArea   Area          @relation("FromArea", fields: [fromAreaId], references: [id])
-  fromAreaId String
-  toArea     Area          @relation("ToArea", fields: [toAreaId], references: [id])
-  toAreaId   String
-  food       Food          @relation(fields: [foodId], references: [id])
-  foodId     String
-  amount     Float
-  segments   FlowSegment[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
