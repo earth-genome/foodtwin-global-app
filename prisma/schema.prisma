@@ -16,29 +16,23 @@ model Area {
   flowsTo   Flow[]                                       @relation("ToArea")
   centroid  Unsupported("geometry(Point, 3857)")?
   limits    Unsupported("geometry(MultiPolygon, 3857)")?
-  nodes     Node[]
 
   @@index([centroid], name: "centroid_idx", type: Gist)
   @@index([limits], name: "limits_idx", type: Gist)
 }
 
 enum NodeType {
-  AIR
   MARITIME
-  ROAD
-  RAIL
-  MULTIMODAL
-  OTHER
+  PORT
 }
 
 model Node {
-  id               String        @id
-  name             String
+  id               String                               @id
+  name             String?
   type             NodeType
-  area             Area          @relation(fields: [areaId], references: [id])
-  areaId           String
-  flowSegmentsFrom FlowSegment[] @relation("FromNode")
-  flowSegmentsTo   FlowSegment[] @relation("ToNode")
+  centroid         Unsupported("geometry(Point, 3857)")
+  flowSegmentsFrom FlowSegment[]                        @relation("FromNode")
+  flowSegmentsTo   FlowSegment[]                        @relation("ToNode")
 }
 
 model Food {

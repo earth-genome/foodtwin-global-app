@@ -1,12 +1,12 @@
 -- CreateEnum
-CREATE TYPE "NodeType" AS ENUM ('AIR', 'MARITIME', 'ROAD', 'RAIL', 'MULTIMODAL', 'OTHER');
+CREATE TYPE "NodeType" AS ENUM ('MARITIME', 'PORT');
 
 -- CreateTable
 CREATE TABLE "Node" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" TEXT,
     "type" "NodeType" NOT NULL,
-    "areaId" TEXT NOT NULL,
+    "centroid" geometry(Point, 3857) NOT NULL,
 
     CONSTRAINT "Node_pkey" PRIMARY KEY ("id")
 );
@@ -40,9 +40,6 @@ CREATE TABLE "Flow" (
 
     CONSTRAINT "Flow_pkey" PRIMARY KEY ("id")
 );
-
--- AddForeignKey
-ALTER TABLE "Node" ADD CONSTRAINT "Node_areaId_fkey" FOREIGN KEY ("areaId") REFERENCES "Area"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "FlowSegment" ADD CONSTRAINT "FlowSegment_fromNodeId_fkey" FOREIGN KEY ("fromNodeId") REFERENCES "Node"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

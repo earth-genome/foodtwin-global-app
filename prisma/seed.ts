@@ -7,11 +7,13 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
+const POSTGRES_CONNECTION_STRING = process.env.DATABASE_URL;
 const SEED_DATA_PATH = process.env.SEED_DATA_PATH as string;
 const ADMIN_CENTROIDS_PATH = path.join(SEED_DATA_PATH, "admin_centroids.gpkg");
 const ADMIN_LIMITS_PATH = path.join(SEED_DATA_PATH, "admin_polygons.gpkg");
 const ADMIN_LIMITS_TABLENAME = "admin_polygons";
-const POSTGRES_CONNECTION_STRING = process.env.DATABASE_URL;
+const NODES_MARITIME_FILE = "nodes_maritime.gpkg";
+const NODES_MARITIME_TABLENAME = "nodes_maritime";
 
 async function ingestData() {
   try {
@@ -31,7 +33,8 @@ async function ingestData() {
     }
 
     // Truncate all tables
-    await prisma.$executeRaw`TRUNCATE "Area" RESTART IDENTITY CASCADE`;
+    // await prisma.$executeRaw`TRUNCATE "Area" RESTART IDENTITY CASCADE`;
+    await prisma.$executeRaw`TRUNCATE "Node" RESTART IDENTITY CASCADE`;
 
     // Check if admin centroids file exists
     if (!fs.existsSync(ADMIN_CENTROIDS_PATH)) {
@@ -60,6 +63,19 @@ async function ingestData() {
     );
 
     await prisma.$executeRaw`UPDATE "Area" SET "limits" = (SELECT ST_Transform(limits, 3857) FROM "area_limits" WHERE "Area"."id" = "area_limits"."id")`;
+
+    // Check if nodes file exists
+    const NODES_PATH = path.join(SEED_DATA_PATH, NODES_MARITIME_FILE);
+    if (!fs.existsSync(NODES_PATH)) {
+      console.error("Maritime nodes file not found.");
+      return;
+    }
+
+    console.log("Ingesting maritime nodes...");
+    await runOgr2Ogr(
+      NODES_PATH,
+      `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT ID as id, name, upper(infra) as type, geom FROM ${NODES_MARITIME_TABLENAME}"`
+    );
   } catch (error) {
     console.error("Error ingesting data:", error);
   } finally {
