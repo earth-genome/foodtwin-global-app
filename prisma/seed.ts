@@ -18,6 +18,8 @@ const EDGES_MARITIME_FILE = "edges_maritime_corrected.gpkg";
 const EDGES_MARITIME_TABLENAME = "edges_maritime_corrected";
 
 async function ingestData() {
+  const { execa } = await import("execa");
+
   try {
     // Check if data path is defined
     if (!SEED_DATA_PATH) {
@@ -35,9 +37,10 @@ async function ingestData() {
     }
 
     // Truncate all tables
-    // await prisma.$executeRaw`TRUNCATE "Area" RESTART IDENTITY CASCADE`;
+    await prisma.$executeRaw`TRUNCATE "Area" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Node" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Edge" RESTART IDENTITY CASCADE`;
+    await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
 
     // Check if admin centroids file exists
     if (!fs.existsSync(ADMIN_CENTROIDS_PATH)) {
@@ -109,6 +112,63 @@ async function ingestData() {
     `;
 
     await prisma.$executeRaw`DROP TABLE IF EXISTS "edge_temp"`;
+
+    // list files starting with "Flow_" in the data directory
+    const FLOW_FILES = fs
+      .readdirSync(SEED_DATA_PATH)
+      .filter((file: string) => file.startsWith("Flows_"));
+
+    for (const file of FLOW_FILES) {
+      const FLOW_PATH = path.resolve(path.join(SEED_DATA_PATH, file));
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "flows_temp"`;
+
+      // Create temporary table for flows
+      await prisma.$executeRaw`
+        CREATE TABLE "flows_temp" (
+          id INTEGER PRIMARY KEY,
+          from_id_admin TEXT,
+          to_id_admin TEXT,
+          flow_id_str TEXT,
+          edge_id TEXT,
+          edge_order TEXT,
+          flow_value FLOAT,
+          flow_start_node_id INTEGER,
+          flow_start_node_id_str TEXT,
+          flow_end_node_id INTEGER,
+          flow_end_node_id_str TEXT,
+          edge_start_node_id INTEGER,
+          edge_start_node_id_str TEXT,
+          edge_end_node_id INTEGER,
+          edge_end_node_id_str TEXT
+        )
+      `;
+
+      const copyCommand = `\\copy flows_temp (id,from_id_admin,to_id_admin,flow_id_str,edge_id,edge_order,flow_value) FROM '${FLOW_PATH}' DELIMITER ',' CSV HEADER;`;
+
+      await execa(`psql -d ${POSTGRES_CONNECTION_STRING} -c "${copyCommand}"`, {
+        shell: true,
+      });
+
+      await prisma.$executeRaw`
+      UPDATE "flows_temp"
+      SET 
+        flow_start_node_id_str = split_part(flow_id_str, '_', 1),
+        flow_end_node_id_str = split_part(flow_id_str, '_', 2),
+        edge_start_node_id_str = split_part(edge_id, '_', 1),
+        edge_end_node_id_str = split_part(edge_id, '_', 2)
+      `;
+
+      // ingest flows
+      await prisma.$executeRaw`
+        INSERT INTO "Flow" ("fromAreaId", "toAreaId", "food", "value")
+        SELECT DISTINCT
+          "from_id_admin" AS "fromAreaId",
+          "to_id_admin" AS "toAreaId",
+          'Food id',
+          "flow_value" AS "value"
+        FROM "flows_temp" f        
+      `;
+    }
   } catch (error) {
     console.error("Error ingesting data:", error);
   } finally {

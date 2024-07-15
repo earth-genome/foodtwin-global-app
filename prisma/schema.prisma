@@ -44,25 +44,29 @@ model Edge {
   fromNodeId Int
   toNode     Node                                      @relation("ToNode", fields: [toNodeId], references: [id])
   toNodeId   Int
-  flows      Flow[]
+  flows      FlowEdges[]
+}
+
+model FlowEdges {
+  edgeId   Int
+  edge     Edge @relation(fields: [edgeId], references: [id])
+  flowId   Int
+  flow     Flow @relation(fields: [flowId], references: [id])
+  position Int
+
+  @@id([edgeId, flowId])
 }
 
 model Flow {
-  id         String @id
+  id         Int    @id @default(autoincrement())
   fromArea   Area   @relation("FromArea", fields: [fromAreaId], references: [id])
   fromAreaId String
   toArea     Area   @relation("ToArea", fields: [toAreaId], references: [id])
   toAreaId   String
-  food       Food   @relation(fields: [foodId], references: [id])
-  foodId     String
-  amount     Float
-  segments   Edge[]
-}
+  food       String
+  value      Float
 
-model Food {
-  id    String @id
-  name  String
-  flows Flow[]
+  FlowEdges FlowEdges[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
