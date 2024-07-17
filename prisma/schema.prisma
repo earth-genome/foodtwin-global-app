@@ -28,12 +28,14 @@ enum NodeType {
 
 model Node {
   id               Int                                  @id @default(autoincrement())
-  id_str           String
+  id_str           String                               @unique
   name             String?
   type             NodeType
   centroid         Unsupported("geometry(Point, 3857)")
   flowSegmentsFrom Edge[]                               @relation("FromNode")
   flowSegmentsTo   Edge[]                               @relation("ToNode")
+
+  @@index([id_str])
 }
 
 model Edge {
@@ -45,6 +47,8 @@ model Edge {
   toNode     Node                                      @relation("ToNode", fields: [toNodeId], references: [id])
   toNodeId   Int
   flows      FlowEdges[]
+
+  @@index([fromNodeId, toNodeId])
 }
 
 model FlowEdges {

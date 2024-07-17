@@ -129,21 +129,18 @@ async function ingestData() {
           from_id_admin TEXT,
           to_id_admin TEXT,
           flow_id_str TEXT,
-          edge_id TEXT,
+          edge_id     INTEGER,
+          edge_id_str TEXT,
           edge_order TEXT,
           flow_value FLOAT,
-          flow_start_node_id INTEGER,
           flow_start_node_id_str TEXT,
-          flow_end_node_id INTEGER,
           flow_end_node_id_str TEXT,
-          edge_start_node_id INTEGER,
           edge_start_node_id_str TEXT,
-          edge_end_node_id INTEGER,
           edge_end_node_id_str TEXT
         )
       `;
 
-      const copyCommand = `\\copy flows_temp (id,from_id_admin,to_id_admin,flow_id_str,edge_id,edge_order,flow_value) FROM '${FLOW_PATH}' DELIMITER ',' CSV HEADER;`;
+      const copyCommand = `\\copy flows_temp (id,from_id_admin,to_id_admin,flow_id_str,edge_id_str,edge_order,flow_value) FROM '${FLOW_PATH}' DELIMITER ',' CSV HEADER;`;
 
       await execa(`psql -d ${POSTGRES_CONNECTION_STRING} -c "${copyCommand}"`, {
         shell: true,
@@ -154,11 +151,24 @@ async function ingestData() {
       SET 
         flow_start_node_id_str = split_part(flow_id_str, '_', 1),
         flow_end_node_id_str = split_part(flow_id_str, '_', 2),
-        edge_start_node_id_str = split_part(edge_id, '_', 1),
-        edge_end_node_id_str = split_part(edge_id, '_', 2)
+        edge_start_node_id_str = split_part(edge_id_str, '_', 1),
+        edge_end_node_id_str = split_part(edge_id_str, '_', 2)
       `;
 
-      // ingest flows
+      await prisma.$executeRaw`
+        CREATE INDEX ON flows_temp (edge_start_node_id_str, edge_end_node_id_str);
+      `;
+
+      await prisma.$executeRaw`
+        UPDATE "flows_temp" ft
+        SET edge_id = e.id
+        FROM "Edge" e
+        JOIN "Node" n1 ON e."fromNodeId" = n1.id
+        JOIN "Node" n2 ON e."toNodeId" = n2.id
+        WHERE n1.id_str = ft.edge_start_node_id_str
+          AND n2.id_str = ft.edge_end_node_id_str;
+      `;
+
       await prisma.$executeRaw`
         INSERT INTO "Flow" ("fromAreaId", "toAreaId", "food", "value")
         SELECT DISTINCT

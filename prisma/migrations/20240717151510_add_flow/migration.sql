@@ -43,6 +43,15 @@ CREATE TABLE "Flow" (
     CONSTRAINT "Flow_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateIndex
+CREATE UNIQUE INDEX "Node_id_str_key" ON "Node"("id_str");
+
+-- CreateIndex
+CREATE INDEX "Node_id_str_idx" ON "Node"("id_str");
+
+-- CreateIndex
+CREATE INDEX "Edge_fromNodeId_toNodeId_idx" ON "Edge"("fromNodeId", "toNodeId");
+
 -- AddForeignKey
 ALTER TABLE "Edge" ADD CONSTRAINT "Edge_fromNodeId_fkey" FOREIGN KEY ("fromNodeId") REFERENCES "Node"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
