@@ -16,6 +16,7 @@ To set up the development environment for this website, you'll need to install t
 - [pnpm](https://pnpm.io/installation)
 - [Docker](https://www.docker.com/)
 - [GDAL](https://gdal.org/)
+- [PostgreSQL](https://www.postgresql.org/)
 
 ### Initialize `.env.local` File
 
