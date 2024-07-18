@@ -14,14 +14,36 @@ const ADMIN_LIMITS_PATH = path.join(SEED_DATA_PATH, "admin_polygons.gpkg");
 const ADMIN_LIMITS_TABLENAME = "admin_polygons";
 const NODES_MARITIME_FILE = "nodes_maritime.gpkg";
 const NODES_MARITIME_TABLENAME = "nodes_maritime";
+const NODES_PATH = path.join(SEED_DATA_PATH, NODES_MARITIME_FILE);
 const EDGES_MARITIME_FILE = "edges_maritime_corrected.gpkg";
 const EDGES_MARITIME_TABLENAME = "edges_maritime_corrected";
+const EDGES_PATH = path.join(SEED_DATA_PATH, EDGES_MARITIME_FILE);
+
+function checkFileExistence(filePath: string, errorMessage: string) {
+  if (!fs.existsSync(filePath)) {
+    console.error(errorMessage);
+    return false;
+  }
+  return true;
+}
+
+function round(value: number, decimals = 2) {
+  return Number(Math.round(Number(value + "e" + decimals)) + "e-" + decimals);
+}
+
+function msToSeconds(ms: number) {
+  return round(ms / 1000);
+}
+
+function msToMinutes(ms: number) {
+  return round(ms / 60000);
+}
 
 async function ingestData() {
+  const ingestDataStart = performance.now();
   const { execa } = await import("execa");
 
   try {
-    // Check if data path is defined
     if (!SEED_DATA_PATH) {
       console.error(
         "SEED_DATA_PATH not defined. Please refer to the README for more information."
@@ -36,63 +58,59 @@ async function ingestData() {
       return;
     }
 
-    // Truncate all tables
+    if (
+      !checkFileExistence(
+        ADMIN_CENTROIDS_PATH,
+        "Admin centroids file not found."
+      )
+    )
+      return;
+    if (!checkFileExistence(ADMIN_LIMITS_PATH, "Admin limits file not found."))
+      return;
+    if (!checkFileExistence(NODES_PATH, "Maritime nodes file not found."))
+      return;
+    if (!checkFileExistence(EDGES_PATH, "Maritime edges file not found."))
+      return;
+
+    const truncateTablesStart = performance.now();
     await prisma.$executeRaw`TRUNCATE "Area" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Node" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Edge" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
+    console.log(
+      `Cleared existing tables (${msToSeconds(performance.now() - truncateTablesStart)}s)`
+    );
 
-    // Check if admin centroids file exists
-    if (!fs.existsSync(ADMIN_CENTROIDS_PATH)) {
-      console.error("Admin centroids file not found.");
-      return;
-    } else {
-      console.log("Ingesting area centroids...");
-    }
-
+    const ingestCentroidsStart = performance.now();
     await runOgr2Ogr(
       ADMIN_CENTROIDS_PATH,
       '-nln Area -append -nlt POINT -lco GEOMETRY_NAME=centroid -sql "SELECT ID as id, admin_name as name, geom AS centroid FROM admin_centroids"'
     );
+    console.log(
+      `Ingested area centroids (${msToSeconds(performance.now() - ingestCentroidsStart)}s)`
+    );
 
-    // Check if admin limits file exists
-    if (!fs.existsSync(ADMIN_LIMITS_PATH)) {
-      console.error("Admin limits file not found.");
-      return;
-    } else {
-      console.log("Ingesting area limits...");
-    }
-
+    const ingestLimitsStart = performance.now();
     await runOgr2Ogr(
       ADMIN_LIMITS_PATH,
       `-nln Area_limits -overwrite -nlt MULTIPOLYGON -lco GEOMETRY_NAME=limits -sql "SELECT ID as id, geom as limits FROM ${ADMIN_LIMITS_TABLENAME}"`
     );
-
     await prisma.$executeRaw`UPDATE "Area" SET "limits" = (SELECT ST_Transform(limits, 3857) FROM "area_limits" WHERE "Area"."id" = "area_limits"."id")`;
+    console.log(
+      `Ingested area limits (${msToSeconds(performance.now() - ingestLimitsStart)}s)`
+    );
 
-    // Check if nodes file exists
-    const NODES_PATH = path.join(SEED_DATA_PATH, NODES_MARITIME_FILE);
-    if (!fs.existsSync(NODES_PATH)) {
-      console.error("Maritime nodes file not found.");
-      return;
-    }
-
-    console.log("Ingesting maritime nodes...");
+    const ingestNodesStart = performance.now();
     await runOgr2Ogr(
       NODES_PATH,
       `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT ID as id_str, name, upper(infra) as type, geom FROM ${NODES_MARITIME_TABLENAME}"`
     );
+    console.log(
+      `Ingested maritime nodes (${msToSeconds(performance.now() - ingestNodesStart)}s)`
+    );
 
-    // Check if edges file exists
-    const EDGES_PATH = path.join(SEED_DATA_PATH, EDGES_MARITIME_FILE);
-    if (!fs.existsSync(EDGES_PATH)) {
-      console.error("Maritime edges file not found.");
-      return;
-    }
-
-    console.log("Ingesting maritime edges...");
+    const ingestEdgesStart = performance.now();
     await prisma.$executeRaw`DROP TABLE IF EXISTS "edge_temp"`;
-
     await runOgr2Ogr(
       EDGES_PATH,
       `-nln edge_temp -append -nlt LINESTRING -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT from_id as from_id_str, to_id as to_id_str, distance, length, geom FROM ${EDGES_MARITIME_TABLENAME}"`
@@ -110,8 +128,10 @@ async function ingestData() {
       JOIN "Node" n2 ON e."to_id_str" = n2."id_str"
       WHERE n1."id" IS NOT NULL AND n2."id" IS NOT NULL
     `;
-
     await prisma.$executeRaw`DROP TABLE IF EXISTS "edge_temp"`;
+    console.log(
+      `Inserted maritime edges (${msToSeconds(performance.now() - ingestEdgesStart)}s)`
+    );
 
     // list files starting with "Flow_" in the data directory
     const FLOW_FILES = fs
@@ -119,6 +139,7 @@ async function ingestData() {
       .filter((file: string) => file.startsWith("Flows_"));
 
     for (const file of FLOW_FILES) {
+      const ingestFlowsStart = performance.now();
       const FLOW_PATH = path.resolve(path.join(SEED_DATA_PATH, file));
       await prisma.$executeRaw`DROP TABLE IF EXISTS "flows_temp"`;
 
@@ -154,7 +175,11 @@ async function ingestData() {
         edge_start_node_id_str = split_part(edge_id_str, '_', 1),
         edge_end_node_id_str = split_part(edge_id_str, '_', 2)
       `;
+      console.log(
+        `Copied flows to temporary table (${msToSeconds(performance.now() - ingestFlowsStart)}s)`
+      );
 
+      const generateIdsStart = performance.now();
       await prisma.$executeRaw`
         CREATE INDEX ON flows_temp (edge_start_node_id_str, edge_end_node_id_str);
       `;
@@ -169,6 +194,11 @@ async function ingestData() {
           AND n2.id_str = ft.edge_end_node_id_str;
       `;
 
+      console.log(
+        `Generated node and edge IDs for flows (${msToSeconds(performance.now() - generateIdsStart)}s)`
+      );
+
+      const insertFlowsStart = performance.now();
       await prisma.$executeRaw`
         INSERT INTO "Flow" ("fromAreaId", "toAreaId", "food", "value")
         SELECT DISTINCT
@@ -178,7 +208,18 @@ async function ingestData() {
           "flow_value" AS "value"
         FROM "flows_temp" f        
       `;
+      console.log(
+        `Inserted flows (${msToSeconds(performance.now() - insertFlowsStart)}s)`
+      );
+
+      console.log(
+        `Ingested file '${file}' (${msToSeconds(performance.now() - ingestFlowsStart)}s)`
+      );
     }
+
+    console.log(
+      `Data ingestion complete in ${msToMinutes(performance.now() - ingestDataStart)} minutes.`
+    );
   } catch (error) {
     console.error("Error ingesting data:", error);
   } finally {
