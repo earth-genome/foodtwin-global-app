@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "prisma migrate reset",
+    "db:seed": "prisma migrate reset",
+    "db:dump": "node prisma/db-dump.js",
+    "db:restore": "node prisma/db-restore.js",
     "studio": "prisma studio",
-    "ingest": "node utils/ingest-data.js",
     "postinstall": "prisma generate"
   },
   "prisma": {
@@ -35,6 +36,7 @@
     "xstate": "^5.13.1"
   },
   "devDependencies": {
+    "dotenv-flow": "^4.1.0",
     "@eslint/js": "^9.3.0",
     "@types/geojson": "^7946.0.14",
     "@types/node": "^20.12.12",
