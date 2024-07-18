@@ -7,7 +7,6 @@ frontend:
         - pnpm install
     build:
       commands:
-        - pnpm run postinstall # forces prisma client to be generated
         - pnpm run build
   artifacts:
     baseDirectory: .next
