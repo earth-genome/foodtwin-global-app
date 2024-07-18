@@ -25,12 +25,11 @@ export async function GET(
     );
   }
 
-  try {
-    const zNum = Number(z);
-    const xNum = Number(x);
-    const yNum = Number(y);
+  const zNum = Number(z);
+  const xNum = Number(x);
+  const yNum = Number(y);
 
-    const query = `
+  const query = `
       SELECT ST_AsMVT(tile) FROM (
         SELECT
           id,
@@ -47,17 +46,11 @@ export async function GET(
       ) AS tile;
     `;
 
-    const tile = (await prisma.$queryRawUnsafe(query)) as Tile[];
+  const tile = (await prisma.$queryRawUnsafe(query)) as Tile[];
 
-    return new NextResponse(tile[0].st_asmvt, {
-      headers: {
-        "Content-Type": "application/vnd.mapbox-vector-tile",
-      },
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
-  }
+  return new NextResponse(tile[0].st_asmvt, {
+    headers: {
+      "Content-Type": "application/vnd.mapbox-vector-tile",
+    },
+  });
 }
