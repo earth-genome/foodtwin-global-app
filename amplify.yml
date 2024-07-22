@@ -1,4 +1,7 @@
 version: 1
+env:
+  variables:
+    DATABASE_URL: ${DATABASE_URL}
 frontend:
   phases:
     preBuild:
@@ -7,6 +10,7 @@ frontend:
         - pnpm install
     build:
       commands:
+        - env | grep -e DATABASE_URL >> .env.production
         - pnpm run build
   artifacts:
     baseDirectory: .next
