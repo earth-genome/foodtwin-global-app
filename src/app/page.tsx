@@ -6,6 +6,7 @@ const currentPages = [
   { href: "/sandbox/simple-map", label: "Simple Map" },
   { href: "/sandbox/globe-view", label: "Globe View" },
   { href: "/sandbox/mvt-test", label: "MVT View" },
+  { href: "/sandbox/mapbox", label: "MVT View (Mapbox Globe)" },
 ];
 
 export default function Home() {
