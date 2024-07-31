@@ -4,6 +4,11 @@ import { globeViewMachine } from "./machine";
 type Snapshot = SnapshotFrom<typeof globeViewMachine>;
 
 export const selectors = {
+  pageUrl: (state: Snapshot) => {
+    const { selectedCountryId } = state.context;
+
+    return selectedCountryId ? `/area/${selectedCountryId}` : `/`;
+  },
   currentCountryLimit: (state: Snapshot) => {
     const { selectedCountryId, countryLimitsGeoJSON } = state.context;
 

@@ -1,13 +1,30 @@
 "use client";
 
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+// Xstate
+import { MachineContext, MachineProvider } from "./state";
+import { selectors } from "./state/selectors";
+
+// Components
+import { Button } from "@nextui-org/react";
 import GlobePanel from "./components/globe-panel";
 import { CountryCard } from "./components/country-card";
-import { MachineContext, MachineProvider } from "./state";
-import { Button } from "@nextui-org/react";
-import { selectors } from "./state/selectors";
 
 function InnerPage() {
   const actorRef = MachineContext.useActorRef();
+  const router = useRouter();
+
+  // Page URL is derived from the machine context
+  const pageUrl = MachineContext.useSelector(selectors.pageUrl);
+
+  // The browser URL is updated when the selected country changes, but the page
+  // does not reload because the target route should be in the rewrite rules
+  // in the next.config.js file.
+  useEffect(() => {
+    router.push(pageUrl);
+  }, [router, pageUrl]);
 
   const displaySidePanel = MachineContext.useSelector((state) =>
     state.context.selectedCountryId ? true : false
@@ -54,7 +71,7 @@ function InnerPage() {
   );
 }
 
-export default function Page() {
+export default function Globe() {
   return (
     <MachineProvider>
       <InnerPage />
