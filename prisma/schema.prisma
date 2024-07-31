@@ -11,13 +11,67 @@ datasource db {
 }
 
 model Area {
-  id       String                                       @id
-  name     String
-  centroid Unsupported("geometry(Point, 3857)")?
-  limits   Unsupported("geometry(MultiPolygon, 3857)")?
+  id        String                                       @id
+  name      String
+  flowsFrom Flow[]                                       @relation("FromArea")
+  flowsTo   Flow[]                                       @relation("ToArea")
+  centroid  Unsupported("geometry(Point, 3857)")?
+  limits    Unsupported("geometry(MultiPolygon, 3857)")?
 
   @@index([centroid], name: "centroid_idx", type: Gist)
   @@index([limits], name: "limits_idx", type: Gist)
+}
+
+enum NodeType {
+  MARITIME
+  PORT
+}
+
+model Node {
+  id               Int                                  @id @default(autoincrement())
+  id_str           String                               @unique
+  name             String?
+  type             NodeType
+  centroid         Unsupported("geometry(Point, 3857)")
+  flowSegmentsFrom Edge[]                               @relation("FromNode")
+  flowSegmentsTo   Edge[]                               @relation("ToNode")
+
+  @@index([id_str])
+}
+
+model Edge {
+  id         Int                                       @id @default(autoincrement())
+  distance   Float
+  geom       Unsupported("geometry(LineString, 3857)")
+  fromNode   Node                                      @relation("FromNode", fields: [fromNodeId], references: [id])
+  fromNodeId Int
+  toNode     Node                                      @relation("ToNode", fields: [toNodeId], references: [id])
+  toNodeId   Int
+  flows      FlowEdges[]
+
+  @@index([fromNodeId, toNodeId])
+}
+
+model FlowEdges {
+  edgeId   Int
+  edge     Edge @relation(fields: [edgeId], references: [id])
+  flowId   Int
+  flow     Flow @relation(fields: [flowId], references: [id])
+  position Int
+
+  @@id([edgeId, flowId])
+}
+
+model Flow {
+  id         Int    @id @default(autoincrement())
+  fromArea   Area   @relation("FromArea", fields: [fromAreaId], references: [id])
+  fromAreaId String
+  toArea     Area   @relation("ToArea", fields: [toAreaId], references: [id])
+  toAreaId   String
+  food       String
+  value      Float
+
+  FlowEdges FlowEdges[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
