@@ -47,7 +47,7 @@ Download seed data and place it into the folder specified by `SEED_DATA_PATH` in
 Apply migrations and ingest seed data:
 
 ```sh
-pnpm seed
+pnpm db:seed
 ```
 
 Start development server:
