@@ -3,13 +3,11 @@ import { createActorContext } from "@xstate/react";
 import { globeViewMachine } from "./machine";
 import { createBrowserInspector } from "@statelyai/inspect";
 
-const inspector = createBrowserInspector();
-
 export const MachineContext = createActorContext(
   globeViewMachine,
-  process.env.NODE_ENV !== "production"
+  process.env.NEXT_PUBLIC_USE_STATELY_INSPECTOR === "true"
     ? {
-        inspect: inspector.inspect,
+        inspect: createBrowserInspector().inspect,
       }
     : undefined
 );
