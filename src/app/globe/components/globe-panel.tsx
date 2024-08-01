@@ -81,11 +81,6 @@ export default function GlobePanel() {
         initialViewState={INITIAL_VIEW_STATE}
         controller={true}
         layers={[...backgroundLayers, arcLayer]}
-        onLoad={() =>
-          actorRef.send({
-            type: "Deck.gl was loaded",
-          })
-        }
       />
     </div>
   );

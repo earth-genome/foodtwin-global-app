@@ -17,9 +17,6 @@ export const globeViewMachine = createMachine(
       },
       events: {} as
         | {
-            type: "Deck.gl was loaded";
-          }
-        | {
             type: "Select country";
             countryId: string;
           }
