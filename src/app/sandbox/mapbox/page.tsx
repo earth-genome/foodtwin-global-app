@@ -17,11 +17,7 @@ function MapboxTest() {
         name: "globe",
       }}
     >
-      <Source
-        id="mvtiles"
-        type="vector"
-        tiles={["http://localhost:3000/api/tiles/{z}/{x}/{y}"]}
-      >
+      <Source id="mvtiles" type="vector" tiles={["/api/tiles/{z}/{x}/{y}"]}>
         <Layer
           id="tile-outline"
           type="line"
