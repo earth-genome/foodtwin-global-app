@@ -5,14 +5,13 @@ import "mapbox-gl/dist/mapbox-gl.css";
 function MapboxTest() {
   return (
     <Map
-      mapboxAccessToken="pk.eyJ1IjoiZGV2c2VlZCIsImEiOiJjbHo5NWh0d3QwMDU0MnBvanAwMmRzYWl0In0.lLN2Ur91TbYhV520kQ3SrA"
+      mapboxAccessToken={process.env.MAPBOX_TOKEN}
       initialViewState={{
         longitude: 0,
         latitude: 0,
         zoom: 2,
       }}
       style={{ width: 1000, height: 800 }}
-      mapStyle="mapbox://styles/mapbox/light-v11"
       projection={{
         name: "globe",
       }}
