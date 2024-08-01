@@ -1,11 +1,12 @@
 "use client";
+import React from "react";
 import Map, { Layer, Source } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 function MapboxTest() {
   return (
     <Map
-      mapboxAccessToken={process.env.MAPBOX_TOKEN}
+      mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
       initialViewState={{
         longitude: 0,
         latitude: 0,
