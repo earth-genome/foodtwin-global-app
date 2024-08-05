@@ -1,32 +1,19 @@
 "use client";
-
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-
-// Xstate
 import { MachineContext, MachineProvider } from "./state";
 import { selectors } from "./state/selectors";
+import Map, { Layer, Source, MapRef } from "react-map-gl";
+import { MapMouseEvent } from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
-// Components
-import { COORDINATE_SYSTEM, _GlobeView as GlobeView } from "@deck.gl/core";
-import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
-import { SphereGeometry } from "@luma.gl/engine";
-import { GlobeViewState } from "@deck.gl/core";
-import { ArcLayer, GeoJsonLayer } from "@deck.gl/layers";
-import { DeckGL } from "@deck.gl/react";
-
-const EARTH_RADIUS_METERS = 6.3e6;
-
-const INITIAL_VIEW_STATE: GlobeViewState = {
-  longitude: -96,
-  latitude: 38,
-  zoom: 0.8,
-};
+const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
 function GlobeInner() {
   const router = useRouter();
   const params = useParams<{ areaId: string }>();
   const actorRef = MachineContext.useActorRef();
+  const mapRef = useRef<MapRef>(null);
 
   // Selectors
   const pageIsMounting = MachineContext.useSelector((state) =>
@@ -49,83 +36,89 @@ function GlobeInner() {
     }
   }, [router, pageUrl, pageIsMounting]);
 
-  const mapIsLoading = MachineContext.useSelector((state) =>
-    state.matches("Map is loading")
-  );
+  const onClick = useCallback((event: MapMouseEvent) => {
+    if (mapRef.current) {
+      const features = mapRef.current.queryRenderedFeatures(event.point, {
+        layers: ["clickable-polygon"],
+      });
 
-  const arcs = MachineContext.useSelector(selectors.currentCountryArcs);
-  const countryLimitsGeoJSON = MachineContext.useSelector(
-    (s) => s.context.countryLimitsGeoJSON
-  );
-
-  const backgroundLayers = useMemo(
-    () =>
-      countryLimitsGeoJSON
-        ? [
-            new SimpleMeshLayer({
-              id: "earth-sphere",
-              data: [0],
-              mesh: new SphereGeometry({
-                radius: EARTH_RADIUS_METERS,
-                nlat: 18,
-                nlong: 36,
-              }),
-              coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-              getPosition: [0, 0, 0],
-              getColor: [173, 216, 230],
-            }),
-            new GeoJsonLayer({
-              id: "country-limits",
-              data: countryLimitsGeoJSON,
-              pickable: true,
-              opacity: 1,
-              getFillColor: [211, 211, 211],
-              getLineWidth: 10000,
-              onClick: (info) => {
-                actorRef.send({
-                  type: "Select area",
-                  areaId: info.object.properties.id,
-                });
-              },
-            }),
-          ]
-        : [],
-    [actorRef, countryLimitsGeoJSON]
-  );
-
-  const arcLayer = useMemo(
-    () =>
-      arcs &&
-      arcs.length > 0 &&
-      new ArcLayer({
-        id: "arcs",
-        data: arcs,
-        getSourcePosition: (d) => d.sourcePosition,
-        getTargetPosition: (d) => d.targetPosition,
-        getSourceColor: [0, 128, 255],
-        getTargetColor: [255, 0, 128],
-        getHeight: 0.1,
-      }),
-    [arcs]
-  );
-
-  if (mapIsLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        Loading...
-      </div>
-    );
-  }
+      if (features.length > 0) {
+        const feature = features[0];
+        if (feature?.properties?.id) {
+          router.push(`/area/${feature.properties.id}`);
+        }
+      }
+    }
+  }, []);
 
   return (
     <div className="flex-1 bg-gray-100 flex items-center justify-center">
       <div className="relative w-full h-full overflow-hidden">
-        <DeckGL
-          views={new GlobeView()}
-          initialViewState={INITIAL_VIEW_STATE}
-          controller={true}
-          layers={[...backgroundLayers, arcLayer]}
-        />
+        <Map
+          ref={mapRef}
+          mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+          initialViewState={{
+            longitude: 0,
+            latitude: 0,
+            zoom: 2,
+          }}
+          projection={{
+            name: "globe",
+          }}
+          onClick={onClick}
+          style={{ width: "100%", height: "100%" }}
+        >
+          {/* Globe background */}
+          <Source
+            id="background"
+            type="geojson"
+            data={{
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "Polygon",
+                coordinates: [
+                  [
+                    [-180, -90],
+                    [180, -90],
+                    [180, 90],
+                    [-180, 90],
+                    [-180, -90],
+                  ],
+                ],
+              },
+            }}
+          >
+            <Layer
+              id="background-layer"
+              type="fill"
+              paint={{
+                "fill-color": "rgb(173, 216, 230)", // Sea blue color
+              }}
+            />
+          </Source>
+
+          <Source
+            id="mvtiles"
+            type="vector"
+            tiles={[`${appUrl}/api/tiles/{z}/{x}/{y}`]}
+          >
+            <Layer
+              id="tile-outline"
+              type="line"
+              source-layer="default"
+              paint={{ "line-color": "#000", "line-width": 0.2 }}
+            />
+            <Layer
+              id="clickable-polygon"
+              type="fill"
+              source-layer="default"
+              paint={{
+                "fill-color": "rgba(211, 211, 211, 0.3)", // Transparent blue
+              }}
+            />
+          </Source>
+        </Map>
       </div>
     </div>
   );
