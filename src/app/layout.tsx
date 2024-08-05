@@ -1,11 +1,11 @@
-import { Providers } from "./providers";
+import { NextUIProvider } from "@nextui-org/react";
 import "./globals.css";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        <NextUIProvider>{children}</NextUIProvider>
       </body>
     </html>
   );
