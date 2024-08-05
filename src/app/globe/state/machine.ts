@@ -11,25 +11,25 @@ export const globeViewMachine = createMachine(
 
     types: {
       context: {} as {
-        selectedCountryId: string | null;
+        areaId: string | null;
         countryLimitsGeoJSON: CountryLimitsGeoJSON | null;
         countryCapitalsGeoJSON: CountryCapitalsGeoJSON | null;
       },
       events: {} as
         | {
-            type: "Select country";
-            countryId: string;
+            type: "Select area";
+            areaId: string;
           }
         | {
-            type: "Clear country selection";
+            type: "Clear area selection";
           },
       actions: {} as
         | {
-            type: "setSelectedCountryId";
-            countryId: string;
+            type: "setAreaId";
+            areaId: string;
           }
         | {
-            type: "clearSelectedCountryId";
+            type: "clearAreaId";
           }
         | {
             type: "assignMapData";
@@ -39,7 +39,7 @@ export const globeViewMachine = createMachine(
     },
 
     context: {
-      selectedCountryId: null,
+      areaId: null,
       countryLimitsGeoJSON: null,
       countryCapitalsGeoJSON: null,
     },
@@ -66,23 +66,23 @@ export const globeViewMachine = createMachine(
 
       "Initial globe view": {
         on: {
-          "Select country": {
+          "Select area": {
             target: "Country is selected",
-            actions: "setSelectedCountryId",
+            actions: "setAreaId",
           },
         },
       },
 
       "Country is selected": {
         on: {
-          "Clear country selection": {
+          "Clear area selection": {
             target: "Initial globe view",
-            actions: "clearSelectedCountryId",
+            actions: "clearAreaId",
           },
 
-          "Select country": {
+          "Select area": {
             target: "Country is selected",
-            actions: "setSelectedCountryId",
+            actions: "setAreaId",
           },
         },
       },
@@ -94,14 +94,14 @@ export const globeViewMachine = createMachine(
   },
   {
     actions: {
-      setSelectedCountryId: assign(({ event }) => {
-        assertEvent(event, "Select country");
+      setAreaId: assign(({ event }) => {
+        assertEvent(event, "Select area");
         return {
-          selectedCountryId: event.countryId,
+          areaId: event.areaId,
         };
       }),
-      clearSelectedCountryId: assign({
-        selectedCountryId: undefined,
+      clearAreaId: assign({
+        areaId: undefined,
       }),
     },
     actors: {

@@ -72,8 +72,8 @@ function InnerPage() {
               getLineWidth: 10000,
               onClick: (info) => {
                 actorRef.send({
-                  type: "Select country",
-                  countryId: info.object.properties.id,
+                  type: "Select area",
+                  areaId: info.object.properties.id,
                 });
               },
             }),

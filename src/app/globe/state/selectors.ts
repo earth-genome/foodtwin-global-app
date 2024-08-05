@@ -5,26 +5,26 @@ type Snapshot = SnapshotFrom<typeof globeViewMachine>;
 
 export const selectors = {
   pageUrl: (state: Snapshot) => {
-    const { selectedCountryId } = state.context;
+    const { areaId } = state.context;
 
-    return selectedCountryId ? `/area/${selectedCountryId}` : `/`;
+    return areaId ? `/area/${areaId}` : `/`;
   },
   currentCountryLimit: (state: Snapshot) => {
-    const { selectedCountryId, countryLimitsGeoJSON } = state.context;
+    const { areaId, countryLimitsGeoJSON } = state.context;
 
-    if (!selectedCountryId || !countryLimitsGeoJSON) return null;
+    if (!areaId || !countryLimitsGeoJSON) return null;
 
     return countryLimitsGeoJSON.features.find(
-      (f) => f.properties.id === selectedCountryId
+      (f) => f.properties.id === areaId
     );
   },
   currentCountryArcs: (state: Snapshot) => {
-    const { selectedCountryId, countryCapitalsGeoJSON } = state.context;
+    const { areaId, countryCapitalsGeoJSON } = state.context;
 
-    if (!selectedCountryId || !countryCapitalsGeoJSON) return null;
+    if (!areaId || !countryCapitalsGeoJSON) return null;
 
     const originCountry = countryCapitalsGeoJSON.features.find(
-      (f) => f.properties.id === selectedCountryId
+      (f) => f.properties.id === areaId
     );
 
     if (!originCountry) {
@@ -32,7 +32,7 @@ export const selectors = {
     }
 
     const targetCountries = countryCapitalsGeoJSON.features
-      .filter((feature) => feature.properties.id !== selectedCountryId)
+      .filter((feature) => feature.properties.id !== areaId)
       .sort(() => Math.random() - 0.5)
       .slice(0, 10);
 
