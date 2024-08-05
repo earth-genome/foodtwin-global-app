@@ -1,14 +1,12 @@
-import React from "react";
-import RootLayout from "./root-layout";
-import Globe from "./globe";
+import { Providers } from "./providers";
+import "./globals.css";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <RootLayout>
-      <div className="flex h-screen">
-        <Globe />
-        {children}
-      </div>
-    </RootLayout>
+    <html lang="en">
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
   );
 }

@@ -1,4 +1,3 @@
-import React from "react";
 import { createActorContext } from "@xstate/react";
 import { globeViewMachine } from "./machine";
 import { createBrowserInspector } from "@statelyai/inspect";

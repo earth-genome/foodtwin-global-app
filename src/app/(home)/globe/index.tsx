@@ -23,7 +23,7 @@ const INITIAL_VIEW_STATE: GlobeViewState = {
   zoom: 0.8,
 };
 
-function InnerPage() {
+function GlobeInner() {
   const router = useRouter();
   const params = useParams<{ areaId: string }>();
   const actorRef = MachineContext.useActorRef();
@@ -134,7 +134,7 @@ function InnerPage() {
 export default function Globe() {
   return (
     <MachineProvider>
-      <InnerPage />
+      <GlobeInner />
     </MachineProvider>
   );
 }
