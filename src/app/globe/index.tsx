@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 // Xstate
 import { MachineContext, MachineProvider } from "./state";
@@ -9,7 +9,6 @@ import { selectors } from "./state/selectors";
 
 // Components
 import { COORDINATE_SYSTEM, _GlobeView as GlobeView } from "@deck.gl/core";
-
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { SphereGeometry } from "@luma.gl/engine";
 import { GlobeViewState } from "@deck.gl/core";
@@ -25,18 +24,30 @@ const INITIAL_VIEW_STATE: GlobeViewState = {
 };
 
 function InnerPage() {
-  const actorRef = MachineContext.useActorRef();
   const router = useRouter();
+  const params = useParams<{ areaId: string }>();
+  const actorRef = MachineContext.useActorRef();
 
-  // Page URL is derived from the machine context
+  // Selectors
+  const pageIsMounting = MachineContext.useSelector((state) =>
+    state.matches("Page is mounting")
+  );
   const pageUrl = MachineContext.useSelector(selectors.pageUrl);
 
-  // The browser URL is updated when the selected country changes, but the page
-  // does not reload because the target route should be in the rewrite rules
-  // in the next.config.js file.
+  // On mount, pass route parameters to the machine
   useEffect(() => {
-    router.push(pageUrl);
-  }, [router, pageUrl]);
+    actorRef.send({
+      type: "Page has mounted",
+      context: { areaId: params.areaId || null },
+    });
+  }, []);
+
+  // Update the URL when necessary
+  useEffect(() => {
+    if (!pageIsMounting) {
+      router.push(pageUrl);
+    }
+  }, [router, pageUrl, pageIsMounting]);
 
   const mapIsLoading = MachineContext.useSelector((state) =>
     state.matches("Map is loading")

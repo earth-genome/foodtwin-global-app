@@ -6,7 +6,7 @@ import { assign, createMachine, assertEvent, fromPromise } from "xstate";
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQCyAhgA4AEusV6ZEuAdlAMQRrNhEsBuaANY8AZmAAuAYwAW5CgBEy4sgG0ADAF1EoCmli5xuLtpAAPRAEYALAFYiAThsB2J-YAc9gGxqATF4DMTgA0IACeiAC0bhZE-jZuTv7+9u5uVm7+VgC+WSGomDj4xHI0dAxMrGxgAE7VaNVEFChKIvUAtkRiUrKUisrqWkgguvqGxkPmCMluRBY2VmrWFvZWPpkWIeEIERZunkRONn7RLnE+Pp6eOXnoWHiERACSzAa4ZChU+VhUfEVsAMpgFBgSTiKiSNAAV2Y4mqoQGJhGr3GoEm1jUDk89gsLjUbgSe08wTClnsGOc-h8RzUXhs-jUROuIC+hQeAGEoTC4aUqLAgSDxJA2GzgWRquDObDQrz+aCjMwEUMkWNmCZJnEZmorOlonNsd43JtSeTElSfDTPHSGU4mSz7sQOdCpTy+cDQULAW6wRCnXDFTo9MjVRNImsiAykhZPJHzm4LjYjQgrBZ-OGtWotfZ-JaoxYcrkQMw0BA4CY7UVEYGVWrIk4YhH-FGYz4455ExE-PZw1ZvJ4Fin5k5LrbbqzipQeeUWFBK6N5TWEE4rEQ+54-GcLGpEit2z4LDE3PEXDYvBY93mC+WHs9Xu9PqOfhWlVX5yGEHNU9Fs2SM0441ZE0cIgEh7P8PH8aJ8QvG4CntIhHS5aVaBlL1IFnIMFyjDEnDUJIbEuY8sQ2EkpkbBxKR8JxzW8XChxHWCiiIABVbhTAoAVICoGo6mqdDqzfGjZhWRYbGpZYrH8dtdhmGxdizKk0i8Q4rnzIA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQCyAhgA4AEusV6ZEuAdlAMQRrNhEsBuaANY8AZmAAuAYwAW5CgBEy4sgG0ADAF1EoCmli5xuLtpAAPRAEYALAFYiAThsB2J-YAc9gGxqATF4DMTgA0IACeiAC0bhZE-jZuTv7+9u5uVm7+VgC+WSGomDj4xHI0dAxMrGxgAE7VaNVEFChKIvUAtkRiUrKUisrqWkgguvqGxkPmCMluRBY2VmrWFvZWPpkWIeEIERZunkRONn7RLnE+Pp6eOXnoWHiERACSzAa4ZChU+VhUfEVsAMpgFBgSTiKhkapgVSaEwjV7jUCTNSbRBqa4gL6FB4AYTQAFdmOJqqFSlRYECQeJIGxscCIeDIWQyRTQUZmANYXp4cwTEiUQg0bkMbcscRcQSiSTaMzgaDqYDZWCIVCOUM4WMeRNIv41ERPPZrGorPYfK5PLZTfyrBYnEQrFYktavJ4-D5skLMfdiAAFMgwUltfGEljsX3+6RkOiBiWQVU6Lka3mWWx2zwWQILNxpE2+fkRHUzfwZOIm2zufwWHJC5hoCBwEyeoqc0ZspPbJwzfWG42mry2fx59IzNbWLNqOL2xLoxsPErS8oh5vcttOKx6qwu+xnCxqRIrPM+CwxNzxFw2LwWQ+Vj0ir1PF6Gd6fEU-JtqhOtrUIOb+IjRfz6moQEdm6-KOH+q6eB2HhFrs0TTreRREOKhLEqS5KKpAS6Jl+FjeAc45xJcZ5dvySQxFu5xOD4ajeOOThXDeBR3gAqtwpgUJSkBUDUdTVNhn6IogdGzCsiw2EciwrAOYSRHBRA2LslHxMaUE2IxNzMUhYZgAGQaGKwAkImYlhHEQtELDqW7uE44mDos5n2jRajOPMyzujkQA */
     id: "globeView",
 
     types: {
@@ -17,6 +17,12 @@ export const globeViewMachine = createMachine(
       },
       events: {} as
         | {
+            type: "Page has mounted";
+            context: {
+              areaId: string | null;
+            };
+          }
+        | {
             type: "Select area";
             areaId: string;
           }
@@ -24,6 +30,12 @@ export const globeViewMachine = createMachine(
             type: "Clear area selection";
           },
       actions: {} as
+        | {
+            type: "initContext";
+            context: {
+              areaId: string | null;
+            };
+          }
         | {
             type: "setAreaId";
             areaId: string;
@@ -88,12 +100,28 @@ export const globeViewMachine = createMachine(
       },
 
       "Unexpected error": {},
+
+      "Page is mounting": {
+        on: {
+          "Page has mounted": {
+            target: "Map is loading",
+            reenter: true,
+            actions: "initContext",
+          },
+        },
+      },
     },
 
-    initial: "Map is loading",
+    initial: "Page is mounting",
   },
   {
     actions: {
+      initContext: assign(({ event }) => {
+        assertEvent(event, "Page has mounted");
+        return {
+          ...event.context,
+        };
+      }),
       setAreaId: assign(({ event }) => {
         assertEvent(event, "Select area");
         return {
