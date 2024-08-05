@@ -1,13 +1,4 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: "/area/:areaId",
-        destination: "/",
-      },
-    ];
-  },
-};
+const nextConfig = {};
 
 export default nextConfig;

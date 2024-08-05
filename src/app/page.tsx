@@ -1,7 +1,5 @@
-import Globe from "./globe";
-
 const Home = () => {
-  return <Globe />;
+  return null;
 };
 
 export default Home;
