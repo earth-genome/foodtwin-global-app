@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import CloseButton from "./close-button";
+import LinkButton from "@/app/components/link-button";
 
 const AreaPage = async ({
   params,
@@ -24,7 +24,7 @@ const AreaPage = async ({
       <div className="overflow-y-auto w-128 p-4 space-y-4">
         This is area page for {area.name}
       </div>
-      <CloseButton />
+      <LinkButton href="/">Close</LinkButton>
     </>
   );
 };
