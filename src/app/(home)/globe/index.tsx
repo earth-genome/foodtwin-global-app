@@ -3,9 +3,13 @@ import React, { useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { MachineContext, MachineProvider } from "./state";
 import { selectors } from "./state/selectors";
-import Map, { Layer, Source, MapRef } from "react-map-gl";
-import { MapMouseEvent } from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+import Map, {
+  Layer,
+  Source,
+  MapRef,
+  MapMouseEvent,
+} from "react-map-gl/maplibre";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -56,14 +60,10 @@ function GlobeInner() {
       <div className="relative w-full h-full overflow-hidden">
         <Map
           ref={mapRef}
-          mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
           initialViewState={{
             longitude: 0,
             latitude: 0,
             zoom: 2,
-          }}
-          projection={{
-            name: "globe",
           }}
           onClick={onClick}
           style={{ width: "100%", height: "100%" }}
