@@ -93,9 +93,9 @@ async function ingestData() {
     const ingestLimitsStart = performance.now();
     await runOgr2Ogr(
       ADMIN_LIMITS_PATH,
-      `-nln Area_limits -overwrite -nlt MULTIPOLYGON -lco GEOMETRY_NAME=limits -sql "SELECT ID as id, geom as limits FROM ${ADMIN_LIMITS_TABLENAME}"`
+      `-nln Area_limits_temp -overwrite -nlt MULTIPOLYGON -lco GEOMETRY_NAME=limits -sql "SELECT ID as id, geom as limits FROM ${ADMIN_LIMITS_TABLENAME}"`
     );
-    await prisma.$executeRaw`UPDATE "Area" SET "limits" = (SELECT ST_Transform(limits, 3857) FROM "area_limits" WHERE "Area"."id" = "area_limits"."id")`;
+    await prisma.$executeRaw`UPDATE "Area" SET "limits" = (SELECT ST_Transform(limits, 3857) FROM "area_limits_temp" WHERE "Area"."id" = "area_limits_temp"."id")`;
     console.log(
       `Ingested area limits (${msToSeconds(performance.now() - ingestLimitsStart)}s)`
     );
@@ -220,6 +220,10 @@ async function ingestData() {
     console.log(
       `Data ingestion complete in ${msToMinutes(performance.now() - ingestDataStart)} minutes.`
     );
+
+    // Clear temporary tables
+    await prisma.$executeRaw`DROP TABLE IF EXISTS "area_limits_temp"`;
+    await prisma.$executeRaw`DROP TABLE IF EXISTS "flows_temp"`;
   } catch (error) {
     console.error("Error ingesting data:", error);
   } finally {
