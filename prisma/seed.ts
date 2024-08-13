@@ -15,6 +15,10 @@ const ADMIN_LIMITS_TABLENAME = "admin_polygons";
 const NODES_MARITIME_FILE = "nodes_maritime.gpkg";
 const NODES_MARITIME_TABLENAME = "nodes_maritime";
 const NODES_PATH = path.join(SEED_DATA_PATH, NODES_MARITIME_FILE);
+const EDGES_LAND_FILE = path.join(
+  SEED_DATA_PATH,
+  "Geometry_Landmapping_hexcode_complete.csv"
+);
 const EDGES_MARITIME_FILE = "edges_maritime_corrected.gpkg";
 const EDGES_MARITIME_TABLENAME = "edges_maritime_corrected";
 const EDGES_PATH = path.join(SEED_DATA_PATH, EDGES_MARITIME_FILE);
@@ -101,16 +105,33 @@ async function ingestData() {
       `Ingested area limits (${msToSeconds(performance.now() - ingestLimitsStart)}s)`
     );
 
-    const ingestNodesStart = performance.now();
+    const ingestMaritimeNodesStart = performance.now();
     await runOgr2Ogr(
       NODES_PATH,
       `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT ID as id_str, name, upper(infra) as type, geom FROM ${NODES_MARITIME_TABLENAME}"`
     );
     console.log(
-      `Ingested maritime nodes (${msToSeconds(performance.now() - ingestNodesStart)}s)`
+      `Ingested maritime nodes (${msToSeconds(performance.now() - ingestMaritimeNodesStart)}s)`
     );
 
-    const ingestEdgesStart = performance.now();
+    // TODO - Ingest land nodes
+
+    const ingestLandEdgesStart = performance.now();
+    await prisma.$executeRaw`DROP TABLE IF EXISTS "land_edges_temp"`;
+
+    // Ingest csv file to temporary table
+    await runOgr2Ogr(
+      EDGES_LAND_FILE,
+      `-nln land_edges_temp -oo KEEP_GEOM_COLUMNS=NO -lco FID=id -lco PRECISION=NO -nlt LINESTRING -oo GEOM_POSSIBLE_NAMES=geometry`
+    );
+
+    // TODO - Insert temporary data into Edge table
+
+    console.log(
+      `Ingested land edges (${msToSeconds(performance.now() - ingestLandEdgesStart)}s)`
+    );
+
+    const ingestWaterEdgesStart = performance.now();
     await prisma.$executeRaw`DROP TABLE IF EXISTS "edge_temp"`;
     await runOgr2Ogr(
       EDGES_PATH,
@@ -131,7 +152,7 @@ async function ingestData() {
     `;
     await prisma.$executeRaw`DROP TABLE IF EXISTS "edge_temp"`;
     console.log(
-      `Inserted maritime edges (${msToSeconds(performance.now() - ingestEdgesStart)}s)`
+      `Inserted maritime edges (${msToSeconds(performance.now() - ingestWaterEdgesStart)}s)`
     );
 
     // list files starting with "Flow_" in the data directory
