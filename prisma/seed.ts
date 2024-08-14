@@ -12,6 +12,12 @@ const SEED_DATA_PATH = process.env.SEED_DATA_PATH as string;
 const ADMIN_CENTROIDS_PATH = path.join(SEED_DATA_PATH, "admin_centroids.gpkg");
 const ADMIN_LIMITS_PATH = path.join(SEED_DATA_PATH, "admin_polygons.gpkg");
 const ADMIN_LIMITS_TABLENAME = "admin_polygons";
+
+const INLAND_PORTS_TABLENAME = "IWWPorts_infrastructure";
+const INLAND_PORTS_PATH = path.join(
+  SEED_DATA_PATH,
+  `${INLAND_PORTS_TABLENAME}.csv`
+);
 const NODES_MARITIME_FILE = "nodes_maritime.gpkg";
 const NODES_MARITIME_TABLENAME = "nodes_maritime";
 const NODES_PATH = path.join(SEED_DATA_PATH, NODES_MARITIME_FILE);
@@ -103,6 +109,22 @@ async function ingestData() {
     await prisma.$executeRaw`DROP TABLE IF EXISTS "area_limits_temp"`;
     console.log(
       `Ingested area limits (${msToSeconds(performance.now() - ingestLimitsStart)}s)`
+    );
+
+    const ingestInlandPortsStart = performance.now();
+    await runOgr2Ogr(
+      INLAND_PORTS_PATH,
+      `-nln inland_ports_temp -nlt POINT -overwrite -oo X_POSSIBLE_NAMES=lon -oo Y_POSSIBLE_NAMES=lat -oo KEEP_GEOM_COLUMNS=NO -s_srs EPSG:4326 -t_srs EPSG:3857`
+    );
+
+    await prisma.$executeRaw`
+      INSERT INTO "Node" ("id_str", "centroid", "type")
+      SELECT node_id AS id_str, wkb_geometry AS centroid, 'INLAND_PORT' AS type
+      FROM inland_ports_temp
+    `;
+    await prisma.$executeRaw`DROP TABLE IF EXISTS "inland_ports_temp"`;
+    console.log(
+      `Ingested inland ports (${msToSeconds(performance.now() - ingestInlandPortsStart)}s)`
     );
 
     const ingestMaritimeNodesStart = performance.now();
