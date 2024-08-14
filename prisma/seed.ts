@@ -13,10 +13,13 @@ const ADMIN_CENTROIDS_PATH = path.join(SEED_DATA_PATH, "admin_centroids.gpkg");
 const ADMIN_LIMITS_PATH = path.join(SEED_DATA_PATH, "admin_polygons.gpkg");
 const ADMIN_LIMITS_TABLENAME = "admin_polygons";
 
-const INLAND_PORTS_TABLENAME = "IWWPorts_infrastructure";
 const INLAND_PORTS_PATH = path.join(
   SEED_DATA_PATH,
-  `${INLAND_PORTS_TABLENAME}.csv`
+  `IWWPorts_infrastructure.csv`
+);
+const RAIL_STATIONS_PATH = path.join(
+  SEED_DATA_PATH,
+  `RailwayStation_infrastructure.csv`
 );
 const NODES_MARITIME_FILE = "nodes_maritime.gpkg";
 const NODES_MARITIME_TABLENAME = "nodes_maritime";
@@ -116,7 +119,6 @@ async function ingestData() {
       INLAND_PORTS_PATH,
       `-nln inland_ports_temp -nlt POINT -overwrite -oo X_POSSIBLE_NAMES=lon -oo Y_POSSIBLE_NAMES=lat -oo KEEP_GEOM_COLUMNS=NO -s_srs EPSG:4326 -t_srs EPSG:3857`
     );
-
     await prisma.$executeRaw`
       INSERT INTO "Node" ("id_str", "centroid", "type")
       SELECT node_id AS id_str, wkb_geometry AS centroid, 'INLAND_PORT' AS type
@@ -125,6 +127,21 @@ async function ingestData() {
     await prisma.$executeRaw`DROP TABLE IF EXISTS "inland_ports_temp"`;
     console.log(
       `Ingested inland ports (${msToSeconds(performance.now() - ingestInlandPortsStart)}s)`
+    );
+
+    const ingestRailStationStart = performance.now();
+    await runOgr2Ogr(
+      RAIL_STATIONS_PATH,
+      `-nln rail_stations_temp -nlt POINT -overwrite -oo X_POSSIBLE_NAMES=lon -oo Y_POSSIBLE_NAMES=lat -oo KEEP_GEOM_COLUMNS=NO -s_srs EPSG:4326 -t_srs EPSG:3857`
+    );
+    await prisma.$executeRaw`
+      INSERT INTO "Node" ("id_str", "centroid", "type")
+      SELECT DISTINCT node_id , wkb_geometry, 'RAIL_STATION'::"NodeType" AS type
+      FROM rail_stations_temp
+    `;
+    await prisma.$executeRaw`DROP TABLE IF EXISTS "rail_stations_temp"`;
+    console.log(
+      `Ingested rail stations (${msToSeconds(performance.now() - ingestRailStationStart)}s)`
     );
 
     const ingestMaritimeNodesStart = performance.now();

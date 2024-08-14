@@ -23,9 +23,10 @@ model Area {
 }
 
 enum NodeType {
+  INLAND_PORT
   MARITIME
   PORT
-  INLAND_PORT
+  RAIL_STATION
 }
 
 model Node {
