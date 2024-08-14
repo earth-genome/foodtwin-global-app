@@ -3,23 +3,27 @@
 
 const fs = require("fs");
 const path = require("path");
+const { exec } = require("child_process");
+const { promisify } = require("util");
 const { PrismaClient } = require("@prisma/client");
+const execAsync = promisify(exec);
 
 const prisma = new PrismaClient();
 
 const POSTGRES_CONNECTION_STRING = process.env.DATABASE_URL;
-const SEED_DATA_PATH = process.env.SEED_DATA_PATH as string;
+const SEED_DATA_PATH = path.resolve(process.env.SEED_DATA_PATH as string);
 const ADMIN_CENTROIDS_PATH = path.join(SEED_DATA_PATH, "admin_centroids.gpkg");
 const ADMIN_LIMITS_PATH = path.join(SEED_DATA_PATH, "admin_polygons.gpkg");
 const ADMIN_LIMITS_TABLENAME = "admin_polygons";
 
 const INLAND_PORTS_PATH = path.join(
   SEED_DATA_PATH,
-  `IWWPorts_infrastructure.csv`
+  `IWWNodes_infrastructure.gpkg`
 );
+const INLAND_PORTS_TABLENAME = "IWWNodes_infrastructure";
 const RAIL_STATIONS_PATH = path.join(
   SEED_DATA_PATH,
-  `RailwayStation_infrastructure.csv`
+  `RailNodes_infrastructure.gpkg`
 );
 const NODES_MARITIME_FILE = "nodes_maritime.gpkg";
 const NODES_MARITIME_TABLENAME = "nodes_maritime";
@@ -117,14 +121,8 @@ async function ingestData() {
     const ingestInlandPortsStart = performance.now();
     await runOgr2Ogr(
       INLAND_PORTS_PATH,
-      `-nln inland_ports_temp -nlt POINT -overwrite -oo X_POSSIBLE_NAMES=lon -oo Y_POSSIBLE_NAMES=lat -oo KEEP_GEOM_COLUMNS=NO -s_srs EPSG:4326 -t_srs EPSG:3857`
+      `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT node_id as id_str, 'INLAND_PORT' as type, geom FROM ${INLAND_PORTS_TABLENAME}" -s_srs EPSG:4326`
     );
-    await prisma.$executeRaw`
-      INSERT INTO "Node" ("id_str", "centroid", "type")
-      SELECT node_id AS id_str, wkb_geometry AS centroid, 'INLAND_PORT' AS type
-      FROM inland_ports_temp
-    `;
-    await prisma.$executeRaw`DROP TABLE IF EXISTS "inland_ports_temp"`;
     console.log(
       `Ingested inland ports (${msToSeconds(performance.now() - ingestInlandPortsStart)}s)`
     );
@@ -132,11 +130,11 @@ async function ingestData() {
     const ingestRailStationStart = performance.now();
     await runOgr2Ogr(
       RAIL_STATIONS_PATH,
-      `-nln rail_stations_temp -nlt POINT -overwrite -oo X_POSSIBLE_NAMES=lon -oo Y_POSSIBLE_NAMES=lat -oo KEEP_GEOM_COLUMNS=NO -s_srs EPSG:4326 -t_srs EPSG:3857`
+      `-nln rail_stations_temp -nlt POINT -overwrite -oo KEEP_GEOM_COLUMNS=NO -s_srs EPSG:4326 -t_srs EPSG:3857`
     );
     await prisma.$executeRaw`
       INSERT INTO "Node" ("id_str", "centroid", "type")
-      SELECT DISTINCT node_id , wkb_geometry, 'RAIL_STATION'::"NodeType" AS type
+      SELECT DISTINCT node_id, geom, 'RAIL_STATION'::"NodeType" AS type
       FROM rail_stations_temp
     `;
     await prisma.$executeRaw`DROP TABLE IF EXISTS "rail_stations_temp"`;
@@ -147,28 +145,58 @@ async function ingestData() {
     const ingestMaritimeNodesStart = performance.now();
     await runOgr2Ogr(
       NODES_PATH,
-      `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT ID as id_str, name, upper(infra) as type, geom FROM ${NODES_MARITIME_TABLENAME}"`
+      `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT ID as id_str, name, upper(infra) as type, geom FROM ${NODES_MARITIME_TABLENAME}" -a_srs EPSG:4326`
     );
     console.log(
       `Ingested maritime nodes (${msToSeconds(performance.now() - ingestMaritimeNodesStart)}s)`
     );
 
-    // TODO - Ingest land nodes
-
     const ingestLandEdgesStart = performance.now();
     await prisma.$executeRaw`DROP TABLE IF EXISTS "land_edges_temp"`;
-
-    // Ingest csv file to temporary table
     await runOgr2Ogr(
       EDGES_LAND_FILE,
-      `-nln land_edges_temp -oo KEEP_GEOM_COLUMNS=NO -lco FID=id -lco PRECISION=NO -nlt LINESTRING -oo GEOM_POSSIBLE_NAMES=geometry`
+      `-nln land_edges_temp -oo KEEP_GEOM_COLUMNS=NO -lco FID=id -lco PRECISION=NO -nlt LINESTRING -oo GEOM_POSSIBLE_NAMES=geometry -a_srs EPSG:4326`
     );
+    await prisma.$executeRaw`
+      INSERT INTO "Edge" ("fromNodeId", "toNodeId", distance, "geom")
+      SELECT 
+          n1.id,
+          n2.id,
+          ST_Length(ST_Transform(le.geometry, 4326)::geography) AS distance,
+          ST_Transform(le.geometry, 3857) AS geom
+      FROM 
+          land_edges_temp le
+      JOIN 
+          "Node" n1 ON n1.id_str = split_part(le.edge_id, '-', 1)
+      JOIN 
+          "Node" n2 ON n2.id_str = split_part(le.edge_id, '-', 2)
+    `;
 
-    // TODO - Insert temporary data into Edge table
-
+    // Export unmatched land edges
+    const query = `
+      COPY (
+        SELECT
+          le.edge_id
+        FROM
+          land_edges_temp le
+        LEFT JOIN
+          "Node" n1 ON n1.id_str = split_part(le.edge_id, '-', 1)
+        LEFT JOIN
+          "Node" n2 ON n2.id_str = split_part(le.edge_id, '-', 2)
+        WHERE
+          n1.id IS NULL OR n2.id IS NULL
+      ) TO STDOUT CSV HEADER
+    `;
+    const outputFile = path.resolve(SEED_DATA_PATH, "unmatched_land_edges.csv");
+    const command = `psql "${POSTGRES_CONNECTION_STRING}" -c "${query.replace(/"/g, '\\"')}" > "${outputFile}"`;
+    const { stdout, stderr } = await execAsync(command);
+    if (stderr) {
+      console.error("psql error:", stderr);
+    }
     console.log(
-      `Ingested land edges (${msToSeconds(performance.now() - ingestLandEdgesStart)}s)`
+      `Ingested land edges and exported unmatched edges (${msToSeconds(performance.now() - ingestLandEdgesStart)}s)`
     );
+    if (stdout) console.log(stdout);
 
     const ingestWaterEdgesStart = performance.now();
     await prisma.$executeRaw`DROP TABLE IF EXISTS "edge_temp"`;
@@ -279,7 +307,7 @@ async function ingestData() {
     }
     await prisma.$executeRaw`DROP TABLE IF EXISTS "flows_temp"`;
     console.log(
-      `Data ingestion complete in ${msToMinutes(performance.now() - ingestDataStart)} minutes.`
+      `Data ingestion completed in ${msToMinutes(performance.now() - ingestDataStart)} minutes.`
     );
   } catch (error) {
     console.error("Error ingesting data:", error);
