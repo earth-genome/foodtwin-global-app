@@ -39,7 +39,7 @@ export default function GlobePanel() {
             }),
             new MVTLayer({
               id: "areas",
-              data: "/api/tiles/{z}/{x}/{y}",
+              data: "/api/tiles/areas/{z}/{x}/{y}",
               getFillColor: [211, 211, 211],
               getLineWidth: 1000,
             }),
@@ -47,7 +47,7 @@ export default function GlobePanel() {
         : [
             new MVTLayer({
               id: "areas",
-              data: "/api/tiles/{z}/{x}/{y}",
+              data: "/api/tiles/areas/{z}/{x}/{y}",
               getFillColor: [211, 211, 211],
               getLineWidth: 1000,
             }),
