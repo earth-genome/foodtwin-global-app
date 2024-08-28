@@ -13,7 +13,14 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-enum TransportTypeColor {
+enum NodeTypeColor {
+  INLAND_PORT = "red",
+  MARITIME = "purple",
+  PORT = "pink",
+  RAIL_STATION = "yellow",
+}
+
+enum EdgeType {
   MARITIME = "blue",
   LAND = "green",
 }
@@ -137,10 +144,10 @@ function GlobeInner() {
                   "match",
                   ["get", "type"],
                   "MARITIME",
-                  TransportTypeColor.MARITIME,
+                  EdgeType.MARITIME,
                   "LAND",
-                  TransportTypeColor.LAND,
-                  TransportTypeColor.LAND, // default color if type doesn't match
+                  EdgeType.LAND,
+                  EdgeType.LAND, // default color if type doesn't match
                 ],
                 "line-width": 2,
               }}
@@ -157,7 +164,19 @@ function GlobeInner() {
               type="circle"
               source-layer="default"
               paint={{
-                "circle-color": "red",
+                "circle-color": [
+                  "match",
+                  ["get", "type"],
+                  "INLAND_PORT",
+                  NodeTypeColor.INLAND_PORT,
+                  "MARITIME",
+                  NodeTypeColor.MARITIME,
+                  "PORT",
+                  NodeTypeColor.PORT,
+                  "RAIL_STATION",
+                  NodeTypeColor.RAIL_STATION,
+                  NodeTypeColor.INLAND_PORT, // default color if type doesn't match
+                ],
                 "circle-radius": 2,
               }}
             />
