@@ -13,6 +13,11 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
+enum TransportTypeColor {
+  MARITIME = "blue",
+  LAND = "green",
+}
+
 function GlobeInner() {
   const router = useRouter();
   const params = useParams<{ areaId: string }>();
@@ -128,7 +133,15 @@ function GlobeInner() {
               type="line"
               source-layer="default"
               paint={{
-                "line-color": "green",
+                "line-color": [
+                  "match",
+                  ["get", "type"],
+                  "MARITIME",
+                  TransportTypeColor.MARITIME,
+                  "LAND",
+                  TransportTypeColor.LAND,
+                  TransportTypeColor.LAND, // default color if type doesn't match
+                ],
                 "line-width": 2,
               }}
             />

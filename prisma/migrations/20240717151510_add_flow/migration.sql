@@ -16,7 +16,7 @@ CREATE TABLE "Node" (
 CREATE TABLE "Edge" (
     "id" SERIAL NOT NULL,
     "distance" DOUBLE PRECISION NOT NULL,
-    "geom" geometry(LineString, 3857) NOT NULL,
+    "geom" geometry(MultiLineString, 3857) NOT NULL,
     "fromNodeId" INTEGER NOT NULL,
     "toNodeId" INTEGER NOT NULL,
 

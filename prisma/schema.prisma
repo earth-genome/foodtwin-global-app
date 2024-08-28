@@ -41,16 +41,25 @@ model Node {
   @@index([id_str])
 }
 
+enum EdgeType {
+  LAND
+  MARITIME
+}
+
 model Edge {
-  id         Int                                       @id @default(autoincrement())
+  id         Int                                            @id @default(autoincrement())
   distance   Float
-  geom       Unsupported("geometry(LineString, 3857)")
-  fromNode   Node                                      @relation("FromNode", fields: [fromNodeId], references: [id])
+  type       EdgeType
+  geom       Unsupported("geometry(MultiLineString, 3857)")
+  fromNode   Node                                           @relation("FromNode", fields: [fromNodeId], references: [id])
   fromNodeId Int
-  toNode     Node                                      @relation("ToNode", fields: [toNodeId], references: [id])
+  toNode     Node                                           @relation("ToNode", fields: [toNodeId], references: [id])
   toNodeId   Int
   flows      FlowEdges[]
 
+  @@index([geom], name: "geom_idx", type: Gist)
+  @@index([fromNodeId])
+  @@index([toNodeId])
   @@index([fromNodeId, toNodeId])
 }
 

@@ -33,6 +33,7 @@ export async function GET(
       SELECT ST_AsMVT(tile) FROM (
         SELECT
           id,
+          type,
           ST_AsMVTGeom(
             geom,
             ST_TileEnvelope(${zNum}, ${xNum}, ${yNum})

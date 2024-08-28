@@ -156,14 +156,16 @@ async function ingestData() {
     await prisma.$executeRaw`DROP TABLE IF EXISTS "land_edges_temp"`;
     await runOgr2Ogr(
       EDGES_LAND_FILE,
-      `-nln land_edges_temp -oo KEEP_GEOM_COLUMNS=NO -lco FID=id -lco PRECISION=NO -nlt LINESTRING -oo GEOM_POSSIBLE_NAMES=geometry -a_srs EPSG:4326`
+      `-nln land_edges_temp -oo KEEP_GEOM_COLUMNS=NO -lco FID=id -lco PRECISION=NO -nlt MULTILINESTRING -oo GEOM_POSSIBLE_NAMES=geometry -a_srs EPSG:4326`
     );
+
     await prisma.$executeRaw`
-      INSERT INTO "Edge" ("fromNodeId", "toNodeId", distance, "geom")
+      INSERT INTO "Edge" ("fromNodeId", "toNodeId", distance, "type", "geom")
       SELECT 
           n1.id,
           n2.id,
           ST_Length(ST_Transform(le.geometry, 4326)::geography) AS distance,
+          'LAND' AS type,
           ST_Transform(le.geometry, 3857) AS geom
       FROM 
           land_edges_temp le
@@ -201,20 +203,22 @@ async function ingestData() {
       `Ingested land edges and exported unmatched edges (${msToSeconds(performance.now() - ingestLandEdgesStart)}s)`
     );
     if (stdout) console.log(stdout);
+    await prisma.$executeRaw`DROP TABLE IF EXISTS "land_edges_temp"`;
 
     const ingestWaterEdgesStart = performance.now();
     await prisma.$executeRaw`DROP TABLE IF EXISTS "edge_temp"`;
     await runOgr2Ogr(
       EDGES_PATH,
-      `-nln edge_temp -append -nlt LINESTRING -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT from_id as from_id_str, to_id as to_id_str, distance, length, geom FROM ${EDGES_MARITIME_TABLENAME}"`
+      `-nln edge_temp -append -nlt MULTILINESTRING -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT from_id as from_id_str, to_id as to_id_str, distance, length, geom FROM ${EDGES_MARITIME_TABLENAME}"`
     );
 
     await prisma.$executeRaw`
-      INSERT INTO "Edge" ("fromNodeId", "toNodeId", "distance", "geom")
+      INSERT INTO "Edge" ("fromNodeId", "toNodeId", "distance", "type", "geom")
       SELECT
         n1."id" AS fromNodeId,
         n2."id" AS toNodeId,
         e."distance",
+        'MARITIME' AS type,
         e."geom"
       FROM "edge_temp" e
       JOIN "Node" n1 ON e."from_id_str" = n1."id_str"
@@ -263,7 +267,7 @@ async function ingestData() {
 
       await prisma.$executeRaw`
       UPDATE "flows_temp"
-      SET 
+      SET
         flow_start_node_id_str = split_part(flow_id_str, '_', 1),
         flow_end_node_id_str = split_part(flow_id_str, '_', 2),
         edge_start_node_id_str = split_part(edge_id_str, '_', 1),
@@ -300,7 +304,7 @@ async function ingestData() {
           "to_id_admin" AS "toAreaId",
           'Food id',
           "flow_value" AS "value"
-        FROM "flows_temp" f        
+        FROM "flows_temp" f
       `;
       console.log(
         `Inserted flows (${msToSeconds(performance.now() - insertFlowsStart)}s)`
