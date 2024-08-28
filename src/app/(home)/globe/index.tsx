@@ -43,7 +43,7 @@ function GlobeInner() {
   const onClick = useCallback((event: MapMouseEvent) => {
     if (mapRef.current) {
       const features = mapRef.current.queryRenderedFeatures(event.point, {
-        layers: ["clickable-polygon"],
+        layers: ["area-clickable-polygon"],
       });
 
       if (features.length > 0) {
@@ -68,7 +68,6 @@ function GlobeInner() {
           onClick={onClick}
           style={{ width: "100%", height: "100%" }}
         >
-          {/* Globe background */}
           <Source
             id="background"
             type="geojson"
@@ -99,22 +98,54 @@ function GlobeInner() {
           </Source>
 
           <Source
-            id="mvtiles"
+            id="area-tiles"
             type="vector"
-            tiles={[`${appUrl}/api/tiles/{z}/{x}/{y}`]}
+            tiles={[`${appUrl}/api/tiles/areas/{z}/{x}/{y}`]}
           >
             <Layer
-              id="tile-outline"
+              id="area-outline"
               type="line"
               source-layer="default"
               paint={{ "line-color": "#000", "line-width": 0.2 }}
             />
             <Layer
-              id="clickable-polygon"
+              id="area-clickable-polygon"
               type="fill"
               source-layer="default"
               paint={{
                 "fill-color": "rgba(211, 211, 211, 0.3)", // Transparent blue
+              }}
+            />
+          </Source>
+
+          <Source
+            id="edges-tiles"
+            type="vector"
+            tiles={[`${appUrl}/api/tiles/edges/{z}/{x}/{y}`]}
+          >
+            <Layer
+              id="edge-line"
+              type="line"
+              source-layer="default"
+              paint={{
+                "line-color": "green",
+                "line-width": 2,
+              }}
+            />
+          </Source>
+
+          <Source
+            id="nodes-tiles"
+            type="vector"
+            tiles={[`${appUrl}/api/tiles/nodes/{z}/{x}/{y}`]}
+          >
+            <Layer
+              id="node-point"
+              type="circle"
+              source-layer="default"
+              paint={{
+                "circle-color": "red",
+                "circle-radius": 1,
               }}
             />
           </Source>
