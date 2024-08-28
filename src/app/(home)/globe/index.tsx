@@ -145,7 +145,7 @@ function GlobeInner() {
               source-layer="default"
               paint={{
                 "circle-color": "red",
-                "circle-radius": 1,
+                "circle-radius": 2,
               }}
             />
           </Source>

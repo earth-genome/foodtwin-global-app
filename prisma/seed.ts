@@ -151,6 +151,7 @@ async function ingestData() {
       `Ingested maritime nodes (${msToSeconds(performance.now() - ingestMaritimeNodesStart)}s)`
     );
 
+    console.log("Ingesting land edges...");
     const ingestLandEdgesStart = performance.now();
     await prisma.$executeRaw`DROP TABLE IF EXISTS "land_edges_temp"`;
     await runOgr2Ogr(
@@ -171,6 +172,9 @@ async function ingestData() {
       JOIN 
           "Node" n2 ON n2.id_str = split_part(le.edge_id, '-', 2)
     `;
+    console.log(
+      `Ingested land edges (${msToSeconds(performance.now() - ingestLandEdgesStart)}s)`
+    );
 
     // Export unmatched land edges
     const query = `
@@ -228,6 +232,7 @@ async function ingestData() {
       .filter((file: string) => file.startsWith("Flows_"));
 
     for (const file of FLOW_FILES) {
+      console.log(`Ingesting file '${file}'...`);
       const ingestFlowsStart = performance.now();
       const FLOW_PATH = path.resolve(path.join(SEED_DATA_PATH, file));
       await prisma.$executeRaw`DROP TABLE IF EXISTS "flows_temp"`;
