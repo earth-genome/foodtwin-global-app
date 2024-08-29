@@ -6,7 +6,11 @@ import { List, X } from "@phosphor-icons/react/dist/ssr";
 
 function MenuLink({ children, href, ...props }: LinkProps) {
   return (
-    <Link href={href} {...props} className="text-brand-200 uppercase">
+    <Link
+      href={href}
+      {...props}
+      className="text-brand-200 uppercase font-header"
+    >
       {children}
     </Link>
   );
@@ -66,12 +70,15 @@ function Menu() {
         className={`${isOpen ? "hidden" : "grid"} grid-rows-[max-content_1fr] gap-2 h-screen flex-shrink-0 p-2 box-border`}
         aria-hidden={isOpen}
       >
-        <Image
-          src="/logos/landscape.svg"
-          alt="Food Twin"
-          width="88"
-          height="44"
-        />
+        <div className="text-center">
+          <Image
+            src="/logos/landscape.svg"
+            alt="Food Twin"
+            width="88"
+            height="44"
+          />
+          <p className="text-xxs mt-1">by The Plotline</p>
+        </div>
         <div className="text-center self-center">
           <Button
             isIconOnly

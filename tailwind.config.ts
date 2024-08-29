@@ -10,6 +10,13 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        header: ["var(--font-lexend)"],
+        body: ["var(--font-merriweather)"],
+      },
+      fontSize: {
+        xxs: "0.625rem",
+      },
       spacing: {
         128: "32rem",
       },
