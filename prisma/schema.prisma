@@ -85,6 +85,19 @@ model Flow {
   FlowEdges FlowEdges[]
 }
 
+model FoodGroup {
+  id        Int            @id @default(autoincrement())
+  name      String
+  subgroups FoodSubGroup[]
+}
+
+model FoodSubGroup {
+  id          Int       @id @default(autoincrement())
+  name        String
+  foodGroup   FoodGroup @relation(fields: [foodGroupId], references: [id])
+  foodGroupId Int
+}
+
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model spatial_ref_sys {
   srid      Int     @id

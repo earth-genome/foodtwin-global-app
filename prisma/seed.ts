@@ -12,6 +12,12 @@ const prisma = new PrismaClient();
 
 const POSTGRES_CONNECTION_STRING = process.env.DATABASE_URL;
 const SEED_DATA_PATH = path.resolve(process.env.SEED_DATA_PATH as string);
+
+const FOOD_GROUPS_FILE = path.join(
+  SEED_DATA_PATH,
+  "Commodity/UniqueFG1_FG2.csv"
+);
+
 const ADMIN_CENTROIDS_PATH = path.join(SEED_DATA_PATH, "admin_centroids.gpkg");
 const ADMIN_LIMITS_PATH = path.join(SEED_DATA_PATH, "admin_polygons.gpkg");
 const ADMIN_LIMITS_TABLENAME = "admin_polygons";
@@ -94,8 +100,44 @@ async function ingestData() {
     await prisma.$executeRaw`TRUNCATE "Node" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Edge" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
+    await prisma.$executeRaw`TRUNCATE "FoodSubGroup" RESTART IDENTITY CASCADE`;
+    await prisma.$executeRaw`TRUNCATE "FoodGroup" RESTART IDENTITY CASCADE`;
     console.log(
       `Cleared existing tables (${msToSeconds(performance.now() - truncateTablesStart)}s)`
+    );
+
+    // Food groups and subgroups
+    const ingestFoodGroupsStart = performance.now();
+
+    // Ingest csv file to temporary table
+    await prisma.$executeRaw`DROP TABLE IF EXISTS "food_groups_temp"`;
+    await prisma.$executeRaw`
+      CREATE TABLE "food_groups_temp" (
+        id SERIAL PRIMARY KEY,
+        food_group TEXT,
+        food_subgroup TEXT
+      )
+    `;
+    const copyCommand = `\\copy food_groups_temp (food_group, food_subgroup) FROM '${FOOD_GROUPS_FILE}' DELIMITER ',' CSV HEADER;`;
+    await execa(`psql -d ${POSTGRES_CONNECTION_STRING} -c "${copyCommand}"`, {
+      shell: true,
+    });
+
+    // Insert food groups and subgroups
+    await prisma.$executeRaw`
+      INSERT INTO "FoodGroup" (name)
+      SELECT DISTINCT food_group FROM food_groups_temp
+    `;
+    await prisma.$executeRaw`
+      INSERT INTO "FoodSubGroup" (name, "foodGroupId")
+      SELECT DISTINCT food_subgroup, fg.id
+      FROM food_groups_temp fgt
+      JOIN "FoodGroup" fg ON fg.name = fgt.food_group
+    `;
+
+    await prisma.$executeRaw`DROP TABLE IF EXISTS "food_groups_temp"`;
+    console.log(
+      `Ingested food groups and subgroups (${msToSeconds(performance.now() - ingestFoodGroupsStart)}s)`
     );
 
     const ingestCentroidsStart = performance.now();
