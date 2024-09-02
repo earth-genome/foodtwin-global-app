@@ -95,6 +95,7 @@ async function ingestData() {
     if (!checkFileExistence(EDGES_PATH, "Maritime edges file not found."))
       return;
 
+    console.log("Clearing existing tables...");
     const truncateTablesStart = performance.now();
     await prisma.$executeRaw`TRUNCATE "Area" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Node" RESTART IDENTITY CASCADE`;
@@ -105,10 +106,8 @@ async function ingestData() {
       `Cleared existing tables (${msToSeconds(performance.now() - truncateTablesStart)}s)`
     );
 
-    // Food groups and subgroups
+    console.log("Ingesting food groups and subgroups...");
     const ingestFoodGroupsStart = performance.now();
-
-    // Ingest csv file to temporary table
     await prisma.$executeRaw`DROP TABLE IF EXISTS "food_groups_temp"`;
     await prisma.$executeRaw`
       CREATE TABLE "food_groups_temp" (
@@ -142,6 +141,7 @@ async function ingestData() {
       `Ingested food groups and subgroups (${msToSeconds(performance.now() - ingestFoodGroupsStart)}s)`
     );
 
+    console.log("Ingesting area centroids...");
     const ingestCentroidsStart = performance.now();
     await runOgr2Ogr(
       ADMIN_CENTROIDS_PATH,
@@ -151,6 +151,7 @@ async function ingestData() {
       `Ingested area centroids (${msToSeconds(performance.now() - ingestCentroidsStart)}s)`
     );
 
+    console.log("Ingesting area limits...");
     const ingestLimitsStart = performance.now();
     await runOgr2Ogr(
       ADMIN_LIMITS_PATH,
@@ -162,6 +163,7 @@ async function ingestData() {
       `Ingested area limits (${msToSeconds(performance.now() - ingestLimitsStart)}s)`
     );
 
+    console.log("Ingesting inland ports...");
     const ingestInlandPortsStart = performance.now();
     await runOgr2Ogr(
       INLAND_PORTS_PATH,
@@ -171,6 +173,7 @@ async function ingestData() {
       `Ingested inland ports (${msToSeconds(performance.now() - ingestInlandPortsStart)}s)`
     );
 
+    console.log("Ingesting rail stations...");
     const ingestRailStationStart = performance.now();
     await runOgr2Ogr(
       RAIL_STATIONS_PATH,
@@ -186,6 +189,7 @@ async function ingestData() {
       `Ingested rail stations (${msToSeconds(performance.now() - ingestRailStationStart)}s)`
     );
 
+    console.log("Ingesting maritime nodes...");
     const ingestMaritimeNodesStart = performance.now();
     await runOgr2Ogr(
       NODES_PATH,
@@ -198,24 +202,36 @@ async function ingestData() {
     console.log("Ingesting land edges...");
     const ingestLandEdgesStart = performance.now();
     await prisma.$executeRaw`DROP TABLE IF EXISTS "land_edges_temp"`;
-    await runOgr2Ogr(
-      EDGES_LAND_FILE,
-      `-nln land_edges_temp -oo KEEP_GEOM_COLUMNS=NO -lco FID=id -lco PRECISION=NO -nlt MULTILINESTRING -oo GEOM_POSSIBLE_NAMES=geometry -a_srs EPSG:4326`
+    await prisma.$executeRaw`
+      CREATE TABLE "land_edges_temp" (
+        column1 TEXT,
+        column2 TEXT,
+        edge_id TEXT,
+        geometry GEOMETRY(MULTILINESTRING, 4326)
+      )
+    `;
+
+    const copyLandEdgesCommand = `\\copy land_edges_temp (column1, column2, edge_id, geometry) FROM '${EDGES_LAND_FILE}' DELIMITER ',' CSV HEADER;`;
+    await execa(
+      `psql -d ${POSTGRES_CONNECTION_STRING} -c "${copyLandEdgesCommand}"`,
+      {
+        shell: true,
+      }
     );
 
     await prisma.$executeRaw`
       INSERT INTO "Edge" ("fromNodeId", "toNodeId", distance, "type", "geom")
-      SELECT 
+      SELECT
           n1.id,
           n2.id,
           ST_Length(ST_Transform(le.geometry, 4326)::geography) AS distance,
           'LAND' AS type,
           ST_Transform(le.geometry, 3857) AS geom
-      FROM 
+      FROM
           land_edges_temp le
-      JOIN 
+      JOIN
           "Node" n1 ON n1.id_str = split_part(le.edge_id, '-', 1)
-      JOIN 
+      JOIN
           "Node" n2 ON n2.id_str = split_part(le.edge_id, '-', 2)
     `;
     console.log(
