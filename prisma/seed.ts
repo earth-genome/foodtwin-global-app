@@ -100,7 +100,6 @@ async function ingestData() {
     await prisma.$executeRaw`TRUNCATE "Node" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Edge" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
-    await prisma.$executeRaw`TRUNCATE "FoodSubGroup" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "FoodGroup" RESTART IDENTITY CASCADE`;
     console.log(
       `Cleared existing tables (${msToSeconds(performance.now() - truncateTablesStart)}s)`
@@ -123,16 +122,19 @@ async function ingestData() {
       shell: true,
     });
 
-    // Insert food groups and subgroups
+    // Insert level 0 food groups
     await prisma.$executeRaw`
-      INSERT INTO "FoodGroup" (name)
-      SELECT DISTINCT food_group FROM food_groups_temp
+      INSERT INTO "FoodGroup" (name, level)
+      SELECT DISTINCT food_group, 0
+      FROM "food_groups_temp"
     `;
+
+    // Insert level 1 food subgroups
     await prisma.$executeRaw`
-      INSERT INTO "FoodSubGroup" (name, "foodGroupId")
-      SELECT DISTINCT food_subgroup, fg.id
-      FROM food_groups_temp fgt
-      JOIN "FoodGroup" fg ON fg.name = fgt.food_group
+      INSERT INTO "FoodGroup" (name, level, \"parentId\")
+      SELECT DISTINCT food_subgroup, 1, fg.id
+      FROM "food_groups_temp" fgt
+      JOIN "FoodGroup"  fg ON fg.name = fgt.food_group
     `;
 
     await prisma.$executeRaw`DROP TABLE IF EXISTS "food_groups_temp"`;

@@ -86,16 +86,14 @@ model Flow {
 }
 
 model FoodGroup {
-  id        Int            @id @default(autoincrement())
-  name      String
-  subgroups FoodSubGroup[]
-}
+  id       Int         @id @default(autoincrement())
+  name     String
+  parentId Int?
+  parent   FoodGroup?  @relation("ParentChild", fields: [parentId], references: [id])
+  children FoodGroup[] @relation("ParentChild")
+  level    Int         @default(0)
 
-model FoodSubGroup {
-  id          Int       @id @default(autoincrement())
-  name        String
-  foodGroup   FoodGroup @relation(fields: [foodGroupId], references: [id])
-  foodGroupId Int
+  @@index([parentId])
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
