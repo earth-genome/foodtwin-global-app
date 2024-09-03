@@ -6,5 +6,5 @@ export enum EPageType {
 
 export interface IPageHeader {
   title: string;
-  type: EPageType;
+  itemType: EPageType;
 }

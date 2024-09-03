@@ -14,15 +14,21 @@ export default function Components() {
       <h2>Page Headers</h2>
 
       <div className="w-[480px] mb-8">
-        <PageHeader title="Black Sea Route" type={EPageType.route} />
+        <PageHeader title="Black Sea Route" itemType={EPageType.route} />
       </div>
 
       <div className="w-[480px] mb-8">
-        <PageHeader title="Baden-Württemberg, Germany" type={EPageType.area} />
+        <PageHeader
+          title="Baden-Württemberg, Germany"
+          itemType={EPageType.area}
+        />
       </div>
 
       <div className="w-[480px] mb-8">
-        <PageHeader title="Rotterdam, The Netherlands" type={EPageType.node} />
+        <PageHeader
+          title="Rotterdam, The Netherlands"
+          itemType={EPageType.node}
+        />
       </div>
 
       <h2>Page Sections</h2>

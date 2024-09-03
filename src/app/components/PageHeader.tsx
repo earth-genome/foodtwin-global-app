@@ -6,8 +6,8 @@ import Node from "@/app/components/icons/Node";
 import Route from "@/app/components/icons/Route";
 import { EPageType, IPageHeader } from "@/types/components";
 
-function getTypeLabel(type: EPageType) {
-  switch (type) {
+function getTypeLabel(itemType: EPageType) {
+  switch (itemType) {
     case EPageType.route:
       return "Transport Routes";
     case EPageType.area:
@@ -17,8 +17,8 @@ function getTypeLabel(type: EPageType) {
   }
 }
 
-function getTypeIcon(type: EPageType) {
-  switch (type) {
+function getTypeIcon(itemType: EPageType) {
+  switch (itemType) {
     case EPageType.route:
       return <Route />;
     case EPageType.area:
@@ -28,16 +28,16 @@ function getTypeIcon(type: EPageType) {
   }
 }
 
-function PageHeader({ title, type }: IPageHeader) {
+function PageHeader({ title, itemType }: IPageHeader) {
   return (
     <div className="bg-neutral-900 text-white p-4 flex gap-4 items-start">
       <div className="flex-grow">
         <div className="flex items-center gap-2 mb-4">
-          {getTypeIcon(type)}
+          {getTypeIcon(itemType)}
           <span
-            className={`font-header text-xs text-category-${type} uppercase`}
+            className={`font-header text-xs text-category-${itemType} uppercase`}
           >
-            {getTypeLabel(type)}
+            {getTypeLabel(itemType)}
           </span>
         </div>
         <h1 className="font-header text-4xl">{title}</h1>
