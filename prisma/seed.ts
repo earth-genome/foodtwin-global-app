@@ -46,7 +46,7 @@ const EDGES_LAND_FILE = path.join(
 );
 const EDGES_MARITIME_FILE = "edges_maritime_corrected.gpkg";
 const EDGES_MARITIME_TABLENAME = "edges_maritime_corrected";
-const EDGES_PATH = path.join(SEED_DATA_PATH, EDGES_MARITIME_FILE);
+const EDGES_MARITIME_PATH = path.join(SEED_DATA_PATH, EDGES_MARITIME_FILE);
 
 function checkFileExistence(filePath: string, errorMessage: string) {
   if (!fs.existsSync(filePath)) {
@@ -108,7 +108,9 @@ async function ingestData() {
       return;
     if (!checkFileExistence(NODES_PATH, "Maritime nodes file not found."))
       return;
-    if (!checkFileExistence(EDGES_PATH, "Maritime edges file not found."))
+    if (
+      !checkFileExistence(EDGES_MARITIME_PATH, "Maritime edges file not found.")
+    )
       return;
 
     // Terminate other sessions to avoid conflicts
@@ -130,13 +132,13 @@ async function ingestData() {
     await prisma.$executeRaw`SET log_min_duration_statement = 1000`;
     await prisma.$executeRaw`SET random_page_cost = 1.1`;
 
-    console.log("Clearing existing tables...");
     const truncateTablesStart = performance.now();
     await prisma.$executeRaw`TRUNCATE "Area" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Node" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Edge" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "FoodGroup" RESTART IDENTITY CASCADE`;
+    log("Clearing existing tables...");
 
     console.log(
       `Cleared existing tables (${msToSeconds(performance.now() - truncateTablesStart)}s)`
@@ -199,25 +201,29 @@ async function ingestData() {
       RAIL_STATIONS_PATH,
       `-nln Node -append -nlt POINT -t_srs EPSG:3857 -sql "SELECT DISTINCT node_id as id, 'RAIL_STATION' as type, geom FROM ${RAIL_STATIONS_TABLENAME}"`
     );
-    log("Ingested rail nodes...");
+    log("Ingested rail nodes.");
 
     await runOgr2Ogr(
       NODES_PATH,
       `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT id, name, upper(infra) as type, geom as centroid FROM ${NODES_MARITIME_TABLENAME}"`
     );
-    log(`Ingested maritime nodes...`);
+    log(`Ingested maritime nodes.`);
 
-    return;
+    await runOgr2Ogr(
+      EDGES_MARITIME_PATH,
+      `-nln Edge -append -nlt MULTILINESTRING -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT from_id as "fromNodeId", to_id as "toNodeId", distance, 'MARITIME' as type, geom FROM ${EDGES_MARITIME_TABLENAME}"`
+    );
+    log("Ingested maritime edges.");
 
-    console.log("Ingesting land edges...");
-    const ingestLandEdgesStart = performance.now();
     await prisma.$executeRaw`DROP TABLE IF EXISTS "land_edges_temp"`;
     await prisma.$executeRaw`
-      CREATE TABLE "land_edges_temp" (
+      CREATE UNLOGGED TABLE "land_edges_temp" (
         column1 TEXT,
         column2 TEXT,
         edge_id TEXT,
-        geometry GEOMETRY(MULTILINESTRING, 4326)
+        geometry GEOMETRY(MULTILINESTRING, 4326),
+        "fromNodeId" TEXT,
+        "toNodeId" TEXT
       )
     `;
 
@@ -228,77 +234,67 @@ async function ingestData() {
         shell: true,
       }
     );
+    log("Copied land edges to temporary table.");
+
+    // update fromNodeId and toNodeId
+    await prisma.$executeRaw`
+      UPDATE "land_edges_temp" le
+      SET "fromNodeId" = split_part(le.edge_id, '-', 1),
+          "toNodeId" = split_part(le.edge_id, '-', 2)
+    `;
+    log("Updated edge node IDs in temporary table.");
+
+    // export edges that don't have corresponding nodes
+    const unmatchedLandEdgesQuery = `
+      COPY (
+        SELECT *
+        FROM "land_edges_temp" le
+        LEFT JOIN "Node" n1 ON n1.id = le."fromNodeId"
+        LEFT JOIN "Node" n2 ON n2.id = le."toNodeId"
+        WHERE n1.id IS NULL OR n2.id IS NULL
+      ) TO STDOUT CSV HEADER
+    `;
+
+    const outputFile = path.resolve(SEED_DATA_PATH, "unmatched_land_edges.csv");
+    const command = `psql "${POSTGRES_CONNECTION_STRING}" -c "${unmatchedLandEdgesQuery.replace(/"/g, '\\"')}" > "${outputFile}"`;
+    const { stderr } = await execAsync(command);
+    if (stderr) {
+      console.error("psql error:", stderr);
+    }
+    log("Exported unmatched land edges.");
+
+    // Drop land edges that don't have corresponding nodes
+    await prisma.$executeRaw`
+      DELETE FROM "land_edges_temp"
+        WHERE "fromNodeId" IS NULL
+          OR "toNodeId" IS NULL
+          OR "fromNodeId" NOT IN (SELECT id FROM "Node")
+          OR "toNodeId" NOT IN (SELECT id FROM "Node");
+    `;
+    log("Deleted land edges that don't have corresponding nodes.");
+
+    // Disable triggers on Edge table
+    await prisma.$executeRaw`
+      ALTER TABLE "Edge" DISABLE TRIGGER ALL;
+    `;
 
     await prisma.$executeRaw`
       INSERT INTO "Edge" ("fromNodeId", "toNodeId", distance, "type", "geom")
       SELECT
-          n1.id,
-          n2.id,
-          ST_Length(ST_Transform(le.geometry, 4326)::geography) AS distance,
+          "fromNodeId",
+          "toNodeId",
+          0,
           'LAND' AS type,
           ST_Transform(le.geometry, 3857) AS geom
       FROM
           land_edges_temp le
-      JOIN
-          "Node" n1 ON n1.id_str = split_part(le.edge_id, '-', 1)
-      JOIN
-          "Node" n2 ON n2.id_str = split_part(le.edge_id, '-', 2)
     `;
-    console.log(
-      `Ingested land edges (${msToSeconds(performance.now() - ingestLandEdgesStart)}s)`
-    );
-
-    // Export unmatched land edges
-    const query = `
-      COPY (
-        SELECT
-          le.edge_id
-        FROM
-          land_edges_temp le
-        LEFT JOIN
-          "Node" n1 ON n1.id_str = split_part(le.edge_id, '-', 1)
-        LEFT JOIN
-          "Node" n2 ON n2.id_str = split_part(le.edge_id, '-', 2)
-        WHERE
-          n1.id IS NULL OR n2.id IS NULL
-      ) TO STDOUT CSV HEADER
-    `;
-    const outputFile = path.resolve(SEED_DATA_PATH, "unmatched_land_edges.csv");
-    const command = `psql "${POSTGRES_CONNECTION_STRING}" -c "${query.replace(/"/g, '\\"')}" > "${outputFile}"`;
-    const { stdout, stderr } = await execAsync(command);
-    if (stderr) {
-      console.error("psql error:", stderr);
-    }
-    console.log(
-      `Ingested land edges and exported unmatched edges (${msToSeconds(performance.now() - ingestLandEdgesStart)}s)`
-    );
-    if (stdout) console.log(stdout);
-    await prisma.$executeRaw`DROP TABLE IF EXISTS "land_edges_temp"`;
-
-    const ingestWaterEdgesStart = performance.now();
-    await prisma.$executeRaw`DROP TABLE IF EXISTS "edge_temp"`;
-    await runOgr2Ogr(
-      EDGES_PATH,
-      `-nln edge_temp -append -nlt MULTILINESTRING -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT from_id as from_id_str, to_id as to_id_str, distance, length, geom FROM ${EDGES_MARITIME_TABLENAME}"`
-    );
+    log(`Ingested land edges.`);
 
     await prisma.$executeRaw`
-      INSERT INTO "Edge" ("fromNodeId", "toNodeId", "distance", "type", "geom")
-      SELECT
-        n1."id" AS fromNodeId,
-        n2."id" AS toNodeId,
-        e."distance",
-        'MARITIME' AS type,
-        e."geom"
-      FROM "edge_temp" e
-      JOIN "Node" n1 ON e."from_id_str" = n1."id_str"
-      JOIN "Node" n2 ON e."to_id_str" = n2."id_str"
-      WHERE n1."id" IS NOT NULL AND n2."id" IS NOT NULL
+      ALTER TABLE "Edge" ENABLE TRIGGER ALL;
     `;
-    await prisma.$executeRaw`DROP TABLE IF EXISTS "edge_temp"`;
-    console.log(
-      `Inserted maritime edges (${msToSeconds(performance.now() - ingestWaterEdgesStart)}s)`
-    );
+    log(`Enabled triggers on Edge table.`);
 
     const foodGroups = (await prisma.foodGroup.findMany()) as {
       id: number;
