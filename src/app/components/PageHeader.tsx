@@ -17,7 +17,7 @@ function getTypeLabel(type: EPageType) {
   }
 }
 
-function typeIcon(type: EPageType) {
+function getTypeIcon(type: EPageType) {
   switch (type) {
     case EPageType.route:
       return <Route />;
@@ -33,7 +33,7 @@ function PageHeader({ title, type }: IPageHeader) {
     <div className="bg-neutral-900 text-white p-4 flex gap-4 items-start">
       <div className="flex-grow">
         <div className="flex items-center gap-2 mb-4">
-          {typeIcon(type)}
+          {getTypeIcon(type)}
           <span
             className={`font-header text-xs text-category-${type} uppercase`}
           >
