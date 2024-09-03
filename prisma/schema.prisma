@@ -27,18 +27,18 @@ enum NodeType {
   MARITIME
   PORT
   RAIL_STATION
+  ADMIN
 }
 
 model Node {
-  id               Int                                  @id @default(autoincrement())
-  id_str           String                               @unique
+  id               String                               @id
   name             String?
   type             NodeType
-  centroid         Unsupported("geometry(Point, 3857)")
+  geom             Unsupported("geometry(Point, 3857)")
   flowSegmentsFrom Edge[]                               @relation("FromNode")
   flowSegmentsTo   Edge[]                               @relation("ToNode")
 
-  @@index([id_str])
+  @@index([id])
 }
 
 enum EdgeType {
@@ -52,9 +52,9 @@ model Edge {
   type         EdgeType
   geom         Unsupported("geometry(MultiLineString, 3857)")
   fromNode     Node                                           @relation("FromNode", fields: [fromNodeId], references: [id])
-  fromNodeId   Int
+  fromNodeId   String
   toNode       Node                                           @relation("ToNode", fields: [toNodeId], references: [id])
-  toNodeId     Int
+  toNodeId     String
   flowSegments FlowSegmentEdges[]
   flows        Flow[]
 

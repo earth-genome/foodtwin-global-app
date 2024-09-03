@@ -36,6 +36,7 @@ const RAIL_STATIONS_PATH = path.join(
   SEED_DATA_PATH,
   `RailNodes_infrastructure.gpkg`
 );
+const RAIL_STATIONS_TABLENAME = "RailNodes_infrastructure";
 const NODES_MARITIME_FILE = "nodes_maritime.gpkg";
 const NODES_MARITIME_TABLENAME = "nodes_maritime";
 const NODES_PATH = path.join(SEED_DATA_PATH, NODES_MARITIME_FILE);
@@ -136,6 +137,7 @@ async function ingestData() {
     await prisma.$executeRaw`TRUNCATE "Edge" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
     await prisma.$executeRaw`TRUNCATE "FoodGroup" RESTART IDENTITY CASCADE`;
+
     console.log(
       `Cleared existing tables (${msToSeconds(performance.now() - truncateTablesStart)}s)`
     );
@@ -171,67 +173,41 @@ async function ingestData() {
     `;
 
     await prisma.$executeRaw`DROP TABLE IF EXISTS "food_groups_temp"`;
-    console.log(
-      `Ingested food groups and subgroups (${msToSeconds(performance.now() - ingestFoodGroupsStart)}s)`
-    );
+    log(`Ingested food groups and subgroups.`);
 
-    console.log("Ingesting area centroids...");
-    const ingestCentroidsStart = performance.now();
-    await runOgr2Ogr(
-      ADMIN_CENTROIDS_PATH,
-      '-nln Area -append -nlt POINT -lco GEOMETRY_NAME=centroid -sql "SELECT ID as id, admin_name as name, geom AS centroid FROM admin_centroids"'
-    );
-    console.log(
-      `Ingested area centroids (${msToSeconds(performance.now() - ingestCentroidsStart)}s)`
-    );
-
-    console.log("Ingesting area limits...");
-    const ingestLimitsStart = performance.now();
     await runOgr2Ogr(
       ADMIN_LIMITS_PATH,
       `-nln Area_limits_temp -overwrite -nlt MULTIPOLYGON -lco GEOMETRY_NAME=limits -sql "SELECT ID as id, geom as limits FROM ${ADMIN_LIMITS_TABLENAME}"`
     );
     await prisma.$executeRaw`UPDATE "Area" SET "limits" = (SELECT ST_Transform(limits, 3857) FROM "area_limits_temp" WHERE "Area"."id" = "area_limits_temp"."id")`;
     await prisma.$executeRaw`DROP TABLE IF EXISTS "area_limits_temp"`;
-    console.log(
-      `Ingested area limits (${msToSeconds(performance.now() - ingestLimitsStart)}s)`
-    );
+    log(`Ingested area limits.`);
 
-    console.log("Ingesting inland ports...");
-    const ingestInlandPortsStart = performance.now();
+    await runOgr2Ogr(
+      ADMIN_CENTROIDS_PATH,
+      `-nln Node -append -nlt POINT -t_srs EPSG:3857 -sql "SELECT id, admin_name as name, 'ADMIN' as type, geom FROM admin_centroids"`
+    );
+    log(`Ingested area nodes.`);
+
     await runOgr2Ogr(
       INLAND_PORTS_PATH,
-      `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT node_id as id_str, 'INLAND_PORT' as type, geom FROM ${INLAND_PORTS_TABLENAME}" -s_srs EPSG:4326`
+      `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT node_id as id, 'INLAND_PORT' as type, geom FROM ${INLAND_PORTS_TABLENAME}" -s_srs EPSG:4326`
     );
-    console.log(
-      `Ingested inland ports (${msToSeconds(performance.now() - ingestInlandPortsStart)}s)`
-    );
+    log("Ingested inland ports...");
 
-    console.log("Ingesting rail stations...");
-    const ingestRailStationStart = performance.now();
     await runOgr2Ogr(
       RAIL_STATIONS_PATH,
-      `-nln rail_stations_temp -nlt POINT -overwrite -oo KEEP_GEOM_COLUMNS=NO -s_srs EPSG:4326 -t_srs EPSG:3857`
+      `-nln Node -append -nlt POINT -t_srs EPSG:3857 -sql "SELECT DISTINCT node_id as id, 'RAIL_STATION' as type, geom FROM ${RAIL_STATIONS_TABLENAME}"`
     );
-    await prisma.$executeRaw`
-      INSERT INTO "Node" ("id_str", "centroid", "type")
-      SELECT DISTINCT node_id, geom, 'RAIL_STATION'::"NodeType" AS type
-      FROM rail_stations_temp
-    `;
-    await prisma.$executeRaw`DROP TABLE IF EXISTS "rail_stations_temp"`;
-    console.log(
-      `Ingested rail stations (${msToSeconds(performance.now() - ingestRailStationStart)}s)`
-    );
+    log("Ingested rail nodes...");
 
-    console.log("Ingesting maritime nodes...");
-    const ingestMaritimeNodesStart = performance.now();
     await runOgr2Ogr(
       NODES_PATH,
-      `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT ID as id_str, name, upper(infra) as type, geom FROM ${NODES_MARITIME_TABLENAME}" -a_srs EPSG:4326`
+      `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT id, name, upper(infra) as type, geom as centroid FROM ${NODES_MARITIME_TABLENAME}"`
     );
-    console.log(
-      `Ingested maritime nodes (${msToSeconds(performance.now() - ingestMaritimeNodesStart)}s)`
-    );
+    log(`Ingested maritime nodes...`);
+
+    return;
 
     console.log("Ingesting land edges...");
     const ingestLandEdgesStart = performance.now();
