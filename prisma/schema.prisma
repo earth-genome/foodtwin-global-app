@@ -47,15 +47,16 @@ enum EdgeType {
 }
 
 model Edge {
-  id         Int                                            @id @default(autoincrement())
-  distance   Float
-  type       EdgeType
-  geom       Unsupported("geometry(MultiLineString, 3857)")
-  fromNode   Node                                           @relation("FromNode", fields: [fromNodeId], references: [id])
-  fromNodeId Int
-  toNode     Node                                           @relation("ToNode", fields: [toNodeId], references: [id])
-  toNodeId   Int
-  flows      FlowEdges[]
+  id           Int                                            @id @default(autoincrement())
+  distance     Float
+  type         EdgeType
+  geom         Unsupported("geometry(MultiLineString, 3857)")
+  fromNode     Node                                           @relation("FromNode", fields: [fromNodeId], references: [id])
+  fromNodeId   Int
+  toNode       Node                                           @relation("ToNode", fields: [toNodeId], references: [id])
+  toNodeId     Int
+  flowSegments FlowSegmentEdges[]
+  flows        Flow[]
 
   @@index([geom], name: "geom_idx", type: Gist)
   @@index([fromNodeId])
@@ -63,26 +64,41 @@ model Edge {
   @@index([fromNodeId, toNodeId])
 }
 
-model FlowEdges {
-  edgeId   Int
-  edge     Edge @relation(fields: [edgeId], references: [id])
-  flowId   Int
-  flow     Flow @relation(fields: [flowId], references: [id])
-  position Int
-
-  @@id([edgeId, flowId])
+model Flow {
+  id          Int           @id @default(autoincrement())
+  fromArea    Area          @relation("FromArea", fields: [fromAreaId], references: [id])
+  fromAreaId  String
+  toArea      Area          @relation("ToArea", fields: [toAreaId], references: [id])
+  toAreaId    String
+  foodGroupId Int
+  foodGroup   FoodGroup     @relation(fields: [foodGroupId], references: [id])
+  value       Float
+  Edge        Edge?         @relation(fields: [edgeId], references: [id])
+  edgeId      Int?
+  FlowSegment FlowSegment[]
 }
 
-model Flow {
-  id         Int    @id @default(autoincrement())
-  fromArea   Area   @relation("FromArea", fields: [fromAreaId], references: [id])
-  fromAreaId String
-  toArea     Area   @relation("ToArea", fields: [toAreaId], references: [id])
-  toAreaId   String
-  food       String
-  value      Float
+model FlowSegment {
+  id     Int                @id @default(autoincrement())
+  mode   String
+  flowId Int
+  flow   Flow               @relation(fields: [flowId], references: [id])
+  edges  FlowSegmentEdges[]
 
-  FlowEdges FlowEdges[]
+  order Int
+
+  @@index([flowId, order], name: "flow_segment_composite_idx")
+}
+
+model FlowSegmentEdges {
+  id            Int         @id @default(autoincrement())
+  flowSegmentId Int
+  edgeId        Int
+  flowSegment   FlowSegment @relation(fields: [flowSegmentId], references: [id])
+  edge          Edge        @relation(fields: [edgeId], references: [id])
+
+  @@index([flowSegmentId])
+  @@index([edgeId])
 }
 
 model FoodGroup {
@@ -92,6 +108,7 @@ model FoodGroup {
   parent   FoodGroup?  @relation("ParentChild", fields: [parentId], references: [id])
   children FoodGroup[] @relation("ParentChild")
   level    Int         @default(0)
+  Flow     Flow[]
 
   @@index([parentId])
 }
