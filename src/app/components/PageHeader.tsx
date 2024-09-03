@@ -40,7 +40,7 @@ function PageHeader({ title, itemType }: IPageHeader) {
             {getTypeLabel(itemType)}
           </span>
         </div>
-        <h1 className="font-header text-4xl">{title}</h1>
+        <h1 className="font-header text-4xl tracking-tighter">{title}</h1>
       </div>
       <Link href="/">
         <X className="text-neutral-400" size={24} />
