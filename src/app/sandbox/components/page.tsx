@@ -1,11 +1,15 @@
+"use client";
+
 import PageHeader from "@/app/components/PageHeader";
 import {
   Metric,
   MetricRow,
   PageSection,
   SectionHeader,
+  Tabs,
 } from "@/app/components/PageSection";
 import { EPageType } from "@/types/components";
+import { Tab } from "@nextui-org/react";
 
 export default function Components() {
   return (
@@ -74,6 +78,15 @@ export default function Components() {
             <Metric label="GDP per capita" value={49447} unit="2011 USD$" />
           </MetricRow>
         </PageSection>
+      </div>
+
+      <h2>Charts</h2>
+
+      <div className="w-[480px] mb-8">
+        <Tabs>
+          <Tab title="Food groups">Food groups content</Tab>
+          <Tab title="Nutritional value">Nutritional value content</Tab>
+        </Tabs>
       </div>
     </div>
   );
