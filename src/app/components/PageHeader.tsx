@@ -6,7 +6,7 @@ import Node from "@/app/components/icons/Node";
 import Route from "@/app/components/icons/Route";
 import { EPageType, IPageHeader } from "@/types/components";
 
-function typeLabel(type: EPageType) {
+function getTypeLabel(type: EPageType) {
   switch (type) {
     case EPageType.route:
       return "Transport Routes";
@@ -37,7 +37,7 @@ function PageHeader({ title, type }: IPageHeader) {
           <span
             className={`font-header text-xs text-category-${type} uppercase`}
           >
-            {typeLabel(type)}
+            {getTypeLabel(type)}
           </span>
         </div>
         <h1 className="font-header text-4xl">{title}</h1>
