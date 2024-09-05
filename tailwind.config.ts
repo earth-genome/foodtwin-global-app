@@ -8,6 +8,7 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
+  safelist: ["text-category-area", "text-category-route", "text-category-node"],
   theme: {
     extend: {
       fontFamily: {
@@ -24,6 +25,11 @@ const config: Config = {
     colors: {
       white: "#fff",
       ink: "#0C111D",
+      category: {
+        area: "#C1ED96",
+        route: "#99E2EE",
+        node: "#FFD27A",
+      },
       neutral: {
         50: "#F9FAFB",
         100: "#F2F4F7",
