@@ -34,12 +34,12 @@ export async function GET(
         SELECT
           id,
           ST_AsMVTGeom(
-            centroid,
+            geom,
             ST_TileEnvelope(${zNum}, ${xNum}, ${yNum})
           ) AS geom
         FROM "Node"
         WHERE ST_Intersects(
-          centroid,
+          geom,
           ST_TileEnvelope(${zNum}, ${xNum}, ${yNum})
         )
       ) AS tile;

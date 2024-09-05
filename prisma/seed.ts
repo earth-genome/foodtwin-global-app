@@ -144,8 +144,6 @@ async function ingestData() {
       `Cleared existing tables (${msToSeconds(performance.now() - truncateTablesStart)}s)`
     );
 
-    console.log("Ingesting food groups and subgroups...");
-    const ingestFoodGroupsStart = performance.now();
     await prisma.$executeRaw`DROP TABLE IF EXISTS "food_groups_temp"`;
     await prisma.$executeRaw`
       CREATE TABLE "food_groups_temp" (
@@ -178,18 +176,22 @@ async function ingestData() {
     log(`Ingested food groups and subgroups.`);
 
     await runOgr2Ogr(
+      ADMIN_CENTROIDS_PATH,
+      `-nln Node -append -nlt POINT -t_srs EPSG:3857 -sql "SELECT id, admin_name as name, 'ADMIN' as type, geom FROM admin_centroids"`
+    );
+    log('Ingested admin centroids to "Node" table...');
+
+    // Copy admin centroids to "Area" table
+    await prisma.$executeRaw`INSERT INTO "Area" ("id", "centroid", "name") SELECT id, ST_Transform(geom, 3857), name FROM "Node" WHERE type = 'ADMIN'`;
+
+    // Update limits for areas
+    await runOgr2Ogr(
       ADMIN_LIMITS_PATH,
       `-nln Area_limits_temp -overwrite -nlt MULTIPOLYGON -lco GEOMETRY_NAME=limits -sql "SELECT ID as id, geom as limits FROM ${ADMIN_LIMITS_TABLENAME}"`
     );
     await prisma.$executeRaw`UPDATE "Area" SET "limits" = (SELECT ST_Transform(limits, 3857) FROM "area_limits_temp" WHERE "Area"."id" = "area_limits_temp"."id")`;
     await prisma.$executeRaw`DROP TABLE IF EXISTS "area_limits_temp"`;
     log(`Ingested area limits.`);
-
-    await runOgr2Ogr(
-      ADMIN_CENTROIDS_PATH,
-      `-nln Node -append -nlt POINT -t_srs EPSG:3857 -sql "SELECT id, admin_name as name, 'ADMIN' as type, geom FROM admin_centroids"`
-    );
-    log(`Ingested area nodes.`);
 
     await runOgr2Ogr(
       INLAND_PORTS_PATH,
@@ -426,10 +428,8 @@ async function ingestData() {
           "flowId" INTEGER,
           "mode" TEXT,
           "order" INTEGER,
-          "node_id_str1" TEXT,
-          "node_id_str2" TEXT,
-          "node_id1" INTEGER,
-          "node_id2" INTEGER,
+          "node_id1" TEXT,
+          "node_id2" TEXT,
           "edge_id" INTEGER,
           "flow_segment_id" INTEGER
         );
@@ -438,97 +438,82 @@ async function ingestData() {
 
         // Insert data into the intermediate table
         await prisma.$executeRaw`
-        INSERT INTO flow_segments_intermediate ("flowId", "mode", "order", "node_id_str1", "node_id_str2")
+        INSERT INTO flow_segments_intermediate ("flowId", "mode", "order", "node_id1", "node_id2")
         SELECT
           fs."flowId",
           fs."mode",
           fs."order",
-          split_part(edge_str, '-', 1) AS id_str1,
-          split_part(edge_str, '-', 2) AS id_str2
+          split_part(edge_str, '-', 1) AS node_id1,
+          split_part(edge_str, '-', 2) AS node_id2
         FROM "flow_segments_temp" fs,
         LATERAL unnest(fs.paths) AS edge_str;
       `;
         log("Inserted flow segment edges...");
 
-        // Create necessary indexes after data insertion
-        await prisma.$executeRaw`CREATE INDEX idx_fsi_node_id_str1 ON flow_segments_intermediate (node_id_str1);`;
-        await prisma.$executeRaw`CREATE INDEX idx_fsi_node_id_str2 ON flow_segments_intermediate (node_id_str2);`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_node_id_str ON "Node" (id_str);`;
-        log("Created indexes...");
-
-        // Update node ids using a more efficient join
-        await prisma.$executeRaw`
-        UPDATE flow_segments_intermediate fsi
-        SET node_id1 = n1.id,
-            node_id2 = n2.id
-        FROM "Node" n1, "Node" n2
-        WHERE n1.id_str = fsi.node_id_str1
-          AND n2.id_str = fsi.node_id_str2;
-      `;
-        log("Updated node ids...");
-
         // Update edge ids using the newly created index
         await prisma.$executeRaw`
-        UPDATE flow_segments_intermediate fsi
-        SET edge_id = e.id
-        FROM "Edge" e
-        WHERE e."fromNodeId" = fsi.node_id1
-          AND e."toNodeId" = fsi.node_id2
-          AND fsi.edge_id IS NULL;
-      `;
+          UPDATE flow_segments_intermediate fsi
+          SET edge_id = e.id
+          FROM "Edge" e
+          WHERE e."fromNodeId" = fsi.node_id1
+            AND e."toNodeId" = fsi.node_id2
+            AND fsi.edge_id IS NULL;
+        `;
         log("Updated edge ids...");
 
-        log("Checking for unmatched flow segment edges...");
-        const unmatchedEdges = await prisma.$queryRaw`
-        SELECT COUNT(*) AS count
-        FROM flow_segments_intermediate
-        WHERE edge_id IS NULL
-      `;
-
-        const flowSegmentCount = await prisma.$queryRaw`
-        SELECT COUNT(*) AS count
-        FROM flow_segments_intermediate
-      `;
-
-        log(
-          `Unmatched flow segment edges: ${unmatchedEdges[0].count} / ${flowSegmentCount[0].count}`
+        // Export unmatched flow segment edges
+        const unmatchedFlowSegmentsQuery = `
+          COPY (
+            SELECT *
+            FROM flow_segments_intermediate fsi
+            WHERE edge_id IS NULL
+          ) TO STDOUT CSV HEADER
+        `;
+        const outputFile = path.resolve(
+          SEED_DATA_PATH,
+          `unmatched_flow_segments-${foodGroupFile.name}.csv`
         );
+        const command = `psql "${POSTGRES_CONNECTION_STRING}" -c "${unmatchedFlowSegmentsQuery.replace(/"/g, '\\"')}" > "${outputFile}"`;
+        const { stderr } = await execAsync(command);
+        if (stderr) {
+          console.error("psql error:", stderr);
+        }
+        log("Exported unmatched flow segments.");
 
         await prisma.$executeRaw`
-        DELETE FROM flow_segments_intermediate
-        WHERE node_id1 IS NULL OR node_id2 IS NULL
-      `;
-        log("Cleaning up unmatched flow segment edges...");
+          DELETE FROM flow_segments_intermediate
+          WHERE node_id1 IS NULL OR node_id2 IS NULL
+        `;
+        log("Deleted flow segments with missing nodes before inserting...");
 
         await prisma.$executeRaw`
         INSERT INTO "FlowSegment" ("flowId", "mode", "order")
-        SELECT DISTINCT
-          "flowId",
-          "mode",
-          "order"
-        FROM flow_segments_intermediate
-      `;
+          SELECT DISTINCT
+            "flowId",
+            "mode",
+            "order"
+          FROM flow_segments_intermediate
+        `;
         log("Inserted flow segments...");
 
-        log("Updating flow segment IDs...");
         await prisma.$executeRaw`
-        UPDATE flow_segments_intermediate fsi
-        SET flow_segment_id = fs.id
-        FROM "FlowSegment" fs
-        WHERE fs."flowId" = fsi."flowId"
-          AND fs."mode" = fsi."mode"
-          AND fs."order" = fsi."order"
-      `;
+          UPDATE flow_segments_intermediate fsi
+          SET flow_segment_id = fs.id
+          FROM "FlowSegment" fs
+          WHERE fs."flowId" = fsi."flowId"
+            AND fs."mode" = fsi."mode"
+            AND fs."order" = fsi."order"
+        `;
+        log("Updated flow segment IDs in intermediate table...");
 
-        // TODO - log edges not found
         await prisma.$executeRaw`
         INSERT INTO "FlowSegmentEdges" ("flowSegmentId", "edgeId")
-        SELECT
-          fsi.flow_segment_id,
-          fsi.edge_id
-        FROM flow_segments_intermediate fsi
-        WHERE fsi.edge_id IS NOT NULL
-      `;
+          SELECT
+            fsi.flow_segment_id,
+            fsi.edge_id
+          FROM flow_segments_intermediate fsi
+          WHERE fsi.edge_id IS NOT NULL
+        `;
         log("Inserted flow segment edges...");
 
         log("Cleaning up temporary tables...");
