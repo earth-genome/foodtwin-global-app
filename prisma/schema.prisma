@@ -56,7 +56,6 @@ model Edge {
   toNode       Node                                           @relation("ToNode", fields: [toNodeId], references: [id])
   toNodeId     String
   flowSegments FlowSegmentEdges[]
-  flows        Flow[]
 
   @@index([geom], name: "geom_idx", type: Gist)
   @@index([fromNodeId])
@@ -73,8 +72,6 @@ model Flow {
   foodGroupId Int
   foodGroup   FoodGroup     @relation(fields: [foodGroupId], references: [id])
   value       Float
-  Edge        Edge?         @relation(fields: [edgeId], references: [id])
-  edgeId      Int?
   FlowSegment FlowSegment[]
 }
 
