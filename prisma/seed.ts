@@ -530,6 +530,8 @@ async function ingestData() {
     await prisma.$executeRaw`DROP TABLE IF EXISTS "flow_segments_intermediate"`;
     await prisma.$executeRaw`DROP TABLE IF EXISTS "flow_segments_temp"`;
     await prisma.$executeRaw`DROP TABLE IF EXISTS "flows_temp"`;
+    log("Cleaned up temporary tables.");
+
     console.log(
       `Data ingestion completed in ${msToMinutes(performance.now() - ingestDataStart)} minutes.`
     );

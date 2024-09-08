@@ -10,7 +10,6 @@ export async function GET(
   { params }: { params: { z: string; x: string; y: string } }
 ) {
   const { z, x, y } = params;
-
   if (
     !z ||
     !x ||
@@ -30,21 +29,32 @@ export async function GET(
   const yNum = Number(y);
 
   const query = `
-      SELECT ST_AsMVT(tile) FROM (
-        SELECT
-          id,
-          type,
-          ST_AsMVTGeom(
-            geom,
-            ST_TileEnvelope(${zNum}, ${xNum}, ${yNum})
-          ) AS geom
-        FROM "Edge"
-        WHERE ST_Intersects(
-          geom,
+    SELECT ST_AsMVT(tile) FROM (
+      SELECT
+        e.id,
+        e.type,
+        efa."totalFlowCount" AS "flowCount",
+        efa."totalFlowSum" AS "flowSum",
+        ST_AsMVTGeom(
+          e.geom,
           ST_TileEnvelope(${zNum}, ${xNum}, ${yNum})
-        )
-      ) AS tile;
-    `;
+        ) AS geom
+      FROM "Edge" e
+      INNER JOIN (
+        SELECT 
+          "edgeId", 
+          SUM("flowCount")::INTEGER AS "totalFlowCount", 
+          SUM("flowSum")::FLOAT AS "totalFlowSum"
+        FROM "EdgeFlowAggregation"
+        GROUP BY "edgeId"
+        HAVING SUM("flowCount") > 0
+      ) efa ON e.id = efa."edgeId"
+      WHERE ST_Intersects(
+        e.geom,
+        ST_TileEnvelope(${zNum}, ${xNum}, ${yNum})
+      )
+    ) AS tile;
+  `;
 
   const tile = (await prisma.$queryRawUnsafe(query)) as Tile[];
 
