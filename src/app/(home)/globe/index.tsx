@@ -1,11 +1,5 @@
 "use client";
-import React, {
-  useEffect,
-  useCallback,
-  useRef,
-  useState,
-  useMemo,
-} from "react";
+import React, { useEffect, useCallback, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Map, {
   Layer,
@@ -23,10 +17,11 @@ import { ProductionArea } from "@/types/data";
 
 import { MachineContext, MachineProvider } from "./state";
 import { selectors } from "./state/selectors";
+import { Feature, Polygon } from "geojson";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-interface IHighligthArea extends ProductionArea {
+interface IHighligthArea extends Feature<Polygon, ProductionArea> {
   popupLocation: LngLat;
 }
 
@@ -36,10 +31,6 @@ function GlobeInner() {
   const actorRef = MachineContext.useActorRef();
   const mapRef = useRef<MapRef>(null);
   const [highlightArea, setHighlightArea] = useState<IHighligthArea>();
-  const highlightFilter = useMemo(
-    () => ["==", ["get", "id"], highlightArea?.id || ""],
-    [highlightArea]
-  );
 
   // Selectors
   const pageIsMounting = MachineContext.useSelector((state) =>
@@ -87,7 +78,7 @@ function GlobeInner() {
       const interactiveItem = features && features[0];
       if (interactiveItem) {
         setHighlightArea({
-          ...interactiveItem.properties,
+          ...interactiveItem.toJSON(),
           popupLocation: event.lngLat,
         } as IHighligthArea);
       } else {
@@ -160,16 +151,19 @@ function GlobeInner() {
                 "fill-color": "rgba(250, 250, 249, 0.3)", // Transparent blue
               }}
             />
-            <Layer
-              id="area-hovered-polygon"
-              type="fill"
-              source-layer="default"
-              filter={highlightFilter as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-              paint={{
-                "fill-color": "rgba(250, 250, 249, 0.7)", // Transparent blue
-              }}
-            />
           </Source>
+
+          {highlightArea && (
+            <Source id="area-hovered" type="geojson" data={highlightArea}>
+              <Layer
+                id="area-hovered-polygon"
+                type="fill"
+                paint={{
+                  "fill-color": "rgba(250, 250, 249, 0.7)", // Transparent blue
+                }}
+              />
+            </Source>
+          )}
 
           <Source
             id="edges-tiles"
@@ -205,9 +199,9 @@ function GlobeInner() {
 
           {highlightArea && (
             <MapPopup
-              id={highlightArea.id}
+              id={highlightArea.properties.id}
               itemType={EPageType.area}
-              label={highlightArea.name}
+              label={highlightArea.properties.name}
               longitude={highlightArea.popupLocation.lng}
               latitude={highlightArea.popupLocation.lat}
             />
