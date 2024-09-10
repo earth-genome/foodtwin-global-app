@@ -1,26 +1,29 @@
 "use client";
 import React, { useEffect, useCallback, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { MachineContext, MachineProvider } from "./state";
-import { selectors } from "./state/selectors";
 import Map, {
   Layer,
   Source,
   MapRef,
   MapMouseEvent,
-  Popup,
-  MapGeoJSONFeature,
-  LngLat,
+  MapLayerMouseEvent,
 } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { LngLat } from "react-map-gl";
+
+import { EPageType } from "@/types/components";
+import MapPopup from "@/app/components/MapPopup";
+import { ProductionArea } from "@/types/data";
+
+import { MachineContext, MachineProvider } from "./state";
+import { selectors } from "./state/selectors";
+import { Feature, Polygon } from "geojson";
 import EdgeLayer from "./layers/edges";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-interface PopupProps {
-  type: "node" | "edge";
-  lngLat: LngLat;
-  properties: MapGeoJSONFeature["properties"];
+interface IHighligthArea extends Feature<Polygon, ProductionArea> {
+  popupLocation: LngLat;
 }
 
 function GlobeInner() {
@@ -28,8 +31,7 @@ function GlobeInner() {
   const params = useParams<{ areaId: string }>();
   const actorRef = MachineContext.useActorRef();
   const mapRef = useRef<MapRef>(null);
-
-  const [hoveredFeature, setHoveredFeature] = useState<PopupProps | null>(null);
+  const [highlightArea, setHighlightArea] = useState<IHighligthArea>();
 
   // Selectors
   const pageIsMounting = MachineContext.useSelector((state) =>
@@ -67,28 +69,25 @@ function GlobeInner() {
     }
   }, []);
 
-  const onMouseMove = useCallback((event: MapMouseEvent) => {
-    if (mapRef.current) {
+  const onMouseMove = useCallback(
+    (event: MapLayerMouseEvent) => {
+      if (!mapRef.current) return;
       const features = mapRef.current.queryRenderedFeatures(event.point, {
-        layers: ["node-point", "edge-line"],
+        layers: ["area-clickable-polygon"],
       });
 
-      if (features.length > 0) {
-        const feature = features[0];
-        setHoveredFeature({
-          type: feature.layer.id === "node-point" ? "node" : "edge",
-          lngLat: event.lngLat,
-          properties: features[0].properties,
-        });
+      const interactiveItem = features && features[0];
+      if (interactiveItem) {
+        setHighlightArea({
+          ...interactiveItem.toJSON(),
+          popupLocation: event.lngLat,
+        } as IHighligthArea);
       } else {
-        setHoveredFeature(null);
+        setHighlightArea(undefined);
       }
-    }
-  }, []);
-
-  const onMouseLeave = useCallback(() => {
-    setHoveredFeature(null);
-  }, []);
+    },
+    [setHighlightArea]
+  );
 
   return (
     <div className="flex-1 bg-gray-100 flex items-center justify-center">
@@ -102,7 +101,7 @@ function GlobeInner() {
           }}
           onClick={onClick}
           onMouseMove={onMouseMove}
-          onMouseLeave={onMouseLeave}
+          onMouseLeave={() => setHighlightArea(undefined)}
           style={{ width: "100%", height: "100%" }}
         >
           <Source
@@ -150,10 +149,22 @@ function GlobeInner() {
               type="fill"
               source-layer="default"
               paint={{
-                "fill-color": "rgba(211, 211, 211, 0.3)", // Transparent blue
+                "fill-color": "rgba(250, 250, 249, 0.3)", // Transparent blue
               }}
             />
           </Source>
+
+          {highlightArea && (
+            <Source id="area-hovered" type="geojson" data={highlightArea}>
+              <Layer
+                id="area-hovered-polygon"
+                type="fill"
+                paint={{
+                  "fill-color": "rgba(250, 250, 249, 0.7)", // Transparent blue
+                }}
+              />
+            </Source>
+          )}
 
           <Source
             id="nodes-tiles"
@@ -172,30 +183,14 @@ function GlobeInner() {
 
           <EdgeLayer />
 
-          {hoveredFeature && (
-            <Popup
-              longitude={hoveredFeature.lngLat.lng}
-              latitude={hoveredFeature.lngLat.lat}
-              closeButton={false}
-              closeOnClick={false}
-              anchor="bottom"
-            >
-              <div style={{ padding: "5px", fontSize: "12px" }}>
-                <h3 style={{ fontWeight: "bold", marginBottom: "5px" }}>
-                  {hoveredFeature.type} properties:
-                </h3>
-                <ul style={{ margin: 0, padding: 0, listStyleType: "none" }}>
-                  {hoveredFeature.properties &&
-                    Object.entries(hoveredFeature.properties).map(
-                      ([key, value]) => (
-                        <li key={key}>
-                          <strong>{key}:</strong> {String(value)}
-                        </li>
-                      )
-                    )}
-                </ul>
-              </div>
-            </Popup>
+          {highlightArea && (
+            <MapPopup
+              id={highlightArea.properties.id}
+              itemType={EPageType.area}
+              label={highlightArea.properties.name}
+              longitude={highlightArea.popupLocation.lng}
+              latitude={highlightArea.popupLocation.lat}
+            />
           )}
         </Map>
       </div>

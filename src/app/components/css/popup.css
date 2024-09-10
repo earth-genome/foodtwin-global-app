@@ -1,0 +1,8 @@
+.maplibregl-popup-content {
+  padding: 0;
+  background: none;
+}
+
+.maplibregl-popup-tip {
+  display: none;
+}
