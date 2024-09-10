@@ -1,23 +1,36 @@
 "use client";
-import React, { useEffect, useCallback, useRef } from "react";
+import React, { useEffect, useCallback, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { MachineContext, MachineProvider } from "./state";
-import { selectors } from "./state/selectors";
 import Map, {
   Layer,
   Source,
   MapRef,
   MapMouseEvent,
+  MapLayerMouseEvent,
 } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { LngLat } from "react-map-gl";
+
+import { EPageType } from "@/types/components";
+import MapPopup from "@/app/components/MapPopup";
+import { ProductionArea } from "@/types/data";
+
+import { MachineContext, MachineProvider } from "./state";
+import { selectors } from "./state/selectors";
+import { Feature, Polygon } from "geojson";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+interface IHighligthArea extends Feature<Polygon, ProductionArea> {
+  popupLocation: LngLat;
+}
 
 function GlobeInner() {
   const router = useRouter();
   const params = useParams<{ areaId: string }>();
   const actorRef = MachineContext.useActorRef();
   const mapRef = useRef<MapRef>(null);
+  const [highlightArea, setHighlightArea] = useState<IHighligthArea>();
 
   // Selectors
   const pageIsMounting = MachineContext.useSelector((state) =>
@@ -55,6 +68,26 @@ function GlobeInner() {
     }
   }, []);
 
+  const onMouseMove = useCallback(
+    (event: MapLayerMouseEvent) => {
+      if (!mapRef.current) return;
+      const features = mapRef.current.queryRenderedFeatures(event.point, {
+        layers: ["area-clickable-polygon"],
+      });
+
+      const interactiveItem = features && features[0];
+      if (interactiveItem) {
+        setHighlightArea({
+          ...interactiveItem.toJSON(),
+          popupLocation: event.lngLat,
+        } as IHighligthArea);
+      } else {
+        setHighlightArea(undefined);
+      }
+    },
+    [setHighlightArea]
+  );
+
   return (
     <div className="flex-1 bg-gray-100 flex items-center justify-center">
       <div className="relative w-full h-full overflow-hidden">
@@ -66,6 +99,8 @@ function GlobeInner() {
             zoom: 2,
           }}
           onClick={onClick}
+          onMouseMove={onMouseMove}
+          onMouseLeave={() => setHighlightArea(undefined)}
           style={{ width: "100%", height: "100%" }}
         >
           <Source
@@ -113,10 +148,22 @@ function GlobeInner() {
               type="fill"
               source-layer="default"
               paint={{
-                "fill-color": "rgba(211, 211, 211, 0.3)", // Transparent blue
+                "fill-color": "rgba(250, 250, 249, 0.3)", // Transparent blue
               }}
             />
           </Source>
+
+          {highlightArea && (
+            <Source id="area-hovered" type="geojson" data={highlightArea}>
+              <Layer
+                id="area-hovered-polygon"
+                type="fill"
+                paint={{
+                  "fill-color": "rgba(250, 250, 249, 0.7)", // Transparent blue
+                }}
+              />
+            </Source>
+          )}
 
           <Source
             id="edges-tiles"
@@ -149,6 +196,16 @@ function GlobeInner() {
               }}
             />
           </Source>
+
+          {highlightArea && (
+            <MapPopup
+              id={highlightArea.properties.id}
+              itemType={EPageType.area}
+              label={highlightArea.properties.name}
+              longitude={highlightArea.popupLocation.lng}
+              latitude={highlightArea.popupLocation.lat}
+            />
+          )}
         </Map>
       </div>
     </div>
