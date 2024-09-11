@@ -1,6 +1,6 @@
 "use client";
 
-import { ListBars } from "@/app/components/charts";
+import { ListBars, Sankey } from "@/app/components/charts";
 import PageHeader from "@/app/components/PageHeader";
 import {
   Metric,
@@ -125,6 +125,26 @@ export default function Components() {
             />
           </Tab>
         </Tabs>
+      </div>
+
+      <div className="w-[480px] mb-8">
+        <Sankey
+          height={600}
+          width={480}
+          data={{
+            nodes: [
+              { id: 1, label: "Texas", type: EPageType["area"] },
+              { id: 2, label: "Houston", type: EPageType["node"] },
+              { id: 3, label: "New York", type: EPageType["node"] },
+              { id: 4, label: "Los Angeles", type: EPageType["node"] },
+            ],
+            links: [
+              { source: 1, target: 2, value: 10000 },
+              { source: 1, target: 3, value: 5000 },
+              { source: 1, target: 4, value: 20000 },
+            ],
+          }}
+        />
       </div>
     </div>
   );
