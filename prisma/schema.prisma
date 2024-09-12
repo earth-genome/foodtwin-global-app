@@ -27,53 +27,87 @@ enum NodeType {
   MARITIME
   PORT
   RAIL_STATION
+  ADMIN
 }
 
 model Node {
-  id               Int                                  @id @default(autoincrement())
-  id_str           String                               @unique
+  id               String                               @id
   name             String?
   type             NodeType
-  centroid         Unsupported("geometry(Point, 3857)")
+  geom             Unsupported("geometry(Point, 3857)")
   flowSegmentsFrom Edge[]                               @relation("FromNode")
   flowSegmentsTo   Edge[]                               @relation("ToNode")
 
-  @@index([id_str])
+  @@index([id])
+}
+
+enum EdgeType {
+  LAND
+  MARITIME
 }
 
 model Edge {
-  id         Int                                       @id @default(autoincrement())
-  distance   Float
-  geom       Unsupported("geometry(LineString, 3857)")
-  fromNode   Node                                      @relation("FromNode", fields: [fromNodeId], references: [id])
-  fromNodeId Int
-  toNode     Node                                      @relation("ToNode", fields: [toNodeId], references: [id])
-  toNodeId   Int
-  flows      FlowEdges[]
+  id           Int                                            @id @default(autoincrement())
+  distance     Float
+  type         EdgeType
+  geom         Unsupported("geometry(MultiLineString, 3857)")
+  fromNode     Node                                           @relation("FromNode", fields: [fromNodeId], references: [id])
+  fromNodeId   String
+  toNode       Node                                           @relation("ToNode", fields: [toNodeId], references: [id])
+  toNodeId     String
+  flowSegments FlowSegmentEdges[]
 
+  @@index([geom], name: "geom_idx", type: Gist)
+  @@index([fromNodeId])
+  @@index([toNodeId])
   @@index([fromNodeId, toNodeId])
 }
 
-model FlowEdges {
-  edgeId   Int
-  edge     Edge @relation(fields: [edgeId], references: [id])
-  flowId   Int
-  flow     Flow @relation(fields: [flowId], references: [id])
-  position Int
-
-  @@id([edgeId, flowId])
+model Flow {
+  id          Int           @id @default(autoincrement())
+  fromArea    Area          @relation("FromArea", fields: [fromAreaId], references: [id])
+  fromAreaId  String
+  toArea      Area          @relation("ToArea", fields: [toAreaId], references: [id])
+  toAreaId    String
+  foodGroupId Int
+  foodGroup   FoodGroup     @relation(fields: [foodGroupId], references: [id])
+  value       Float
+  FlowSegment FlowSegment[]
 }
 
-model Flow {
-  id         Int    @id @default(autoincrement())
-  fromArea   Area   @relation("FromArea", fields: [fromAreaId], references: [id])
-  fromAreaId String
-  toArea     Area   @relation("ToArea", fields: [toAreaId], references: [id])
-  toAreaId   String
-  food       String
-  value      Float
+model FlowSegment {
+  id     Int                @id @default(autoincrement())
+  mode   String
+  flowId Int
+  flow   Flow               @relation(fields: [flowId], references: [id])
+  edges  FlowSegmentEdges[]
 
-  FlowEdges FlowEdges[]
+  order Int
+
+  @@index([flowId, order], name: "flow_segment_composite_idx")
+}
+
+model FlowSegmentEdges {
+  id            Int         @id @default(autoincrement())
+  flowSegmentId Int
+  edgeId        Int
+  flowSegment   FlowSegment @relation(fields: [flowSegmentId], references: [id])
+  edge          Edge        @relation(fields: [edgeId], references: [id])
+
+  @@index([flowSegmentId])
+  @@index([edgeId])
+}
+
+model FoodGroup {
+  id       Int         @id @default(autoincrement())
+  name     String
+  parentId Int?
+  parent   FoodGroup?  @relation("ParentChild", fields: [parentId], references: [id])
+  children FoodGroup[] @relation("ParentChild")
+  level    Int         @default(0)
+  Flow     Flow[]
+
+  @@index([parentId])
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

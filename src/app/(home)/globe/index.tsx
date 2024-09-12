@@ -18,6 +18,7 @@ import { ProductionArea } from "@/types/data";
 import { MachineContext, MachineProvider } from "./state";
 import { selectors } from "./state/selectors";
 import { Feature, Polygon } from "geojson";
+import EdgeLayer from "./layers/edges";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -166,22 +167,6 @@ function GlobeInner() {
           )}
 
           <Source
-            id="edges-tiles"
-            type="vector"
-            tiles={[`${appUrl}/api/tiles/edges/{z}/{x}/{y}`]}
-          >
-            <Layer
-              id="edge-line"
-              type="line"
-              source-layer="default"
-              paint={{
-                "line-color": "green",
-                "line-width": 2,
-              }}
-            />
-          </Source>
-
-          <Source
             id="nodes-tiles"
             type="vector"
             tiles={[`${appUrl}/api/tiles/nodes/{z}/{x}/{y}`]}
@@ -191,11 +176,12 @@ function GlobeInner() {
               type="circle"
               source-layer="default"
               paint={{
-                "circle-color": "red",
-                "circle-radius": 1,
+                "circle-radius": 0.5,
               }}
             />
           </Source>
+
+          <EdgeLayer />
 
           {highlightArea && (
             <MapPopup
