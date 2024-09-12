@@ -62,17 +62,17 @@ function Sankey({ height, width, data }: ISankey) {
         Object.assign({}, d as SankeyLink<Node, object>)
       ),
     });
-    /* eslint-disable  @typescript-eslint/no-non-null-assertion */
+
     // Append the nodes
     svg
       .append("g")
       .selectAll()
       .data(nodes)
       .join("rect")
-      .attr("x", (d) => d.x0!)
-      .attr("y", (d) => d.y0!)
-      .attr("height", (d) => d.y1! - d.y0!)
-      .attr("width", (d) => d.x1! - d.x0!)
+      .attr("x", (d) => d.x0 || 0)
+      .attr("y", (d) => d.y0 || 0)
+      .attr("height", (d) => (d.y1 || 0) - (d.y0 || 0))
+      .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
       .attr("fill", "#292524")
       .on("mouseover mousemove", (e, d) => {
         const { pageX, pageY } = e;
@@ -95,7 +95,7 @@ function Sankey({ height, width, data }: ISankey) {
       .attr("d", sankeyLinkHorizontal())
       .attr("stroke", "#E7E5E4")
       .attr("opacity", 0.25)
-      .attr("stroke-width", (d) => Math.max(1, d.width!))
+      .attr("stroke-width", (d) => Math.max(1, d.width || 0))
       .on("mouseover mousemove", (e, d) => {
         const { pageX, pageY } = e;
         setLinkPopup({
