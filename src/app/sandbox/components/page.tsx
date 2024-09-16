@@ -1,5 +1,6 @@
 "use client";
 
+import { ListBars } from "@/app/components/charts";
 import PageHeader from "@/app/components/PageHeader";
 import {
   Metric,
@@ -90,8 +91,39 @@ export default function Components() {
 
       <div className="w-[480px] mb-8">
         <Tabs>
-          <Tab title="Food groups">Food groups content</Tab>
-          <Tab title="Nutritional value">Nutritional value content</Tab>
+          <Tab title="Food groups">
+            <ListBars
+              showPercentage
+              unit="million MMt"
+              data={[
+                {
+                  label: "🥛 Dairy and Eggs",
+                  value: 14.13,
+                  color: "#76B7B2",
+                },
+                {
+                  label: "🥔 Starches",
+                  value: 1.1,
+                  color: "#4E79A7",
+                },
+              ]}
+            />
+          </Tab>
+          <Tab title="Nutritional value">
+            <ListBars
+              unit="Millions people’s needs"
+              data={[
+                {
+                  label: "🍔 Calories",
+                  value: 20000,
+                },
+                {
+                  label: "🥩 Protein",
+                  value: 10000,
+                },
+              ]}
+            />
+          </Tab>
         </Tabs>
       </div>
     </div>
