@@ -6,20 +6,31 @@ import {
   sankeyLinkHorizontal,
   SankeyLink,
   SankeyNode,
+  SankeyExtraProperties,
 } from "d3-sankey";
 import { ArrowDown } from "@phosphor-icons/react";
 import { EPageType } from "@/types/components";
 import { getTypeIcon } from "../icons/getTypeIcon";
 
-interface Node {
+interface Node extends SankeyExtraProperties {
   id: number | string;
   label: string;
   type: EPageType;
 }
 
+interface LinkPopupDatum {
+  value: number;
+  label: string;
+  unit?: string;
+}
+
+interface Link extends SankeyExtraProperties {
+  popupData?: LinkPopupDatum[];
+}
+
 interface SankeyData {
-  nodes: SankeyNode<Node, object>[];
-  links: SankeyLink<Node, object>[];
+  nodes: SankeyNode<Node, Link>[];
+  links: SankeyLink<Node, Link>[];
 }
 
 interface ISankey {
@@ -28,11 +39,11 @@ interface ISankey {
   data: SankeyData;
 }
 
-interface ISankeyLinkPopup extends SankeyLink<Node, object> {
+interface ISankeyLinkPopup extends SankeyLink<Node, Link> {
   screenPosition: [number, number];
 }
 
-interface ISankeyNodePopup extends SankeyNode<Node, object> {
+interface ISankeyNodePopup extends SankeyNode<Node, Link> {
   screenPosition: [number, number];
 }
 
@@ -138,7 +149,7 @@ function Sankey({ height, width, data }: ISankey) {
             transform: getPopoverTranslate(linkPopup.screenPosition),
           }}
         >
-          <div className="bg-neutral-200 rounded p-2 mb-4 font-header">
+          <div className="bg-neutral-200 rounded p-2 font-header">
             <div className="flex gap-2 justify-center">
               {getTypeIcon((linkPopup.source as Node).type)}
               {(linkPopup.source as Node).label}
@@ -149,16 +160,18 @@ function Sankey({ height, width, data }: ISankey) {
               {(linkPopup.target as Node).label}
             </div>
           </div>
-          <table className="text-sm w-[100%] border-separate border-spacing-2">
-            <tr>
-              <td className="text-neutral-600">Value</td>
-              <td className="text-right">{linkPopup.value}</td>
-            </tr>
-            <tr>
-              <td className="text-neutral-600">Other value</td>
-              <td className="text-right">{linkPopup.value}</td>
-            </tr>
-          </table>
+          {linkPopup.popupData && (
+            <table className="text-sm w-[100%] border-separate border-spacing-2 mt-4">
+              {linkPopup.popupData.map(({ label, value, unit }) => (
+                <tr key={label}>
+                  <td className="text-neutral-600">{label}</td>
+                  <td className="text-right">
+                    {value} {unit}
+                  </td>
+                </tr>
+              ))}
+            </table>
+          )}
         </div>
       )}
       {nodePopup && (

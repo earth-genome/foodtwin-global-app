@@ -139,7 +139,27 @@ export default function Components() {
               { id: 4, label: "Los Angeles", type: EPageType["node"] },
             ],
             links: [
-              { source: 1, target: 2, value: 10000 },
+              {
+                source: 1,
+                target: 2,
+                value: 10000,
+                popupData: [
+                  {
+                    label: "Volume",
+                    value: 24.7,
+                    unit: "MMt",
+                  },
+                  {
+                    label: "Calories",
+                    value: 1,
+                    unit: "MCal",
+                  },
+                  {
+                    label: "Ships",
+                    value: 158,
+                  },
+                ],
+              },
               { source: 1, target: 3, value: 5000 },
               { source: 1, target: 4, value: 20000 },
             ],
