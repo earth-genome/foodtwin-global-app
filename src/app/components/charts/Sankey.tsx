@@ -36,6 +36,23 @@ interface ISankeyNodePopup extends SankeyNode<Node, object> {
   screenPosition: [number, number];
 }
 
+function getPopoverTranslate(anchor: [number, number]): string {
+  const margin = 5;
+  const threshold = 150;
+  const { innerWidth } = window;
+  const [x] = anchor;
+
+  if (x < threshold) {
+    return `translate(${margin}px, -50%)`;
+  }
+
+  if (innerWidth - x < threshold) {
+    return `translate(calc(-100% - ${margin}px), -50%)`;
+  }
+
+  return `translate(-50%, calc(-100% - ${margin}px))`;
+}
+
 function Sankey({ height, width, data }: ISankey) {
   const ref = useRef<SVGSVGElement>(null);
   const [linkPopup, setLinkPopup] = useState<ISankeyLinkPopup>();
@@ -118,7 +135,7 @@ function Sankey({ height, width, data }: ISankey) {
           style={{
             left: linkPopup.screenPosition[0],
             top: linkPopup.screenPosition[1],
-            transform: "translate(-50%, -105%)",
+            transform: getPopoverTranslate(linkPopup.screenPosition),
           }}
         >
           <div className="bg-neutral-200 rounded p-2 mb-4 font-header">
@@ -150,7 +167,7 @@ function Sankey({ height, width, data }: ISankey) {
           style={{
             left: nodePopup.screenPosition[0],
             top: nodePopup.screenPosition[1],
-            transform: "translate(-50%, -110%)",
+            transform: getPopoverTranslate(nodePopup.screenPosition),
           }}
         >
           <div className="flex gap-2 justify-center">
