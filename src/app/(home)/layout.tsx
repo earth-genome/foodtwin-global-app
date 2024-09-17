@@ -1,4 +1,4 @@
-import Menu from "../components/Menu";
+import Menu from "../components/menu";
 import Globe from "./globe";
 
 export default function Layout({ children }: { children: React.ReactNode }) {

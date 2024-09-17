@@ -12,7 +12,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { LngLat } from "react-map-gl";
 
 import { EPageType } from "@/types/components";
-import MapPopup from "@/app/components/MapPopup";
+import MapPopup from "@/app/components/map-popup";
 import { ProductionArea } from "@/types/data";
 
 import { MachineContext, MachineProvider } from "./state";

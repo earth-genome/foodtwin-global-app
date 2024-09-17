@@ -1,14 +1,14 @@
 "use client";
 
 import { ListBars } from "@/app/components/charts";
-import PageHeader from "@/app/components/PageHeader";
+import PageHeader from "@/app/components/page-header";
 import {
   Metric,
   MetricRow,
   PageSection,
   SectionHeader,
   Tabs,
-} from "@/app/components/PageSection";
+} from "@/app/components/page-section";
 import { EPageType } from "@/types/components";
 import { Tab } from "@nextui-org/react";
 
