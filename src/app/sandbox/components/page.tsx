@@ -1,15 +1,15 @@
 "use client";
 
 import { ListBars } from "@/app/components/charts";
-import PageHeader from "@/app/components/PageHeader";
+import PageHeader from "@/app/components/page-header";
 import {
   Metric,
   MetricRow,
   PageSection,
   SectionHeader,
   Tabs,
-} from "@/app/components/PageSection";
-import { EPageType } from "@/types/components";
+} from "@/app/components/page-section";
+import { EItemType } from "@/types/components";
 import { Tab } from "@nextui-org/react";
 
 export default function Components() {
@@ -19,20 +19,20 @@ export default function Components() {
       <h2>Page Headers</h2>
 
       <div className="w-[480px] mb-8">
-        <PageHeader title="Black Sea Route" itemType={EPageType.route} />
+        <PageHeader title="Black Sea Route" itemType={EItemType.route} />
       </div>
 
       <div className="w-[480px] mb-8">
         <PageHeader
           title="Baden-Württemberg, Germany"
-          itemType={EPageType.area}
+          itemType={EItemType.area}
         />
       </div>
 
       <div className="w-[480px] mb-8">
         <PageHeader
           title="Rotterdam, The Netherlands"
-          itemType={EPageType.node}
+          itemType={EItemType.node}
         />
       </div>
 

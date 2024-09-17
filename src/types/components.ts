@@ -1,4 +1,4 @@
-export enum EPageType {
+export enum EItemType {
   area = "area",
   route = "route",
   node = "node",
@@ -6,5 +6,5 @@ export enum EPageType {
 
 export interface IPageHeader {
   title: string;
-  itemType: EPageType;
+  itemType: EItemType;
 }

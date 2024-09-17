@@ -1,3 +1,3 @@
-import ListBars from "./ListBars";
+import ListBars from "./list-bars";
 
 export { ListBars };
