@@ -9,7 +9,7 @@ import {
   SectionHeader,
   Tabs,
 } from "@/app/components/page-section";
-import { EPageType } from "@/types/components";
+import { EItemType } from "@/types/components";
 import { Tab } from "@nextui-org/react";
 
 export default function Components() {
@@ -19,20 +19,20 @@ export default function Components() {
       <h2>Page Headers</h2>
 
       <div className="w-[480px] mb-8">
-        <PageHeader title="Black Sea Route" itemType={EPageType.route} />
+        <PageHeader title="Black Sea Route" itemType={EItemType.route} />
       </div>
 
       <div className="w-[480px] mb-8">
         <PageHeader
           title="Baden-Württemberg, Germany"
-          itemType={EPageType.area}
+          itemType={EItemType.area}
         />
       </div>
 
       <div className="w-[480px] mb-8">
         <PageHeader
           title="Rotterdam, The Netherlands"
-          itemType={EPageType.node}
+          itemType={EItemType.node}
         />
       </div>
 

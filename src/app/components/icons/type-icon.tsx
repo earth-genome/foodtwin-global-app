@@ -1,21 +1,21 @@
-import { EPageType } from "@/types/components";
+import { EItemType } from "@/types/components";
 import Area from "./area";
 import Node from "./node";
 import Route from "./route";
 
-function getTypeIcon(itemType: EPageType) {
+function getTypeIcon(itemType: EItemType) {
   switch (itemType) {
-    case EPageType.route:
+    case EItemType.route:
       return <Route />;
-    case EPageType.area:
+    case EItemType.area:
       return <Area />;
-    case EPageType.node:
+    case EItemType.node:
       return <Node />;
   }
 }
 
 interface ITypeIcon {
-  itemType: EPageType;
+  itemType: EItemType;
 }
 
 function TypeIcon({ itemType }: ITypeIcon) {

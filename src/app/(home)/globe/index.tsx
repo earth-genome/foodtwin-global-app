@@ -11,7 +11,7 @@ import Map, {
 import "maplibre-gl/dist/maplibre-gl.css";
 import { LngLat } from "react-map-gl";
 
-import { EPageType } from "@/types/components";
+import { EItemType } from "@/types/components";
 import MapPopup from "@/app/components/map-popup";
 import { ProductionArea } from "@/types/data";
 
@@ -186,7 +186,7 @@ function GlobeInner() {
           {highlightArea && (
             <MapPopup
               id={highlightArea.properties.id}
-              itemType={EPageType.area}
+              itemType={EItemType.area}
               label={highlightArea.properties.name}
               longitude={highlightArea.popupLocation.lng}
               latitude={highlightArea.popupLocation.lat}

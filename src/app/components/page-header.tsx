@@ -1,16 +1,16 @@
 import { Link } from "@nextui-org/react";
 import { X } from "@phosphor-icons/react/dist/ssr";
 
-import { EPageType, IPageHeader } from "@/types/components";
+import { EItemType, IPageHeader } from "@/types/components";
 import TypeIcon from "./icons/type-icon";
 
-function getTypeLabel(itemType: EPageType) {
+function getTypeLabel(itemType: EItemType) {
   switch (itemType) {
-    case EPageType.route:
+    case EItemType.route:
       return "Transport Routes";
-    case EPageType.area:
+    case EItemType.area:
       return "Producing Areas";
-    case EPageType.node:
+    case EItemType.node:
       return "Ports & Depots";
   }
 }

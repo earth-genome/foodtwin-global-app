@@ -1,5 +1,5 @@
 import { Popup } from "react-map-gl";
-import { EPageType } from "@/types/components";
+import { EItemType } from "@/types/components";
 
 import TypeIcon from "./icons/type-icon";
 import "./css/popup.css";
@@ -7,7 +7,7 @@ import "./css/popup.css";
 interface IMapPopup {
   id: string;
   label: string;
-  itemType: EPageType;
+  itemType: EItemType;
   longitude: number;
   latitude: number;
 }
