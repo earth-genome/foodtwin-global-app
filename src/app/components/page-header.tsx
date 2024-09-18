@@ -1,16 +1,16 @@
 import { Link } from "@nextui-org/react";
 import { X } from "@phosphor-icons/react/dist/ssr";
 
-import { EPageType, IPageHeader } from "@/types/components";
-import { getTypeIcon } from "./icons/getTypeIcon";
+import { EItemType, IPageHeader } from "@/types/components";
+import TypeIcon from "./icons/type-icon";
 
-function getTypeLabel(itemType: EPageType) {
+function getTypeLabel(itemType: EItemType) {
   switch (itemType) {
-    case EPageType.route:
+    case EItemType.route:
       return "Transport Routes";
-    case EPageType.area:
+    case EItemType.area:
       return "Producing Areas";
-    case EPageType.node:
+    case EItemType.node:
       return "Ports & Depots";
   }
 }
@@ -20,7 +20,7 @@ function PageHeader({ title, itemType }: IPageHeader) {
     <div className="bg-neutral-900 text-white p-4 flex gap-4 items-start">
       <div className="flex-grow">
         <div className="flex items-center gap-2 mb-4">
-          {getTypeIcon(itemType)}
+          <TypeIcon itemType={itemType} />
           <span
             className={`font-header text-xs text-category-${itemType} uppercase`}
           >
