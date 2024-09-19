@@ -48,11 +48,11 @@ function GlobeInner() {
   }, []);
 
   // Update the URL when necessary
-  useEffect(() => {
-    if (!pageIsMounting) {
-      router.push(pageUrl);
-    }
-  }, [router, pageUrl, pageIsMounting]);
+  // useEffect(() => {
+  //   if (!pageIsMounting) {
+  //     router.push(pageUrl);
+  //   }
+  // }, [router, pageUrl, pageIsMounting]);
 
   const onClick = useCallback((event: MapMouseEvent) => {
     if (mapRef.current) {
