@@ -1,12 +1,12 @@
 import { EItemType } from "@/types/components";
 import Area from "./area";
 import Node from "./node";
-import Route from "./route";
+import TransportRoute from "./transport-route";
 
 export function getTypeIcon(itemType: EItemType) {
   switch (itemType) {
     case EItemType.route:
-      return <Route />;
+      return <TransportRoute />;
     case EItemType.area:
       return <Area />;
     case EItemType.node:
