@@ -30,9 +30,12 @@ const restoreDb = async () => {
 
   try {
     console.log("Restoring database from dump file...");
-    await execa(`pg_restore --clean -d ${DATABASE_URL} ${dumpFilePath}`, {
-      shell: true,
-    });
+    await execa(
+      `pg_restore --clean --verbose -d ${DATABASE_URL} ${dumpFilePath}`,
+      {
+        shell: true,
+      }
+    );
     console.log(`Database restore completed from ${dumpFilePath}`);
   } catch (error) {
     console.error(`Error restoring database: ${error.message}`);
