@@ -22,7 +22,7 @@ import EdgeLayer from "./layers/edges";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-interface IHighligthArea extends Feature<Polygon, ProductionArea> {
+interface IHighlightArea extends Feature<Polygon, ProductionArea> {
   popupLocation: LngLat;
 }
 
@@ -31,7 +31,7 @@ function GlobeInner() {
   const params = useParams<{ areaId: string }>();
   const actorRef = MachineContext.useActorRef();
   const mapRef = useRef<MapRef>(null);
-  const [highlightArea, setHighlightArea] = useState<IHighligthArea>();
+  const [highlightArea, setHighlightArea] = useState<IHighlightArea>();
 
   // Selectors
   const pageIsMounting = MachineContext.useSelector((state) =>
@@ -102,7 +102,7 @@ function GlobeInner() {
         setHighlightArea({
           ...interactiveItem.toJSON(),
           popupLocation: event.lngLat,
-        } as IHighligthArea);
+        } as IHighlightArea);
       } else {
         setHighlightArea(undefined);
       }
@@ -173,19 +173,19 @@ function GlobeInner() {
                 "fill-color": "rgba(250, 250, 249, 0.3)", // Transparent blue
               }}
             />
-          </Source>
-
-          {highlightArea && (
-            <Source id="area-hovered" type="geojson" data={highlightArea}>
+            {highlightArea?.properties?.id && (
               <Layer
-                id="area-hovered-polygon"
+                id="area-highlighted-polygon"
                 type="fill"
+                source-layer="default"
+                filter={["==", ["get", "id"], highlightArea.properties.id]}
                 paint={{
-                  "fill-color": "rgba(250, 250, 249, 0.7)", // Transparent blue
+                  "fill-color": "rgba(250, 250, 249, 0.7)", // Highlighted color
+                  "fill-outline-color": "rgba(0, 0, 0, 1)",
                 }}
               />
-            </Source>
-          )}
+            )}
+          </Source>
 
           <Source
             id="nodes-tiles"
