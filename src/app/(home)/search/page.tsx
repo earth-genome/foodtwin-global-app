@@ -1,12 +1,15 @@
 "use client";
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 import { useState } from "react";
+import useSearch from "./useSearch";
+import Results from "./results";
 
 function SearchPage() {
   const [value, setValue] = useState<string>("");
   const [hasFocus, setHasFocus] = useState<boolean>(false);
 
   const toggleFocus = () => setHasFocus((prev) => !prev);
+  const { results } = useSearch(value);
 
   const error =
     value.length > 0 &&
@@ -36,11 +39,14 @@ function SearchPage() {
           />
           <MagnifyingGlass size={20} className="text-neutral-700" />
         </div>
+
         {error && (
           <div id="search-error" className="text-2xl text-neutral-600">
             {error}
           </div>
         )}
+
+        {results && <Results results={results} q={value} />}
       </div>
     </div>
   );
