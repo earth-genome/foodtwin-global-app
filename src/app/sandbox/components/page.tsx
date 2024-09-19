@@ -133,10 +133,10 @@ export default function Components() {
           width={480}
           data={{
             nodes: [
-              { id: 1, label: "Texas", type: EPageType["area"] },
-              { id: 2, label: "Houston", type: EPageType["node"] },
-              { id: 3, label: "New York", type: EPageType["node"] },
-              { id: 4, label: "Los Angeles", type: EPageType["node"] },
+              { id: 1, label: "Texas", type: EItemType["area"] },
+              { id: 2, label: "Houston", type: EItemType["node"] },
+              { id: 3, label: "New York", type: EItemType["node"] },
+              { id: 4, label: "Los Angeles", type: EItemType["node"] },
             ],
             links: [
               {

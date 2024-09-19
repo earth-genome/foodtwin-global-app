@@ -1,4 +1,4 @@
 import ListBars from "./list-bars";
-import Sankey from "./Sankey";
+import Sankey from "./sankey";
 
 export { ListBars, Sankey };

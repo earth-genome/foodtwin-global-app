@@ -9,13 +9,13 @@ import {
   SankeyExtraProperties,
 } from "d3-sankey";
 import { ArrowDown } from "@phosphor-icons/react";
-import { EPageType } from "@/types/components";
-import { getTypeIcon } from "../icons/getTypeIcon";
+import { EItemType } from "@/types/components";
+import { getTypeIcon } from "../icons/type-icon";
 
 interface Node extends SankeyExtraProperties {
   id: number | string;
   label: string;
-  type: EPageType;
+  type: EItemType;
 }
 
 interface LinkPopupDatum {
