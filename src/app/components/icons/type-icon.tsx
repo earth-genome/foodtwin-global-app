@@ -3,7 +3,7 @@ import Area from "./area";
 import Node from "./node";
 import Route from "./route";
 
-function getTypeIcon(itemType: EItemType) {
+export function getTypeIcon(itemType: EItemType) {
   switch (itemType) {
     case EItemType.route:
       return <Route />;
