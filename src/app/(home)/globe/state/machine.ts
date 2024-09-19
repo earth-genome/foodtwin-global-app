@@ -1,8 +1,6 @@
-import {
-  CountryCapitalsGeoJSON,
-  CountryLimitsGeoJSON,
-} from "@/types/countries";
-import { assign, createMachine, assertEvent, fromPromise } from "xstate";
+import { bbox } from "@turf/bbox";
+import { assign, createMachine, assertEvent } from "xstate";
+import { StateContext, StateActions, StateEvents } from "./types";
 
 export const globeViewMachine = createMachine(
   {
@@ -10,168 +8,72 @@ export const globeViewMachine = createMachine(
     id: "globeView",
 
     types: {
-      context: {} as {
-        areaId: string | null;
-        countryLimitsGeoJSON: CountryLimitsGeoJSON | null;
-        countryCapitalsGeoJSON: CountryCapitalsGeoJSON | null;
-      },
-      events: {} as
-        | {
-            type: "Page has mounted";
-            context: {
-              areaId: string | null;
-            };
-          }
-        | {
-            type: "Select area";
-            areaId: string;
-          }
-        | {
-            type: "Clear area selection";
-          },
-      actions: {} as
-        | {
-            type: "initContext";
-            context: {
-              areaId: string | null;
-            };
-          }
-        | {
-            type: "setAreaId";
-            areaId: string;
-          }
-        | {
-            type: "clearAreaId";
-          }
-        | {
-            type: "assignMapData";
-            countryLimitsGeojson: CountryLimitsGeoJSON;
-            countryCapitalsGeojson: CountryCapitalsGeoJSON;
-          },
+      context: {} as StateContext,
+      events: {} as StateEvents,
+      actions: {} as StateActions,
     },
 
     context: {
       areaId: null,
-      countryLimitsGeoJSON: null,
-      countryCapitalsGeoJSON: null,
+      mapBounds: null,
     },
 
     states: {
-      "Map is loading": {
-        invoke: {
-          id: "fetchMapData",
-          src: "fetchMapData",
-          onError: {
-            target: "Unexpected error",
-          },
-          onDone: {
-            target: "Initial globe view",
-            actions: assign({
-              countryLimitsGeoJSON: ({ event }) =>
-                event.output.countryLimitsGeojson,
-              countryCapitalsGeoJSON: ({ event }) =>
-                event.output.countryCapitalsGeojson,
-            }),
+      initial: {
+        on: {
+          "event:area:select": {
+            target: "area:selected",
+            actions: "action:area:select",
           },
         },
       },
 
-      "Initial globe view": {
+      "area:selected": {
         on: {
-          "Select area": {
-            target: "Country is selected",
-            actions: "setAreaId",
-          },
-        },
-      },
-
-      "Country is selected": {
-        on: {
-          "Clear area selection": {
-            target: "Initial globe view",
-            actions: "clearAreaId",
+          "event:area:clear": {
+            target: "initial",
+            actions: "action:area:clear",
           },
 
-          "Select area": {
-            target: "Country is selected",
-            actions: "setAreaId",
+          "event:area:select": {
+            target: "area:selected",
+            actions: "action:area:select",
           },
         },
       },
 
       "Unexpected error": {},
 
-      "Page is mounting": {
+      "page:mounting": {
         on: {
-          "Page has mounted": {
-            target: "Map is loading",
+          "event:page:mounted": {
+            target: "initial",
             reenter: true,
-            actions: "initContext",
+            actions: "action:initializeContext",
           },
         },
       },
     },
 
-    initial: "Page is mounting",
+    initial: "page:mounting",
   },
   {
     actions: {
-      initContext: assign(({ event }) => {
-        assertEvent(event, "Page has mounted");
+      "action:initializeContext": assign(({ event }) => {
+        assertEvent(event, "event:page:mounted");
         return {
           ...event.context,
         };
       }),
-      setAreaId: assign(({ event }) => {
-        assertEvent(event, "Select area");
+      "action:area:select": assign(({ event }) => {
+        assertEvent(event, "event:area:select");
         return {
-          areaId: event.areaId,
+          areaId: event.area.properties.id,
+          mapBounds: bbox(event.area),
         };
       }),
-      clearAreaId: assign({
+      "action:area:clear": assign({
         areaId: undefined,
-      }),
-    },
-    actors: {
-      fetchMapData: fromPromise(async () => {
-        const countryLimitsGeojson = await fetch(
-          "/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson"
-        )
-          .then((response) => response.json() as Promise<CountryLimitsGeoJSON>)
-          .then((data) => ({
-            ...data,
-            features: data.features
-              .map((feature) => ({
-                ...feature,
-                properties: {
-                  ...feature.properties,
-                  id: feature.properties.iso_a2,
-                },
-              }))
-              .filter((feature) => feature.properties.id !== "-99"),
-          }));
-
-        const countryCapitalsGeojson = await fetch(
-          "/naturalearth-3.3.0/ne_50m_populated_places_adm0cap.geojson"
-        )
-          .then(
-            (response) => response.json() as Promise<CountryCapitalsGeoJSON>
-          )
-          .then((data) => ({
-            ...data,
-            features: data.features.map((feature) => ({
-              ...feature,
-              properties: {
-                ...feature.properties,
-                id: feature.properties.ISO_A2,
-              },
-            })),
-          }));
-
-        return {
-          countryLimitsGeojson,
-          countryCapitalsGeojson,
-        };
       }),
     },
   }

@@ -38,11 +38,12 @@ function GlobeInner() {
     state.matches("Page is mounting")
   );
   const pageUrl = MachineContext.useSelector(selectors.pageUrl);
+  const mapBounds = MachineContext.useSelector(selectors.mapBounds);
 
   // On mount, pass route parameters to the machine
   useEffect(() => {
     actorRef.send({
-      type: "Page has mounted",
+      type: "event:page:mounted",
       context: { areaId: params.areaId || null },
     });
   }, []);
@@ -54,6 +55,16 @@ function GlobeInner() {
     }
   }, [router, pageUrl, pageIsMounting]);
 
+  useEffect(() => {
+    if (mapRef.current && mapBounds) {
+      const [x1, y1, x2, z2] = mapBounds;
+      mapRef.current.fitBounds([x1, y1, x2, z2], {
+        padding: 200,
+        duration: 500,
+      });
+    }
+  }, [mapBounds]);
+
   const onClick = useCallback((event: MapMouseEvent) => {
     if (mapRef.current) {
       const features = mapRef.current.queryRenderedFeatures(event.point, {
@@ -62,8 +73,18 @@ function GlobeInner() {
 
       if (features.length > 0) {
         const feature = features[0];
-        if (feature?.properties?.id) {
-          router.push(`/area/${feature.properties.id}`);
+        if (feature) {
+          actorRef.send({
+            type: "event:area:select",
+            area: {
+              type: "Feature",
+              geometry: feature.geometry,
+              properties: {
+                id: feature.properties.id,
+                name: feature.properties.name,
+              },
+            },
+          });
         }
       }
     }
