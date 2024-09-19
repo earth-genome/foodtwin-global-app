@@ -166,21 +166,6 @@ function GlobeInner() {
             </Source>
           )}
 
-          <Source
-            id="nodes-tiles"
-            type="vector"
-            tiles={[`${appUrl}/api/tiles/nodes/{z}/{x}/{y}`]}
-          >
-            <Layer
-              id="node-point"
-              type="circle"
-              source-layer="default"
-              paint={{
-                "circle-radius": 0.5,
-              }}
-            />
-          </Source>
-
           <EdgeLayer />
 
           {highlightArea && (
