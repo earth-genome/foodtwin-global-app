@@ -9,7 +9,7 @@ function SearchPage() {
   const [hasFocus, setHasFocus] = useState<boolean>(false);
 
   const toggleFocus = () => setHasFocus((prev) => !prev);
-  const { results, error } = useSearch(value);
+  const { results, error, isPending } = useSearch(value);
 
   return (
     <div className="absolute top-0 left-0 z-40 h-screen w-screen bg-neutral-100/50 backdrop-blur">
@@ -41,7 +41,7 @@ function SearchPage() {
           </div>
         )}
 
-        {results && <Results results={results} q={value} />}
+        {!isPending && results && <Results results={results} q={value} />}
       </div>
     </div>
   );
