@@ -32,13 +32,13 @@ function Results({ results, q }: IResultsPage) {
 
   return (
     <ul className="font-header text-2xl text-neutral-800 tracking-tight">
-      {results.map(({ id, label, type }) => {
+      {results.map(({ id, name, type }) => {
         const linkHref = generateItemLink(type, id);
         return (
           <li key={id} className="flex items-center gap-4 mb-2">
             <TypeIcon itemType={type} />{" "}
             <Link href={linkHref} className="hover:underline">
-              {label}
+              {name}
             </Link>
           </li>
         );

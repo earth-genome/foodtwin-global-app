@@ -7,6 +7,6 @@ export interface ProductionArea {
 
 export interface IResult {
   id: string;
-  label: string;
+  name: string;
   type: EItemType;
 }

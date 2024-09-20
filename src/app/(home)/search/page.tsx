@@ -9,12 +9,7 @@ function SearchPage() {
   const [hasFocus, setHasFocus] = useState<boolean>(false);
 
   const toggleFocus = () => setHasFocus((prev) => !prev);
-  const { results } = useSearch(value);
-
-  const error =
-    value.length > 0 &&
-    value.length < 3 &&
-    "Enter at least 3 letters to start searching.";
+  const { results, error } = useSearch(value);
 
   return (
     <div className="absolute top-0 left-0 z-40 h-screen w-screen bg-neutral-100/50 backdrop-blur">
