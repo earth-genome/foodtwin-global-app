@@ -1,6 +1,13 @@
 import { bbox } from "@turf/bbox";
 import { assign, createMachine, assertEvent } from "xstate";
-import { StateContext, StateActions, StateEvents } from "./types";
+import { StateEvents } from "./types/events";
+import { StateActions } from "./types/actions";
+import { BBox } from "geojson";
+
+interface StateContext {
+  areaId: string | null;
+  mapBounds: BBox | null;
+}
 
 export const globeViewMachine = createMachine(
   {
