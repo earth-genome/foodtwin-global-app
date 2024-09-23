@@ -11,7 +11,7 @@ interface StateContext {
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHS4B2uALrgIYoDEYAbmKRQtQE5jUKxgpgAxhQDaABgC6iUAAc0sSrjSlpIAB6IAjAE4AbETFiALACYjADnOmA7GO2aAzABoQAT0QBaTZv1jzusU0AVmCHTXMg62sAX2iXVEwcfGJObl5+IQpIBmZWdi4eQQFOcSkkEDkFKmVVDQQPByJrcOswyN0TB21m7Rd3eu9ff0CQoLCI611Y+PQsPEIiVJ4+AWFsphY2JfTV0UlVSsUa8rrNE2siHyNNMSCg3V0HMWbrPq0HIKJza3NHbzHzH5NNMQAk5skiDJqDAEABbNAAV1YZCgOU2CChMPhSKyEFKB3kRxUJ08JjERAczXMlPuZiCt10QTe9QcHQMH10Okeula1jMsTiIFIaAgcFUYKShAJVSUxNAdQ8unMFKpNI6RnpkWZHjGRiIRl02j813M2iCgIcIIl82IZEUtGlRNqiEpBnMJiC3Q9ZgclO1Jk0ep+Su8H2e1w+VtmkpSBR2mUgjuqcvUiAuYUpmkmRlMfjJrzcWnJrW09kCWZzjMcUcSNsh0LAcMRyNIUCTsudCE0XzC10DhuMXSMem1OYuJl+gPp4TD5wF0SAA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHS4B2uALrgIYoDEYAbmKRQtQE5jUKxgpgAxhQDaABgC6iUAAc0sSrjSlpIAB6IArAE4A7EQDMBgCwAmYwYAclg7u0BGYwBoQAT0SX7Re5d3ndYtqaAGyWYpoAvhEuqJg4+MSc3Lz8QhSQDMys7Fw8ggKc4lJIIHIKVMqqGgg6moYW9poBwYE+li7uCPa6wUSapi1GA76aBqaWUTHoWHiEREk8fALCGUwsbAspy6KSqmWKlSXVxvamRMZiBsHGOmPBpprGuh2IDkRi45f23WH2HxPRECxGYJIgyagwBAAWzQAFdWGQoJl1ghwZCYfCdsVZPIDiojohTOE+r5TOYxI0xnoXghTLovJZrp5tMYTpYBpMgdN4nModQZNC4QjSEi1tk+QKMawintcRV8aBqrV6gZGs1WtYaXSGUz7Cy2RzOaQ0BA4KpgTyCLLykoFepEABaYI0p2ci2zYhkRS0a14qqIOx1OlXSyaD7aMTBXQGLWh7zXTT9HxmTw2N3cj3zXJbNKQX3y-0IMz6EJEoI9MxR51uRB6rxXUL9EwPBzBdNxTNosCCzGI-O2wtmLUsoi6Xxjkw9VPGdsg3n8nvCqD9w6KxBmYznMKaP6mAws0zabTDzdj3Q9XQWCMWNtRCJAA */
     id: "globeView",
 
     types: {
@@ -51,10 +51,20 @@ export const globeViewMachine = createMachine(
 
       "page:mounting": {
         on: {
-          "event:page:mounted": {
-            target: "initial",
+          "event:page:mount": {
+            target: "map:mounting",
             reenter: true,
             actions: "action:initializeContext",
+          },
+        },
+      },
+
+      "map:mounting": {
+        on: {
+          "event:map:mount": {
+            target: "initial",
+            reenter: true,
+            actions: "action:setMapRef",
           },
         },
       },
@@ -65,7 +75,7 @@ export const globeViewMachine = createMachine(
   {
     actions: {
       "action:initializeContext": assign(({ event }) => {
-        assertEvent(event, "event:page:mounted");
+        assertEvent(event, "event:page:mount");
         return {
           ...event.context,
         };

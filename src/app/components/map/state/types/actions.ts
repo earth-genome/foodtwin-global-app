@@ -1,4 +1,5 @@
 import { BBox } from "geojson";
+import { MapRef } from "react-map-gl";
 
 interface ActionInitContext {
   type: "action:initializeContext";
@@ -6,6 +7,12 @@ interface ActionInitContext {
     areaId: string | null;
   };
 }
+
+interface ActionSetMapRef {
+  type: "action:setMapRef";
+  mapRef: MapRef;
+}
+
 interface ActionAreaSelect {
   type: "action:area:select";
   areaId: string;
@@ -17,5 +24,6 @@ interface ActionAreaClear {
 
 export type StateActions =
   | ActionInitContext
+  | ActionSetMapRef
   | ActionAreaSelect
   | ActionAreaClear;

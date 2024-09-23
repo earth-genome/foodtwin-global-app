@@ -41,8 +41,11 @@ function GlobeInner() {
   const [highlightArea, setHighlightArea] = useState<IHighlightArea>();
 
   // Selectors
-  const pageIsMounting = MachineContext.useSelector((state) =>
-    state.matches("Page is mounting")
+  const pageIsMounting = MachineContext.useSelector((s) =>
+    s.matches("page:mounting")
+  );
+  const mapIsMounting = MachineContext.useSelector((s) =>
+    s.matches("map:mounting")
   );
   const pageUrl = MachineContext.useSelector(selectors.pageUrl);
   const mapBounds = MachineContext.useSelector(selectors.mapBounds);
@@ -50,10 +53,19 @@ function GlobeInner() {
   // On mount, pass route parameters to the machine
   useEffect(() => {
     actorRef.send({
-      type: "event:page:mounted",
+      type: "event:page:mount",
       context: { areaId: params.areaId || null },
     });
   }, []);
+
+  useEffect(() => {
+    if (mapIsMounting && mapRef.current) {
+      actorRef.send({
+        type: "event:map:mount",
+        mapRef: mapRef.current,
+      });
+    }
+  }, [mapIsMounting, mapRef.current]);
 
   // Update the URL when necessary
   useEffect(() => {
