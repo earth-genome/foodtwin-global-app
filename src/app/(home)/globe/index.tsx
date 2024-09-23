@@ -7,22 +7,29 @@ import Map, {
   MapRef,
   MapMouseEvent,
   MapLayerMouseEvent,
+  MapGeoJSONFeature,
 } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { LngLat } from "react-map-gl";
 
 import { EItemType } from "@/types/components";
 import MapPopup from "@/app/components/map-popup";
-import { ProductionArea } from "@/types/data";
 
 import { MachineContext, MachineProvider } from "./state";
 import { selectors } from "./state/selectors";
-import { Feature, Polygon } from "geojson";
 import EdgeLayer from "./layers/edges";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-interface IHighlightArea extends Feature<Polygon, ProductionArea> {
+// Colors
+const SEA_BLUE = "rgb(173, 216, 230)";
+const AREA_HIGHLIGHT_COLOR = "rgba(250, 250, 249, 0.7)";
+const AREA_DEFAULT_COLOR = "rgba(250, 250, 249, 0.3)";
+const AREA_HIGHLIGHT_OUTLINE_COLOR = "rgba(0, 0, 0, 1)";
+const AREA_DEFAULT_OUTLINE_COLOR = "rgba(0, 0, 0, 0.3)";
+
+interface IHighlightArea {
+  feature: MapGeoJSONFeature;
   popupLocation: LngLat;
 }
 
@@ -98,16 +105,24 @@ function GlobeInner() {
       });
 
       const interactiveItem = features && features[0];
+
+      // Clear current highlighted area, if any
+      if (highlightArea && highlightArea.feature !== interactiveItem) {
+        mapRef.current.setFeatureState(highlightArea.feature, { hover: false });
+      }
+
+      // Handle the current item under the mouse
       if (interactiveItem) {
+        mapRef.current.setFeatureState(interactiveItem, { hover: true });
         setHighlightArea({
-          ...interactiveItem.toJSON(),
+          feature: interactiveItem,
           popupLocation: event.lngLat,
         } as IHighlightArea);
       } else {
         setHighlightArea(undefined);
       }
     },
-    [setHighlightArea]
+    [highlightArea, setHighlightArea]
   );
 
   return (
@@ -149,7 +164,7 @@ function GlobeInner() {
               id="background-layer"
               type="fill"
               paint={{
-                "fill-color": "rgb(173, 216, 230)", // Sea blue color
+                "fill-color": SEA_BLUE,
               }}
             />
           </Source>
@@ -170,34 +185,18 @@ function GlobeInner() {
               type="fill"
               source-layer="default"
               paint={{
-                "fill-color": "rgba(250, 250, 249, 0.3)", // Transparent blue
-              }}
-            />
-            {highlightArea?.properties?.id && (
-              <Layer
-                id="area-highlighted-polygon"
-                type="fill"
-                source-layer="default"
-                filter={["==", ["get", "id"], highlightArea.properties.id]}
-                paint={{
-                  "fill-color": "rgba(250, 250, 249, 0.7)", // Highlighted color
-                  "fill-outline-color": "rgba(0, 0, 0, 1)",
-                }}
-              />
-            )}
-          </Source>
-
-          <Source
-            id="nodes-tiles"
-            type="vector"
-            tiles={[`${appUrl}/api/tiles/nodes/{z}/{x}/{y}`]}
-          >
-            <Layer
-              id="node-point"
-              type="circle"
-              source-layer="default"
-              paint={{
-                "circle-radius": 0.5,
+                "fill-color": [
+                  "case",
+                  ["boolean", ["feature-state", "hover"], false],
+                  AREA_HIGHLIGHT_COLOR,
+                  AREA_DEFAULT_COLOR,
+                ],
+                "fill-outline-color": [
+                  "case",
+                  ["boolean", ["feature-state", "hover"], false],
+                  AREA_HIGHLIGHT_OUTLINE_COLOR,
+                  AREA_DEFAULT_OUTLINE_COLOR,
+                ],
               }}
             />
           </Source>
@@ -206,9 +205,9 @@ function GlobeInner() {
 
           {highlightArea && (
             <MapPopup
-              id={highlightArea.properties.id}
+              id={highlightArea.feature.properties.id}
               itemType={EItemType.area}
-              label={highlightArea.properties.name}
+              label={highlightArea.feature.properties.name}
               longitude={highlightArea.popupLocation.lng}
               latitude={highlightArea.popupLocation.lat}
             />
