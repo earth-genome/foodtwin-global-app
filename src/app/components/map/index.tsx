@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useCallback, useRef, useState } from "react";
+import React, { useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Map, {
   Layer,
@@ -7,12 +7,9 @@ import Map, {
   MapRef,
   MapMouseEvent,
   MapLayerMouseEvent,
-  MapGeoJSONFeature,
 } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { LngLat } from "react-map-gl";
 
-import { EItemType } from "@/types/components";
 import MapPopup from "@/app/components/map-popup";
 
 import { MachineContext, MachineProvider } from "./state";
@@ -28,17 +25,11 @@ const AREA_DEFAULT_COLOR = "rgba(250, 250, 249, 0.3)";
 const AREA_HIGHLIGHT_OUTLINE_COLOR = "rgba(0, 0, 0, 1)";
 const AREA_DEFAULT_OUTLINE_COLOR = "rgba(0, 0, 0, 0.3)";
 
-interface IHighlightArea {
-  feature: MapGeoJSONFeature;
-  popupLocation: LngLat;
-}
-
 function GlobeInner() {
   const router = useRouter();
   const params = useParams<{ areaId: string }>();
   const actorRef = MachineContext.useActorRef();
   const mapRef = useRef<MapRef>(null);
-  const [highlightArea, setHighlightArea] = useState<IHighlightArea>();
 
   // Selectors
   const pageIsMounting = MachineContext.useSelector((s) =>
@@ -49,8 +40,21 @@ function GlobeInner() {
   );
   const pageUrl = MachineContext.useSelector(selectors.pageUrl);
   const mapBounds = MachineContext.useSelector(selectors.mapBounds);
+  const eventHandlers = MachineContext.useSelector(
+    (state) => state.context.eventHandlers
+  );
+  const mapPopup = MachineContext.useSelector(
+    (state) => state.context.mapPopup
+  );
 
-  // On mount, pass route parameters to the machine
+  const handleMouseMove = useCallback((event: MapLayerMouseEvent) => {
+    actorRef.send({
+      type: "event:map:mousemove",
+      mapEvent: event,
+    });
+  }, []);
+
+  // On mount, pass route parameters to the machineaad
   useEffect(() => {
     actorRef.send({
       type: "event:page:mount",
@@ -109,33 +113,16 @@ function GlobeInner() {
     }
   }, []);
 
-  const onMouseMove = useCallback(
-    (event: MapLayerMouseEvent) => {
-      if (!mapRef.current) return;
-      const features = mapRef.current.queryRenderedFeatures(event.point, {
-        layers: ["area-clickable-polygon"],
-      });
+  // Enable/disable map mousemove
+  useEffect(() => {
+    if (!mapRef.current) return;
 
-      const interactiveItem = features && features[0];
-
-      // Clear current highlighted area, if any
-      if (highlightArea && highlightArea.feature !== interactiveItem) {
-        mapRef.current.setFeatureState(highlightArea.feature, { hover: false });
-      }
-
-      // Handle the current item under the mouse
-      if (interactiveItem) {
-        mapRef.current.setFeatureState(interactiveItem, { hover: true });
-        setHighlightArea({
-          feature: interactiveItem,
-          popupLocation: event.lngLat,
-        } as IHighlightArea);
-      } else {
-        setHighlightArea(undefined);
-      }
-    },
-    [highlightArea, setHighlightArea]
-  );
+    if (eventHandlers.mousemove) {
+      mapRef.current.on("mousemove", handleMouseMove);
+    } else {
+      mapRef.current.off("mousemove", handleMouseMove);
+    }
+  }, [handleMouseMove, eventHandlers.mousemove, mapRef.current]);
 
   return (
     <div className="flex-1 bg-gray-100 flex items-center justify-center">
@@ -148,8 +135,6 @@ function GlobeInner() {
             zoom: 2,
           }}
           onClick={onClick}
-          onMouseMove={onMouseMove}
-          onMouseLeave={() => setHighlightArea(undefined)}
           style={{ width: "100%", height: "100%" }}
         >
           <Source
@@ -215,15 +200,7 @@ function GlobeInner() {
 
           <EdgeLayer />
 
-          {highlightArea && (
-            <MapPopup
-              id={highlightArea.feature.properties.id}
-              itemType={EItemType.area}
-              label={highlightArea.feature.properties.name}
-              longitude={highlightArea.popupLocation.lng}
-              latitude={highlightArea.popupLocation.lat}
-            />
-          )}
+          {mapPopup && <MapPopup {...mapPopup} />}
         </Map>
       </div>
     </div>

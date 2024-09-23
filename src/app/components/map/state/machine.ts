@@ -3,15 +3,24 @@ import { assign, createMachine, assertEvent } from "xstate";
 import { StateEvents } from "./types/events";
 import { StateActions } from "./types/actions";
 import { BBox } from "geojson";
+import { MapGeoJSONFeature, MapRef } from "react-map-gl/maplibre";
+import { IMapPopup } from "../../map-popup";
+import { EItemType } from "@/types/components";
 
 interface StateContext {
+  mapRef: MapRef | null;
   areaId: string | null;
+  highlightedArea: MapGeoJSONFeature | null;
+  mapPopup: IMapPopup | null;
   mapBounds: BBox | null;
+  eventHandlers: {
+    mousemove: boolean;
+  };
 }
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHS4B2uALrgIYoDEYAbmKRQtQE5jUKxgpgAxhQDaABgC6iUAAc0sSrjSlpIAB6IArAE4A7EQDMBgCwAmYwYAclg7u0BGYwBoQAT0SX7Re5d3ndYtqaAGyWYpoAvhEuqJg4+MSc3Lz8QhSQDMys7Fw8ggKc4lJIIHIKVMqqGgg6moYW9poBwYE+li7uCPa6wUSapi1GA76aBqaWUTHoWHiEREk8fALCGUwsbAspy6KSqmWKlSXVxvamRMZiBsHGOmPBpprGuh2IDkRi45f23WH2HxPRECxGYJIgyagwBAAWzQAFdWGQoJl1ghwZCYfCdsVZPIDiojohTOE+r5TOYxI0xnoXghTLovJZrp5tMYTpYBpMgdN4nModQZNC4QjSEi1tk+QKMawintcRV8aBqrV6gZGs1WtYaXSGUz7Cy2RzOaQ0BA4KpgTyCLLykoFepEABaYI0p2ci2zYhkRS0a14qqIOx1OlXSyaD7aMTBXQGLWh7zXTT9HxmTw2N3cj3zXJbNKQX3y-0IMz6EJEoI9MxR51uRB6rxXUL9EwPBzBdNxTNosCCzGI-O2wtmLUsoi6Xxjkw9VPGdsg3n8nvCqD9w6KxBmYznMKaP6mAws0zabTDzdj3Q9XQWCMWNtRCJAA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHS4B2uALrgIYoDEYAbmKRQtQE5jUKxgpgAxhQDaABgC6iUAAc0sSrjSlpIAB6IArAE4A7EQDMBgCwAmYwYAclg7u0BGYwBoQAT0SX7Re5d3ndYtqaAGyWYpoAvhEuqJg4+MSc3Lz8QhSQDMys7Fw8ggKc4lJIIHIKVMqqGgg6moYW9poBwYE+li7uCPa6wUSapi1GA76aBqaWUTHoWHiEREk8fALCGUwsbAspy6KSqmWKlSXVxvamRMZiBsHGOmPBpprGuh2IDkRi45f23WH2HxPRECxGYJIgyagwBAAWzQAFdWGQoJl1ghwZCYfCdsVZPIDiojohTOE+r5TOYxI0xnoXghTLovJZrp5tMYTpYBpMgdN4nModQZNC4QjSEi1tk+QKMawintcRV8aBqrV6gZGs1WtYaXSGUz7Cy2RzAcCecQyIpaMjxfzBbC+DDmDKSvt5VUPNciIzgg57uztH7TDSDNpeuFWZpLH7gj1RlFAaQ0BA4KpjbMCLLykoFepEABaYI0vPvMTFgxiUJR0v-Tkp0Fmqi0dN410IOx1OlXSyaD7aMu6Axazvea6afo+MyeGzV7mp+a5LZpSCNl0EhBmfQhIlBHpmKP5tyIPVeK6hfomB7eqdxGdosA24VQJeZ5tmLUsoi6Xwfkw9CfGS8g3lrSlKgRUfQ5FUQMxjHOMJND+UwgzMP1X2gj9dB6XQLB7CxgljCIgA */
     id: "globeView",
 
     types: {
@@ -21,8 +30,14 @@ export const globeViewMachine = createMachine(
     },
 
     context: {
+      mapRef: null,
       areaId: null,
+      highlightedArea: null,
+      mapPopup: null,
       mapBounds: null,
+      eventHandlers: {
+        mousemove: true,
+      },
     },
 
     states: {
@@ -31,6 +46,11 @@ export const globeViewMachine = createMachine(
           "event:area:select": {
             target: "area:selected",
             actions: "action:area:select",
+          },
+
+          "event:map:mousemove": {
+            target: "initial",
+            actions: "action:setHighlightedArea",
           },
         },
       },
@@ -78,6 +98,51 @@ export const globeViewMachine = createMachine(
         assertEvent(event, "event:page:mount");
         return {
           ...event.context,
+        };
+      }),
+      "action:setMapRef": assign(({ event }) => {
+        assertEvent(event, "event:map:mount");
+
+        return {
+          mapRef: event.mapRef,
+        };
+      }),
+      "action:setHighlightedArea": assign(({ event, context }) => {
+        assertEvent(event, "event:map:mousemove");
+
+        const { highlightedArea, mapRef } = context;
+
+        if (!mapRef) {
+          return {};
+        }
+
+        if (highlightedArea) {
+          mapRef.setFeatureState(highlightedArea, {
+            hover: false,
+          });
+        }
+
+        const features = mapRef.queryRenderedFeatures(event.mapEvent.point, {
+          layers: ["area-clickable-polygon"],
+        });
+
+        const feature = features && features[0];
+
+        if (feature) {
+          mapRef.setFeatureState(feature, { hover: true });
+        }
+
+        return {
+          highlightedArea: feature || null,
+          mapPopup: feature
+            ? {
+                id: feature.properties.id,
+                label: feature.properties.name,
+                itemType: EItemType.area,
+                longitude: event.mapEvent.lngLat.lng,
+                latitude: event.mapEvent.lngLat.lat,
+              }
+            : null,
         };
       }),
       "action:area:select": assign(({ event }) => {
