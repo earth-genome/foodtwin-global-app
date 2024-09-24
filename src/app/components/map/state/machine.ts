@@ -23,7 +23,7 @@ interface StateContext {
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggIZlicKxgUYAMZsA2gAYAuolAAHNLFxtcaFrJAAPRAHYdEogGZDADh0mAbBYCcAJluGArIYA0IAJ6IAjBYNeJJhIALCbWOo62JoYWjgC+sW6omDh0JOSUNHSMzOwIALaccvloAK4CeWjMkjJIIApKKmoa2giWQUSWNj6RttZ9tm6eCIbWFkQSjkFBjqGjOjGG8YnoWHiERHKcMMUl7LgsUNmsHJvbFbvi0hr1yqrqtS22E0QzOvZBEl7OvTqDiLY6LwdCwhLzWKZeEy2CxLEBJVapApFc57A5HXJInbsarXRS3JoPRCOayOIxBQxffS+ayQkx-BAAoFtExgiFQmEJOErFLrbi8BAAMzAbGEAAt9ocIGowER9tQ0ABrGXwnnEPl8IUi8UHBBytDCTiNFjVHG1G5G5q6Cy2IheQwSBxvCZ6AL0gC0bxeEjsEzskR0H0WnJVazVPD4tEI6I46oQwiE3FN8jxFsJCC8XgDRGsnwpZhGEQD9J8fgCwVC4Ui0Tiwe5oaIscjDCYxy44f4ghElxqyYad0tCD6BkcEhs1mMkX84XpESIejeTwk5kM0yCMXinJYaAgcA0IbouL7BNALTdFndPiBa9sU3s87CXlssP361IFCoTcP+PuJ90JKIALRCYI69KOOiuB4-zAbaIKOBEkJBJOUTPnWqSnGAWIqAcX6pr+CCIfSvTtOYehREE8wsiYQQock9aYiiWFQDh-Zpoh7QhBM-gOOCvTWIR4JzmY8wBiMwTRDRCK8u2mpihKzHHloughGS1jATY5gxEu-G2oCkzBNSQTgmYEmqg27afmaKYsXh-iOEC8yGL0mYOhCQTulmAJ2XBPjjiugIbrEQA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggIZlicKxgUYAMZsA2gAYAuolAAHNLFxtcaFrJAAPRAHYdEogGZDADh0mAbBYCcAJluGArIYA0IAJ6IAjBYNeJJhIALCbWOo62JoYWjgC+sW6omDh0JOSUNHSMzOwIALaccvloAK4CeWjMkjJIIApKKmoa2giWQUSWNj6RttZ9tm6eCIbWFkQSjkFBjqGjOjGG8YnoWHiERHKcMMUl7LgsUNmsHJvbFbvi0hr1yqrqtS22E0QzOvZBEl7OvTqDiLY6LwdCwhLzWKZeEy2CxLEBJVapApFc57A5HXJInbsarXRS3JoPRCOayOIxBQxffS+ayQkx-BAAoFtExgiFQmEJOErFLrbi8BAAMzAbGEAAt9ocIGowER9tQ0ABrGXwnnEPl8IUi8UHBBytDCTiNFjVHG1G5G5q6Cy2IheQwSBxvCZ6AL0gC0bxeEjsEzskR0H0WnJVazVPD4tEI6I46oQwiE3FN8jxFsJCC8XgDRGsnwpZhGEQD9J8fgCwVC4Ui0Tiwe5oaIscjDCYxy44f4ghElxqyYad0tCD6BkcEhs1mMkX84XpESIejeTwk5kM0yCMVhIdSjayLYxhR25UqYCTdRT-bTGdMc8zIWi82soTpHkQbqe1jnjinlkCYI5nJYaAQHAGiboQuJ9gSoAtG6Fjur0YzjlEMTmJYMzRBudapKQFBUE24H4vcUG6CSRAAtEJgjr0o46K4z4MhRtogo4ESQkEk5RBhyT1qcYBYioBz4amREIGx9K9O05h6FEQTzCyJhBJxCLrJiKL8VAgnnsJbHtCEEz+A44K9NYYngnOZjzAGIzBOhtZcVu7aamKEoaZBWi6CEZIPo4NjmDES4mbagKTME1JBOCZiKaqDbtnhZpnq5LT+J+c4WIYvSZg6EJBO6WYAp+zE+OOK6AvE8RAA */
     id: "globeView",
 
     types: {
@@ -106,6 +106,11 @@ export const globeViewMachine = createMachine(
             target: "area:fetching",
             reenter: true,
             actions: "action:setCurrentAreaId",
+          },
+
+          "event:map:mousemove": {
+            target: "area:view",
+            actions: "action:setHighlightedArea",
           },
         },
 
