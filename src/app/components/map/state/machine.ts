@@ -10,7 +10,6 @@ import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 
 interface StateContext {
   mapRef: MapRef | null;
-  areaId: string | null;
   highlightedArea: MapGeoJSONFeature | null;
   currentAreaId: string | null;
   currentArea: FetchAreaResponse | null;
@@ -34,7 +33,6 @@ export const globeViewMachine = createMachine(
 
     context: {
       mapRef: null,
-      areaId: null,
       highlightedArea: null,
       currentAreaId: null,
       currentArea: null,
@@ -122,12 +120,6 @@ export const globeViewMachine = createMachine(
   },
   {
     actions: {
-      "action:initializeContext": assign(({ event }) => {
-        assertEvent(event, "event:page:mount");
-        return {
-          ...event.context,
-        };
-      }),
       "action:setMapRef": assign(({ event }) => {
         assertEvent(event, "event:map:mount");
 
@@ -210,7 +202,8 @@ export const globeViewMachine = createMachine(
         };
       }),
       "action:area:clear": assign({
-        areaId: undefined,
+        currentAreaId: undefined,
+        currentArea: undefined,
       }),
     },
     actors: {
