@@ -195,7 +195,7 @@ export const globeViewMachine = createMachine(
             [bounds[2], bounds[3]],
           ],
           {
-            padding: 400,
+            padding: 100,
           }
         );
 
