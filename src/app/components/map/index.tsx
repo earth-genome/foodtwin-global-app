@@ -54,7 +54,7 @@ function GlobeInner() {
     });
   }, []);
 
-  // On mount, pass route parameters to the machineaad
+  // On mount, pass route parameters to the machine
   useEffect(() => {
     actorRef.send({
       type: "event:page:mount",
@@ -78,16 +78,6 @@ function GlobeInner() {
     }
   }, [router, pageUrl, pageIsMounting]);
 
-  useEffect(() => {
-    if (mapRef.current && mapBounds) {
-      const [x1, y1, x2, z2] = mapBounds;
-      mapRef.current.fitBounds([x1, y1, x2, z2], {
-        padding: 200,
-        duration: 500,
-      });
-    }
-  }, [mapBounds]);
-
   const onClick = useCallback((event: MapMouseEvent) => {
     if (mapRef.current) {
       const features = mapRef.current.queryRenderedFeatures(event.point, {
@@ -99,14 +89,7 @@ function GlobeInner() {
         if (feature) {
           actorRef.send({
             type: "event:area:select",
-            area: {
-              type: "Feature",
-              geometry: feature.geometry,
-              properties: {
-                id: feature.properties.id,
-                name: feature.properties.name,
-              },
-            },
+            areaId: feature.properties.id,
           });
         }
       }

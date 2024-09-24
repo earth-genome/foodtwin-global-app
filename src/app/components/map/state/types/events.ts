@@ -2,6 +2,7 @@ import { ProductionArea } from "@/types/data";
 import { Feature, Geometry } from "geojson";
 import { MapRef } from "react-map-gl/maplibre";
 import { MapLayerMouseEvent } from "react-map-gl/dist/esm/exports-maplibre";
+import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 
 interface EventPageMount {
   type: "event:page:mount";
@@ -22,7 +23,15 @@ interface EventMapMouseMove {
 
 interface EventAreaSelect {
   type: "event:area:select";
-  area: Feature<Geometry, ProductionArea>;
+  areaId: string;
+}
+
+interface EventFetchAreaDone {
+  type: "xstate.done.actor.0.globeView.area:fetching";
+  input: {
+    areaId: string;
+  };
+  output: FetchAreaResponse;
 }
 
 interface EventAreaClear {
@@ -34,4 +43,5 @@ export type StateEvents =
   | EventMapMount
   | EventMapMouseMove
   | EventAreaSelect
+  | EventFetchAreaDone
   | EventAreaClear;

@@ -1,4 +1,3 @@
-import { BBox } from "geojson";
 import { MapGeoJSONFeature, MapRef } from "react-map-gl/maplibre";
 import { IMapPopup } from "@/app/components/map-popup";
 
@@ -20,10 +19,17 @@ interface ActionSetHighlightedArea {
   MapPopup: IMapPopup | null;
 }
 
-interface ActionAreaSelect {
-  type: "action:area:select";
-  areaId: string;
-  mapBounds: BBox | null;
+interface ActionSetCurrentAreaId {
+  type: "action:setCurrentAreaId";
+  currentAreaId: string;
+}
+interface ActionSetCurrentArea {
+  type: "action:setCurrentArea";
+  area: GeoJSON.Feature;
+}
+
+interface ActionSetAreaMapView {
+  type: "action:setAreaMapView";
 }
 interface ActionAreaClear {
   type: "action:area:clear";
@@ -33,6 +39,7 @@ export type StateActions =
   | ActionInitContext
   | ActionSetMapRef
   | ActionSetHighlightedArea
-  | ActionAreaSelect
-  | ActionAreaSelect
+  | ActionSetCurrentAreaId
+  | ActionSetCurrentArea
+  | ActionSetAreaMapView
   | ActionAreaClear;

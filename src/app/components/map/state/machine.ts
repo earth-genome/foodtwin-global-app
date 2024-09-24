@@ -1,16 +1,19 @@
 import { bbox } from "@turf/bbox";
-import { assign, createMachine, assertEvent } from "xstate";
+import { assign, createMachine, assertEvent, fromPromise, setup } from "xstate";
 import { StateEvents } from "./types/events";
 import { StateActions } from "./types/actions";
 import { BBox } from "geojson";
 import { MapGeoJSONFeature, MapRef } from "react-map-gl/maplibre";
 import { IMapPopup } from "../../map-popup";
 import { EItemType } from "@/types/components";
+import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 
 interface StateContext {
   mapRef: MapRef | null;
   areaId: string | null;
   highlightedArea: MapGeoJSONFeature | null;
+  currentAreaId: string | null;
+  currentArea: FetchAreaResponse | null;
   mapPopup: IMapPopup | null;
   mapBounds: BBox | null;
   eventHandlers: {
@@ -20,7 +23,7 @@ interface StateContext {
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHS4B2uALrgIYoDEYAbmKRQtQE5jUKxgpgAxhQDaABgC6iUAAc0sSrjSlpIAB6IArAE4A7EQDMBgCwAmYwYAclg7u0BGYwBoQAT0SX7Re5d3ndYtqaAGyWYpoAvhEuqJg4+MSc3Lz8QhSQDMys7Fw8ggKc4lJIIHIKVMqqGgg6moYW9poBwYE+li7uCPa6wUSapi1GA76aBqaWUTHoWHiEREk8fALCGUwsbAspy6KSqmWKlSXVxvamRMZiBsHGOmPBpprGuh2IDkRi45f23WH2HxPRECxGYJIgyagwBAAWzQAFdWGQoJl1ghwZCYfCdsVZPIDiojohTOE+r5TOYxI0xnoXghTLovJZrp5tMYTpYBpMgdN4nModQZNC4QjSEi1tk+QKMawintcRV8aBqrV6gZGs1WtYaXSGUz7Cy2RzAcCecQyIpaMjxfzBbC+DDmDKSvt5VUPNciIzgg57uztH7TDSDNpeuFWZpLH7gj1RlFAaQ0BA4KpjbMCLLykoFepEABaYI0vPvMTFgxiUJR0v-Tkp0Fmqi0dN410IOx1OlXSyaD7aMu6Axazvea6afo+MyeGzV7mp+a5LZpSCNl0EhBmfQhIlBHpmKP5tyIPVeK6hfomB7eqdxGdosA24VQJeZ5tmLUsoi6Xwfkw9CfGS8g3lrSlKgRUfQ5FUQMxjHOMJND+UwgzMP1X2gj9dB6XQLB7CxgljCIgA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggIZlicKxgUYAMZsA2gAYAuolAAHNLFxtcaFrJAAPRAHYdEogGZDADh0mAbBYCcAJluGArIYA0IAJ6IAjBYNeJJhIALCbWOo62JoYWjgC+sW6omDh0JOSUNHSMzOwIALaccvloAK4CeWjMkjJIIApKKmoa2giWQUSWNj6RttZ9tm6eCIbWFkQSjkFBjqGjOjGG8YnoWHiERHKcMMUl7LgsUNmsHJvbFbvi0hr1yqrqtS22E0QzOvZBEl7OvTqDiLY6LwdCwhLzWKZeEy2CxLEBJVapApFc57A5HXJInbsarXRS3JoPRCOayOIxBQxffS+ayQkx-BAAoFtExgiFQmEJOErFLrbi8BAAMzAbGEAAt9ocIGowER9tQ0ABrGXwnnEPl8IUi8UHBBytDCTiNFjVHG1G5G5q6Cy2IheQwSBxvCZ6AL0gC0bxeEjsEzskR0H0WnJVazVPD4tEI6I46oQwiE3FN8jxFsJCC8XgDRGsnwpZhGEQD9J8fgCwVC4Ui0Tiwe5oaIscjDCYxy44f4ghElxqyYad0tCD6BkcEhs1mMkX84XpESIejeTwk5kM0yCMXinJYaAgcA0IbouL7BNALTdFndPiBa9sU3s87CXlssP361IFCoTcP+PuJ90JKIALRCYI69KOOiuB4-zAbaIKOBEkJBJOUTPnWqSnGAWIqAcX6pr+CCIfSvTtOYehREE8wsiYQQock9aYiiWFQDh-Zpoh7QhBM-gOOCvTWIR4JzmY8wBiMwTRDRCK8u2mpihKzHHloughGS1jATY5gxEu-G2oCkzBNSQTgmYEmqg27afmaKYsXh-iOEC8yGL0mYOhCQTulmAJ2XBPjjiugIbrEQA */
     id: "globeView",
 
     types: {
@@ -33,6 +36,8 @@ export const globeViewMachine = createMachine(
       mapRef: null,
       areaId: null,
       highlightedArea: null,
+      currentAreaId: null,
+      currentArea: null,
       mapPopup: null,
       mapBounds: null,
       eventHandlers: {
@@ -41,30 +46,17 @@ export const globeViewMachine = createMachine(
     },
 
     states: {
-      initial: {
+      "world:view": {
         on: {
           "event:area:select": {
-            target: "area:selected",
-            actions: "action:area:select",
+            target: "area:fetching",
+            actions: "action:setCurrentAreaId",
+            reenter: true,
           },
 
           "event:map:mousemove": {
-            target: "initial",
+            target: "world:view",
             actions: "action:setHighlightedArea",
-          },
-        },
-      },
-
-      "area:selected": {
-        on: {
-          "event:area:clear": {
-            target: "initial",
-            actions: "action:area:clear",
-          },
-
-          "event:area:select": {
-            target: "area:selected",
-            actions: "action:area:select",
           },
         },
       },
@@ -82,11 +74,42 @@ export const globeViewMachine = createMachine(
       "map:mounting": {
         on: {
           "event:map:mount": {
-            target: "initial",
+            target: "world:view",
             reenter: true,
             actions: "action:setMapRef",
           },
         },
+      },
+
+      "area:fetching": {
+        invoke: {
+          src: "actor:fetchArea",
+          input: ({ context: { currentAreaId } }) => ({
+            areaId: currentAreaId,
+          }),
+          onDone: {
+            target: "area:view",
+            actions: "action:setCurrentArea",
+          },
+        },
+      },
+
+      "area:view": {
+        on: {
+          "event:area:clear": {
+            target: "world:view",
+            actions: "action:area:clear",
+            reenter: true,
+          },
+
+          "event:area:select": {
+            target: "area:fetching",
+            reenter: true,
+            actions: "action:setCurrentAreaId",
+          },
+        },
+
+        entry: "action:setAreaMapView",
       },
     },
 
@@ -145,16 +168,53 @@ export const globeViewMachine = createMachine(
             : null,
         };
       }),
-      "action:area:select": assign(({ event }) => {
+      "action:setCurrentArea": assign(({ event }) => {
+        assertEvent(event, "xstate.done.actor.0.globeView.area:fetching");
+
+        return {
+          currentArea: event.output,
+        };
+      }),
+      "action:setAreaMapView": assign(({ context }) => {
+        const { mapRef, currentArea } = context;
+
+        if (!mapRef || !currentArea || !currentArea.boundingBox) {
+          return {};
+        }
+
+        const bounds = bbox(currentArea.boundingBox);
+
+        mapRef.fitBounds(
+          [
+            [bounds[0], bounds[1]],
+            [bounds[2], bounds[3]],
+          ],
+          {
+            padding: 100,
+          }
+        );
+
+        return {
+          mapBounds: bounds,
+        };
+      }),
+      "action:setCurrentAreaId": assign(({ event }) => {
         assertEvent(event, "event:area:select");
         return {
-          areaId: event.area.properties.id,
-          mapBounds: bbox(event.area),
+          currentAreaId: event.areaId,
         };
       }),
       "action:area:clear": assign({
         areaId: undefined,
       }),
+    },
+    actors: {
+      "actor:fetchArea": fromPromise<FetchAreaResponse, { areaId: string }>(
+        async ({ input }) => {
+          const response = await fetch(`/api/areas/${input.areaId}`);
+          return await response.json();
+        }
+      ),
     },
   }
 );
