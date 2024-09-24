@@ -1,5 +1,5 @@
 import Menu from "../components/menu";
-import Globe from "./globe";
+import Map from "../components/map";
 import WelcomeModal from "./welcome-modal";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -7,7 +7,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <>
       <Menu />
       <div className="flex h-screen">
-        <Globe />
+        <Map />
         {children}
         <WelcomeModal />
       </div>
