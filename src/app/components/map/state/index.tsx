@@ -1,6 +1,8 @@
 import { createActorContext } from "@xstate/react";
 import { globeViewMachine } from "./machine";
 
+/* eslint-disable no-console */
+
 export const MachineContext = createActorContext(globeViewMachine, {
   inspect:
     process.env.NEXT_PUBLIC_XSTATE_INSPECT === "true"

@@ -39,7 +39,6 @@ function GlobeInner() {
     s.matches("map:mounting")
   );
   const pageUrl = MachineContext.useSelector(selectors.pageUrl);
-  const mapBounds = MachineContext.useSelector(selectors.mapBounds);
   const eventHandlers = MachineContext.useSelector(
     (state) => state.context.eventHandlers
   );

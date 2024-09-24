@@ -1,5 +1,5 @@
 import { bbox } from "@turf/bbox";
-import { assign, createMachine, assertEvent, fromPromise, setup } from "xstate";
+import { assign, createMachine, assertEvent, fromPromise } from "xstate";
 import { StateEvents } from "./types/events";
 import { StateActions } from "./types/actions";
 import { BBox } from "geojson";

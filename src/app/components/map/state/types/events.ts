@@ -1,5 +1,3 @@
-import { ProductionArea } from "@/types/data";
-import { Feature, Geometry } from "geojson";
 import { MapRef } from "react-map-gl/maplibre";
 import { MapLayerMouseEvent } from "react-map-gl/dist/esm/exports-maplibre";
 import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
