@@ -1,4 +1,4 @@
-import { Link } from "@nextui-org/react";
+import Link from "next/link";
 import { X } from "@phosphor-icons/react/dist/ssr";
 
 import { EItemType, IPageHeader } from "@/types/components";
