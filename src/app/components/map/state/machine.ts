@@ -7,8 +7,15 @@ import { MapGeoJSONFeature, MapRef } from "react-map-gl/maplibre";
 import { IMapPopup } from "../../map-popup";
 import { EItemType } from "@/types/components";
 import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
+import { worldViewState } from "..";
+
+export enum EViewType {
+  world = "world",
+  area = "area",
+}
 
 interface StateContext {
+  viewType: EViewType | null;
   mapRef: MapRef | null;
   highlightedArea: MapGeoJSONFeature | null;
   currentAreaId: string | null;
@@ -22,7 +29,7 @@ interface StateContext {
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggIZlicKxgUYAMZsA2gAYAuolAAHNLFxtcaFrJAAPRAHYdEogGZDADh0mAbBYCcAJluGArIYA0IAJ6IAjBYNeJJhIALCbWOo62JoYWjgC+sW6omDh0JOSUNHSMzOwIALaccvloAK4CeWjMkjJIIApKKmoa2giWQUSWNj6RttZ9tm6eCIbWFkQSjkFBjqGjOjGG8YnoWHiERHKcMMUl7LgsUNmsHJvbFbvi0hr1yqrqtS22E0QzOvZBEl7OvTqDiLY6LwdCwhLzWKZeEy2CxLEBJVapApFc57A5HXJInbsarXRS3JoPRCOayOIxBQxffS+ayQkx-BAAoFtExgiFQmEJOErFLrbi8BAAMzAbGEAAt9ocIGowER9tQ0ABrGXwnnEPl8IUi8UHBBytDCTiNFjVHG1G5G5q6Cy2IheQwSBxvCZ6AL0gC0bxeEjsEzskR0H0WnJVazVPD4tEI6I46oQwiE3FN8jxFsJCC8XgDRGsnwpZhGEQD9J8fgCwVC4Ui0Tiwe5oaIscjDCYxy44f4ghElxqyYad0tCD6BkcEhs1mMkX84XpESIejeTwk5kM0yCMVhIdSjayLYxhR25UqYCTdRT-bTGdMc8zIWi82soTpHkQbqe1jnjinlkCYI5nJYaAQHAGiboQuJ9gSoAtG6Fjur0YzjlEMTmJYMzRBudapKQFBUE24H4vcUG6CSRAAtEJgjr0o46K4z4MhRtogo4ESQkEk5RBhyT1qcYBYioBz4amREIGx9K9O05h6FEQTzCyJhBJxCLrJiKL8VAgnnsJbHtCEEz+A44K9NYYngnOZjzAGIzBOhtZcVu7aamKEoaZBWi6CEZIPo4NjmDES4mbagKTME1JBOCZiKaqDbtnhZpnq5LT+J+c4WIYvSZg6EJBO6WYAp+zE+OOK6AvE8RAA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggIZlicKxgUYAMZsA2gAYAuolAAHNLFxtcaFrJAAPRADYATET16AHAGYA7OZPmAnHp06JAVgA0IAJ6IAtAEYnB0x0fYwAWQNM9cwljPQBfWLdUTBw6EnJKGjpGZnYEAFtOOXy0AFcBPLRmSRkkEAUlFTUNbQQ9JxsiGydnGwkQ8x0QoJ83TwRfHyIHPR87YKCTMxD4xPQsPEI0iipaQmzWDhKKBAOwMmqNeuVVdVqWoKIJHz0LV-9LK1HEU3aibuMdKZTBIJDpuj4+isQEl1qkCkUKiV2LgWFB9rl4cUkeJpJdFNcmndvIFJsDejobMYnMYaTovghwVMnCE+uYWf0nFYoTCUptuLwEAAzMBsYQACxRaIgajARBR1DQAGtZTyNsR+XxhaKJaiEPK0MJOI0WNULrUrsbmogfEMOsYJJSLOZjD5zPSuqYiCFjOYnM9Aj7maZuWteeqeHxdgwmAcuBGEMIhNwzfJ8ZaiQggp7HBCnE7zLM-PSBhJDOZTD5whZIj4fCHkmqiBrMnsY7lmwIhKIU3U0zcrQhbJMnE5HAMWcCzMZ6QDJmY9M4lqYbKYQk567C+fGo+iOJjEeVKmAexb+xnIh1Kw6Kf4bcY7PSIRYiK6qWD2vfOeYN2Gm9usm2hzHKc5y4uafaEqALReAMRADDYIRGDYvq9FY04eIgs5EPOEIFguvpxAk0Kho2cicDACDoJwED0CeEG3FBmEPCCoKUiuiFPKY9JDKSgyAiOVhdDo5Y-qR5FgJRaDUbRPg1KmDRnoxCDPA6L5RD4Og0vabJhPSwkGNS7TRCOdj3oRqwNqkZEUYiyKoruCDWRJtk4nJvYKZBWjEoCcEOrYpgAr0LI2PSLw6IYfQstSUTMjSyxQiwaAQHAGiqnQeIeQxXnjCEta+chK6BX0Dr0l4LwdMyNi1ghyEOKCwZEWlmykNsLYEBlBJZS0IQdIMuEROW9hriMGHKRp2GjmYlIum0PUNRZm7EPupR2VAHXpkpXirsYhiBFEDrtEMzohPSy7hVVCzekhzw2qJqTNlq4qSutinZTa9hwWEVJhEd7R6Kd1J-FVMTLiEYP2OZxGWVuApRi9nktC85hTK6GnCQMgTROhYwAqWVX+D1JjBO0Oh3ZsTmSdR8NdcSFZTMh-gAi8YOjnpUSPHhLK2N6HJk8QFMuc94GZQOW3dFMFhhAFAWVt6j4si+NgOBSILUvYXTxPEQA */
     id: "globeView",
 
     types: {
@@ -32,6 +39,7 @@ export const globeViewMachine = createMachine(
     },
 
     context: {
+      viewType: EViewType.world,
       mapRef: null,
       highlightedArea: null,
       currentAreaId: null,
@@ -56,25 +64,30 @@ export const globeViewMachine = createMachine(
             target: "world:view",
             actions: "action:setHighlightedArea",
           },
-        },
-      },
 
-      "page:mounting": {
-        on: {
-          "event:page:mount": {
-            target: "map:mounting",
+          "event:url:enter": {
+            target: "page:load",
             reenter: true,
-            actions: "action:initializeContext",
+            actions: [
+              {
+                type: "action:parseUrl",
+                params: ({ event }) => ({
+                  pathname: event.pathname,
+                }),
+              },
+            ],
           },
         },
+
+        entry: "action:setWorldMapView",
       },
 
       "map:mounting": {
         on: {
           "event:map:mount": {
-            target: "world:view",
-            reenter: true,
+            target: "page:load",
             actions: "action:setMapRef",
+            reenter: true,
           },
         },
       },
@@ -110,9 +123,50 @@ export const globeViewMachine = createMachine(
             target: "area:view",
             actions: "action:setHighlightedArea",
           },
+
+          "event:url:enter": {
+            target: "page:load",
+            reenter: true,
+            actions: {
+              type: "action:parseUrl",
+              params: ({ event }) => ({
+                pathname: event.pathname,
+              }),
+            },
+          },
         },
 
         entry: "action:setAreaMapView",
+      },
+
+      "page:load": {
+        always: [
+          {
+            target: "world:view",
+            guard: "guard:isWorldView",
+          },
+          {
+            target: "area:fetching",
+            reenter: true,
+          },
+        ],
+      },
+
+      "page:mounting": {
+        on: {
+          "event:page:mount": {
+            target: "map:mounting",
+            reenter: true,
+            actions: [
+              {
+                type: "action:parseUrl",
+                params: ({ event }) => ({
+                  pathname: event.pathname,
+                }),
+              },
+            ],
+          },
+        },
       },
     },
 
@@ -120,6 +174,24 @@ export const globeViewMachine = createMachine(
   },
   {
     actions: {
+      "action:parseUrl": assign((_, params: { pathname: string }) => {
+        if (params.pathname.startsWith("/area/")) {
+          const [, , areaId] = params.pathname.split("/");
+
+          return {
+            viewType: EViewType.area,
+            currentAreaId: areaId,
+            currentArea: null,
+          };
+        }
+
+        // default to world view
+        return {
+          viewType: EViewType.world,
+          currentAreaId: null,
+          currentArea: null,
+        };
+      }),
       "action:setMapRef": assign(({ event }) => {
         assertEvent(event, "event:map:mount");
 
@@ -195,6 +267,17 @@ export const globeViewMachine = createMachine(
           mapBounds: bounds,
         };
       }),
+      "action:setWorldMapView": assign(({ context }) => {
+        const { mapRef } = context;
+
+        if (!mapRef) {
+          return {};
+        }
+
+        mapRef.fitBounds(worldViewState.bounds);
+
+        return {};
+      }),
       "action:setCurrentAreaId": assign(({ event }) => {
         assertEvent(event, "event:area:select");
         return {
@@ -202,9 +285,14 @@ export const globeViewMachine = createMachine(
         };
       }),
       "action:area:clear": assign({
-        currentAreaId: undefined,
-        currentArea: undefined,
+        currentAreaId: null,
+        currentArea: null,
       }),
+    },
+    guards: {
+      "guard:isWorldView": ({ context }) => {
+        return context.viewType === EViewType.world;
+      },
     },
     actors: {
       "actor:fetchArea": fromPromise<FetchAreaResponse, { areaId: string }>(

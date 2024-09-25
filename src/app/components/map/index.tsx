@@ -1,19 +1,19 @@
 "use client";
 import React, { useEffect, useCallback, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Map, {
   Layer,
   Source,
-  MapRef,
   MapMouseEvent,
   MapLayerMouseEvent,
+  MapRef,
+  LngLatBoundsLike,
 } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import MapPopup from "@/app/components/map-popup";
 
 import { MachineContext, MachineProvider } from "./state";
-import { selectors } from "./state/selectors";
 import EdgeLayer from "./layers/edges";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -25,9 +25,18 @@ const AREA_DEFAULT_COLOR = "rgba(250, 250, 249, 0.3)";
 const AREA_HIGHLIGHT_OUTLINE_COLOR = "rgba(0, 0, 0, 1)";
 const AREA_DEFAULT_OUTLINE_COLOR = "rgba(0, 0, 0, 0.3)";
 
+export const worldViewState = {
+  bounds: [
+    [-170, -70],
+    [170, 80],
+  ],
+} as {
+  bounds: LngLatBoundsLike;
+};
+
 function GlobeInner() {
   const router = useRouter();
-  const params = useParams<{ areaId: string }>();
+  const pathname = usePathname();
   const actorRef = MachineContext.useActorRef();
   const mapRef = useRef<MapRef>(null);
 
@@ -38,7 +47,6 @@ function GlobeInner() {
   const mapIsMounting = MachineContext.useSelector((s) =>
     s.matches("map:mounting")
   );
-  const pageUrl = MachineContext.useSelector(selectors.pageUrl);
   const eventHandlers = MachineContext.useSelector(
     (state) => state.context.eventHandlers
   );
@@ -53,29 +61,22 @@ function GlobeInner() {
     });
   }, []);
 
-  // On mount, pass route parameters to the machine
   useEffect(() => {
     actorRef.send({
       type: "event:page:mount",
-      context: { areaId: params.areaId || null },
+      pathname,
     });
   }, []);
 
+  // Observe URL changes
   useEffect(() => {
-    if (mapIsMounting && mapRef.current) {
-      actorRef.send({
-        type: "event:map:mount",
-        mapRef: mapRef.current,
-      });
-    }
-  }, [mapIsMounting, mapRef.current]);
+    if (pageIsMounting || mapIsMounting) return;
 
-  // Update the URL when necessary
-  useEffect(() => {
-    if (!pageIsMounting) {
-      router.push(pageUrl);
-    }
-  }, [router, pageUrl, pageIsMounting]);
+    actorRef.send({
+      type: "event:url:enter",
+      pathname,
+    });
+  }, [pageIsMounting, mapIsMounting, pathname]);
 
   const onClick = useCallback((event: MapMouseEvent) => {
     if (mapRef.current) {
@@ -86,10 +87,7 @@ function GlobeInner() {
       if (features.length > 0) {
         const feature = features[0];
         if (feature) {
-          actorRef.send({
-            type: "event:area:select",
-            areaId: feature.properties.id,
-          });
+          router.push(`/area/${feature.properties.id}`);
         }
       }
     }
@@ -111,12 +109,14 @@ function GlobeInner() {
       <div className="relative w-full h-full overflow-hidden">
         <Map
           ref={mapRef}
-          initialViewState={{
-            longitude: 0,
-            latitude: 0,
-            zoom: 2,
-          }}
+          initialViewState={worldViewState}
           onClick={onClick}
+          onLoad={() => {
+            actorRef.send({
+              type: "event:map:mount",
+              mapRef: mapRef.current as MapRef,
+            });
+          }}
           style={{ width: "100%", height: "100%" }}
         >
           <Source
