@@ -9,7 +9,7 @@ function getTypeLabel(itemType: EItemType) {
     case EItemType.route:
       return "Transport Routes";
     case EItemType.area:
-      return "Producing Areas";
+      return "Regions and Countries";
     case EItemType.node:
       return "Ports & Depots";
   }
