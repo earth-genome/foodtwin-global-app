@@ -4,9 +4,12 @@ import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 
 interface EventPageMount {
   type: "event:page:mount";
-  context: {
-    areaId: string | null;
-  };
+  pathname: string;
+}
+
+interface EventUrlEnter {
+  type: "event:url:enter";
+  pathname: string;
 }
 
 interface EventMapMount {
@@ -38,6 +41,7 @@ interface EventAreaClear {
 
 export type StateEvents =
   | EventPageMount
+  | EventUrlEnter
   | EventMapMount
   | EventMapMouseMove
   | EventAreaSelect

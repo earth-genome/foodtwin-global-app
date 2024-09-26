@@ -1,4 +1,4 @@
-import { Link } from "@nextui-org/react";
+import Link from "next/link";
 import { X } from "@phosphor-icons/react/dist/ssr";
 
 import { EItemType, IPageHeader } from "@/types/components";
@@ -9,7 +9,7 @@ function getTypeLabel(itemType: EItemType) {
     case EItemType.route:
       return "Transport Routes";
     case EItemType.area:
-      return "Producing Areas";
+      return "Regions and Countries";
     case EItemType.node:
       return "Ports & Depots";
   }

@@ -1,11 +1,15 @@
 import { MapGeoJSONFeature, MapRef } from "react-map-gl/maplibre";
 import { IMapPopup } from "@/app/components/map-popup";
+import { EViewType } from "../machine";
 
-interface ActionInitContext {
-  type: "action:initializeContext";
-  context: {
-    areaId: string | null;
+interface ActionParseUrl {
+  type: "action:parseUrl";
+  params: {
+    pathname: string;
   };
+  viewType: EViewType | null;
+  currentAreaId?: string | null;
+  currentArea?: GeoJSON.Feature | null;
 }
 
 interface ActionSetMapRef {
@@ -31,15 +35,20 @@ interface ActionSetCurrentArea {
 interface ActionSetAreaMapView {
   type: "action:setAreaMapView";
 }
+
+interface ActionSetWorldMapView {
+  type: "action:setWorldMapView";
+}
 interface ActionAreaClear {
   type: "action:area:clear";
 }
 
 export type StateActions =
-  | ActionInitContext
+  | ActionParseUrl
   | ActionSetMapRef
   | ActionSetHighlightedArea
   | ActionSetCurrentAreaId
   | ActionSetCurrentArea
   | ActionSetAreaMapView
+  | ActionSetWorldMapView
   | ActionAreaClear;
