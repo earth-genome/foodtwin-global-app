@@ -15,7 +15,10 @@ import MapPopup from "@/app/components/map-popup";
 import { MachineContext, MachineProvider } from "./state";
 import EdgeLayer from "./layers/edges";
 
+// Environment variables used in this component
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+const mapboxStyleUrl = process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL;
 
 // Colors
 const AREA_HIGHLIGHT_COLOR = "rgba(250, 250, 249, 0.7)";
@@ -106,7 +109,7 @@ function GlobeInner() {
     <div className="flex-1 bg-gray-100 flex items-center justify-center">
       <div className="relative w-full h-full overflow-hidden">
         <Map
-          mapboxAccessToken="pk.eyJ1IjoiZGV2c2VlZCIsImEiOiJjbTFvamliYzMxMnpvMnFwcnp3ZTNpM3VrIn0.oMIsXzzowqdpGMLafnsblg"
+          mapboxAccessToken={mapboxAccessToken}
           ref={mapRef}
           initialViewState={worldViewState}
           onClick={onClick}
@@ -117,7 +120,7 @@ function GlobeInner() {
             });
           }}
           style={{ width: "100%", height: "100%" }}
-          mapStyle="mapbox://styles/devseed/cm19b1klx02ab01pj9houfjo0"
+          mapStyle={mapboxStyleUrl}
         >
           <Source
             id="area-tiles"
