@@ -1,4 +1,5 @@
-import { MapGeoJSONFeature, MapRef } from "react-map-gl/maplibre";
+import { MapRef } from "react-map-gl";
+import { GeoJSONFeature } from "mapbox-gl";
 import { IMapPopup } from "@/app/components/map-popup";
 import { EViewType } from "../machine";
 
@@ -19,7 +20,7 @@ interface ActionSetMapRef {
 
 interface ActionSetHighlightedArea {
   type: "action:setHighlightedArea";
-  highlightedArea: MapGeoJSONFeature | null;
+  highlightedArea: GeoJSONFeature | null;
   MapPopup: IMapPopup | null;
 }
 
