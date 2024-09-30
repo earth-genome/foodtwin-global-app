@@ -47,7 +47,7 @@ enum EdgeType {
 }
 
 model Edge {
-  id           Int                                            @id @default(autoincrement())
+  id           String                                         @id
   distance     Float
   type         EdgeType
   geom         Unsupported("geometry(MultiLineString, 3857)")
@@ -64,7 +64,7 @@ model Edge {
 }
 
 model Flow {
-  id          Int           @id @default(autoincrement())
+  id          String        @id
   fromArea    Area          @relation("FromArea", fields: [fromAreaId], references: [id])
   fromAreaId  String
   toArea      Area          @relation("ToArea", fields: [toAreaId], references: [id])
@@ -76,9 +76,9 @@ model Flow {
 }
 
 model FlowSegment {
-  id     Int                @id @default(autoincrement())
+  id     String             @id
   mode   String
-  flowId Int
+  flowId String
   flow   Flow               @relation(fields: [flowId], references: [id])
   edges  FlowSegmentEdges[]
 
@@ -89,10 +89,11 @@ model FlowSegment {
 
 model FlowSegmentEdges {
   id            Int         @id @default(autoincrement())
-  flowSegmentId Int
-  edgeId        Int
-  flowSegment   FlowSegment @relation(fields: [flowSegmentId], references: [id])
+  edgeId        String
   edge          Edge        @relation(fields: [edgeId], references: [id])
+  flowSegmentId String
+  flowSegment   FlowSegment @relation(fields: [flowSegmentId], references: [id])
+  order         Int
 
   @@index([flowSegmentId])
   @@index([edgeId])
@@ -101,6 +102,7 @@ model FlowSegmentEdges {
 model FoodGroup {
   id       Int         @id @default(autoincrement())
   name     String
+  slug     String?
   parentId Int?
   parent   FoodGroup?  @relation("ParentChild", fields: [parentId], references: [id])
   children FoodGroup[] @relation("ParentChild")

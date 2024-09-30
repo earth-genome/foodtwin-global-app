@@ -14,18 +14,22 @@ export async function GET(req: NextRequest) {
       where: {
         name: {
           contains: query,
+          mode: "insensitive",
         },
       },
+      take: 10,
     }),
     prisma.node.findMany({
       where: {
         name: {
           contains: query,
+          mode: "insensitive",
         },
         type: {
           equals: "PORT",
         },
       },
+      take: 10,
     }),
   ]);
 

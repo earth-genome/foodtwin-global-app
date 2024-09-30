@@ -1,4 +1,4 @@
-function Route() {
+function TransportRoute() {
   return (
     <svg
       width="28"
@@ -16,4 +16,4 @@ function Route() {
   );
 }
 
-export default Route;
+export default TransportRoute;
