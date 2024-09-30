@@ -66,6 +66,11 @@ export const globeViewMachine = createMachine(
             actions: "action:setHighlightedArea",
           },
 
+          "event:map:mouseout": {
+            target: "world:view",
+            actions: "action:clearHighlightedArea",
+          },
+
           "event:url:enter": {
             target: "page:load",
             reenter: true,
@@ -123,6 +128,11 @@ export const globeViewMachine = createMachine(
           "event:map:mousemove": {
             target: "area:view",
             actions: "action:setHighlightedArea",
+          },
+
+          "event:map:mouseout": {
+            target: "area:view",
+            actions: "action:clearHighlightedArea",
           },
 
           "event:url:enter": {
@@ -236,6 +246,26 @@ export const globeViewMachine = createMachine(
                 latitude: event.mapEvent.lngLat.lat,
               }
             : null,
+        };
+      }),
+      "action:clearHighlightedArea": assign(({ event, context }) => {
+        assertEvent(event, "event:map:mouseout");
+
+        const { highlightedArea, mapRef } = context;
+
+        if (!mapRef) {
+          return {};
+        }
+
+        if (highlightedArea) {
+          mapRef.setFeatureState(highlightedArea, {
+            hover: false,
+          });
+        }
+
+        return {
+          highlightedArea: null,
+          mapPopup: null,
         };
       }),
       "action:setCurrentArea": assign(({ event }) => {
