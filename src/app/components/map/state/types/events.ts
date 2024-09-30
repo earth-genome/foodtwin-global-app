@@ -1,5 +1,4 @@
-import { MapRef } from "react-map-gl/maplibre";
-import { MapLayerMouseEvent } from "react-map-gl/dist/esm/exports-maplibre";
+import { MapMouseEvent, MapRef } from "react-map-gl";
 import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 
 interface EventPageMount {
@@ -19,7 +18,7 @@ interface EventMapMount {
 
 interface EventMapMouseMove {
   type: "event:map:mousemove";
-  mapEvent: MapLayerMouseEvent;
+  mapEvent: MapMouseEvent;
 }
 
 interface EventAreaSelect {

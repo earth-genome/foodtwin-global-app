@@ -3,7 +3,8 @@ import { assign, createMachine, assertEvent, fromPromise } from "xstate";
 import { StateEvents } from "./types/events";
 import { StateActions } from "./types/actions";
 import { BBox } from "geojson";
-import { MapGeoJSONFeature, MapRef } from "react-map-gl/maplibre";
+import { MapRef } from "react-map-gl";
+import { GeoJSONFeature } from "mapbox-gl";
 import { IMapPopup } from "../../map-popup";
 import { EItemType } from "@/types/components";
 import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
@@ -17,7 +18,7 @@ export enum EViewType {
 interface StateContext {
   viewType: EViewType | null;
   mapRef: MapRef | null;
-  highlightedArea: MapGeoJSONFeature | null;
+  highlightedArea: GeoJSONFeature | null;
   currentAreaId: string | null;
   currentArea: FetchAreaResponse | null;
   mapPopup: IMapPopup | null;
@@ -226,7 +227,7 @@ export const globeViewMachine = createMachine(
 
         return {
           highlightedArea: feature || null,
-          mapPopup: feature
+          mapPopup: feature?.properties
             ? {
                 id: feature.properties.id,
                 label: feature.properties.name,

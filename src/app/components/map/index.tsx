@@ -5,21 +5,22 @@ import Map, {
   Layer,
   Source,
   MapMouseEvent,
-  MapLayerMouseEvent,
   MapRef,
   LngLatBoundsLike,
-} from "react-map-gl/maplibre";
-import "maplibre-gl/dist/maplibre-gl.css";
+} from "react-map-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 import MapPopup from "@/app/components/map-popup";
 
 import { MachineContext, MachineProvider } from "./state";
 import EdgeLayer from "./layers/edges";
 
+// Environment variables used in this component
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+const mapboxStyleUrl = process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL;
 
 // Colors
-const SEA_BLUE = "rgb(173, 216, 230)";
 const AREA_HIGHLIGHT_COLOR = "rgba(250, 250, 249, 0.7)";
 const AREA_DEFAULT_COLOR = "rgba(250, 250, 249, 0.3)";
 const AREA_HIGHLIGHT_OUTLINE_COLOR = "rgba(0, 0, 0, 1)";
@@ -54,7 +55,7 @@ function GlobeInner() {
     (state) => state.context.mapPopup
   );
 
-  const handleMouseMove = useCallback((event: MapLayerMouseEvent) => {
+  const handleMouseMove = useCallback((event: MapMouseEvent) => {
     actorRef.send({
       type: "event:map:mousemove",
       mapEvent: event,
@@ -86,7 +87,7 @@ function GlobeInner() {
 
       if (features.length > 0) {
         const feature = features[0];
-        if (feature) {
+        if (feature?.properties) {
           router.push(`/area/${feature.properties.id}`);
         }
       }
@@ -108,6 +109,7 @@ function GlobeInner() {
     <div className="flex-1 bg-gray-100 flex items-center justify-center">
       <div className="relative w-full h-full overflow-hidden">
         <Map
+          mapboxAccessToken={mapboxAccessToken}
           ref={mapRef}
           initialViewState={worldViewState}
           onClick={onClick}
@@ -118,36 +120,8 @@ function GlobeInner() {
             });
           }}
           style={{ width: "100%", height: "100%" }}
+          mapStyle={mapboxStyleUrl}
         >
-          <Source
-            id="background"
-            type="geojson"
-            data={{
-              type: "Feature",
-              properties: {},
-              geometry: {
-                type: "Polygon",
-                coordinates: [
-                  [
-                    [-180, -90],
-                    [180, -90],
-                    [180, 90],
-                    [-180, 90],
-                    [-180, -90],
-                  ],
-                ],
-              },
-            }}
-          >
-            <Layer
-              id="background-layer"
-              type="fill"
-              paint={{
-                "fill-color": SEA_BLUE,
-              }}
-            />
-          </Source>
-
           <Source
             id="area-tiles"
             type="vector"
