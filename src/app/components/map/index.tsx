@@ -8,12 +8,14 @@ import Map, {
   MapRef,
   LngLatBoundsLike,
 } from "react-map-gl";
+import { CircleLayerSpecification } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import MapPopup from "@/app/components/map-popup";
 
 import { MachineContext, MachineProvider } from "./state";
 import EdgeLayer from "./layers/edges";
+import { foodgroupsStyle } from "./cartography";
 
 // Environment variables used in this component
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -151,6 +153,19 @@ function GlobeInner() {
                   AREA_DEFAULT_OUTLINE_COLOR,
                 ],
               }}
+            />
+          </Source>
+
+          <Source
+            id="foodgroups-source"
+            type="vector"
+            url="mapbox://devseed.dlel0qkq"
+          >
+            <Layer
+              id="foodgroups-layer"
+              type="circle"
+              source-layer="foodgroup2max"
+              paint={foodgroupsStyle as CircleLayerSpecification["paint"]}
             />
           </Source>
 
