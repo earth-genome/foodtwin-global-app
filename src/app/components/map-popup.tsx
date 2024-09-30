@@ -4,7 +4,7 @@ import { EItemType } from "@/types/components";
 import TypeIcon from "./icons/type-icon";
 import "./css/popup.css";
 
-interface IMapPopup {
+export interface IMapPopup {
   id: string;
   label: string;
   itemType: EItemType;

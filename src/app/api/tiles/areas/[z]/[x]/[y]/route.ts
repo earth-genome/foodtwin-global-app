@@ -30,9 +30,10 @@ export async function GET(
   const yNum = Number(y);
 
   const query = `
-      SELECT ST_AsMVT(tile) FROM (
+      SELECT ST_AsMVT(tile, 'default', 4096, 'geom', 'id_int') FROM (
         SELECT
           id,
+          ((ctid::text::point)[0]::bigint << 32) | (ctid::text::point)[1]::bigint AS id_int,
           name,
           ST_AsMVTGeom(
             limits,

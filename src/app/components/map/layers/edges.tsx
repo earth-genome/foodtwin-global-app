@@ -1,5 +1,5 @@
 import React from "react";
-import { Source, Layer } from "react-map-gl/maplibre";
+import { Source, Layer } from "react-map-gl";
 
 const EdgeLayer = () => {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
