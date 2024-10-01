@@ -58,6 +58,12 @@ function GlobeInner() {
     });
   }, []);
 
+  const handleMouseOut = useCallback(() => {
+    actorRef.send({
+      type: "event:map:mouseout",
+    });
+  }, [actorRef]);
+
   useEffect(() => {
     actorRef.send({
       type: "event:page:mount",
@@ -90,17 +96,6 @@ function GlobeInner() {
     }
   }, []);
 
-  // Enable/disable map mousemove
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    if (eventHandlers.mousemove) {
-      mapRef.current.on("mousemove", handleMouseMove);
-    } else {
-      mapRef.current.off("mousemove", handleMouseMove);
-    }
-  }, [handleMouseMove, eventHandlers.mousemove, mapRef.current]);
-
   return (
     <div className="flex-1 bg-gray-100 flex items-center justify-center">
       <div className="relative w-full h-full overflow-hidden">
@@ -115,6 +110,8 @@ function GlobeInner() {
               mapRef: mapRef.current as MapRef,
             });
           }}
+          onMouseMove={eventHandlers.mousemove ? handleMouseMove : undefined}
+          onMouseOut={eventHandlers.mousemove ? handleMouseOut : undefined}
           style={{ width: "100%", height: "100%" }}
           mapStyle={mapboxStyleUrl}
         >

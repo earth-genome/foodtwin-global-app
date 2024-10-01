@@ -21,6 +21,10 @@ interface EventMapMouseMove {
   mapEvent: MapMouseEvent;
 }
 
+interface EventMapMouseOut {
+  type: "event:map:mouseout";
+}
+
 interface EventAreaSelect {
   type: "event:area:select";
   areaId: string;
@@ -45,4 +49,5 @@ export type StateEvents =
   | EventMapMouseMove
   | EventAreaSelect
   | EventFetchAreaDone
-  | EventAreaClear;
+  | EventAreaClear
+  | EventMapMouseOut;

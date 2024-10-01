@@ -24,6 +24,10 @@ interface ActionSetHighlightedArea {
   MapPopup: IMapPopup | null;
 }
 
+interface ActionClearHighlightedArea {
+  type: "action:clearHighlightedArea";
+}
+
 interface ActionSetCurrentAreaId {
   type: "action:setCurrentAreaId";
   currentAreaId: string;
@@ -48,6 +52,7 @@ export type StateActions =
   | ActionParseUrl
   | ActionSetMapRef
   | ActionSetHighlightedArea
+  | ActionClearHighlightedArea
   | ActionSetCurrentAreaId
   | ActionSetCurrentArea
   | ActionSetAreaMapView
