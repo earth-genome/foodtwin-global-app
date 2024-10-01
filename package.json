@@ -46,7 +46,6 @@
     "@types/d3-sankey": "^0.12.4",
     "@types/fs-extra": "^11.0.4",
     "@types/geojson": "^7946.0.14",
-    "@types/mapbox-gl": "^3.4.0",
     "@types/node": "^20.12.12",
     "@types/react": "^18.3.2",
     "@types/react-dom": "^18.3.0",
