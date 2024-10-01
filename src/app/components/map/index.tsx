@@ -14,6 +14,7 @@ import MapPopup from "@/app/components/map-popup";
 
 import { MachineContext, MachineProvider } from "./state";
 import EdgeLayer from "./layers/edges";
+import Legend from "./legend";
 
 // Environment variables used in this component
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -108,6 +109,7 @@ function GlobeInner() {
   return (
     <div className="flex-1 bg-gray-100 flex items-center justify-center">
       <div className="relative w-full h-full overflow-hidden">
+        <Legend />
         <Map
           mapboxAccessToken={mapboxAccessToken}
           ref={mapRef}
