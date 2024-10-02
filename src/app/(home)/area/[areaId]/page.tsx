@@ -1,6 +1,13 @@
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import LinkButton from "@/app/components/link-button";
+import PageHeader from "@/app/components/page-header";
+import { EItemType } from "@/types/components";
+import {
+  Metric,
+  MetricRow,
+  PageSection,
+  SectionHeader,
+} from "@/app/components/page-section";
 
 const AreaPage = async ({
   params,
@@ -19,13 +26,39 @@ const AreaPage = async ({
     return redirect("/not-found");
   }
 
+  const totalFlow = await prisma.flow.aggregate({
+    where: {
+      fromAreaId: area.id,
+    },
+    _sum: {
+      value: true,
+    },
+  });
+
   return (
-    <>
-      <div className="overflow-y-auto w-128 p-4 space-y-4">
-        This is area page for {area.name}
-      </div>
-      <LinkButton href="/">Close</LinkButton>
-    </>
+    <div className="w-[480px]">
+      <PageHeader title={area.name} itemType={EItemType.area} />
+      <PageSection>
+        <SectionHeader label="Food Produced" />
+        <MetricRow>
+          <Metric
+            label="Calories produced"
+            value={totalFlow._sum.value}
+            unit="tonnes"
+          />
+          <Metric
+            label="Agriculture sector in GDP"
+            value={null}
+            unit="billion 2010 USD$"
+          />
+          <Metric label="GDP per capita" value={null} unit="2011 USD$" />
+        </MetricRow>
+        <MetricRow>
+          <Metric label="Total population" value={null} unit="million people" />
+          <Metric label="Human Development Index" value={null} />
+        </MetricRow>
+      </PageSection>
+    </div>
   );
 };
 

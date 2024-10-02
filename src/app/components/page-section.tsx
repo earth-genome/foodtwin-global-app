@@ -1,5 +1,10 @@
 import { formatNumber } from "@/utils/numbers";
-import { Button, Tooltip } from "@nextui-org/react";
+import {
+  Button,
+  Tooltip,
+  Tabs as NextUiTabs,
+  TabsProps,
+} from "@nextui-org/react";
 import { Info } from "@phosphor-icons/react/dist/ssr";
 
 interface ISectionHeader {
@@ -53,7 +58,7 @@ export function MetricRow({ children }: IMetricRow) {
 
 interface IMetric {
   label: string;
-  value: number;
+  value: number | null;
   unit?: string;
 }
 
@@ -61,8 +66,24 @@ export function Metric({ label, value, unit }: IMetric) {
   return (
     <div className="text-center text-ink px-4 [&:not(:last-child)]:border-r-1 border-neutral-200">
       <p className="text-neutral-500 text-xs">{label}</p>
-      <p className="text-2xl">{formatNumber(value)}</p>
+      <p className="text-2xl">{value ? formatNumber(value) : "-"}</p>
       {unit && <p className="text-xs font-bold mt-1">{unit}</p>}
+    </div>
+  );
+}
+
+export function Tabs({ children, ...props }: TabsProps) {
+  return (
+    <div className="my-8">
+      <NextUiTabs
+        {...props}
+        fullWidth
+        classNames={{
+          tab: "font-header text-sm tracking-tighter",
+        }}
+      >
+        {children}
+      </NextUiTabs>
     </div>
   );
 }
