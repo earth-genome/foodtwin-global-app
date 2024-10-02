@@ -30,6 +30,18 @@ const config: Config = {
         route: "#99E2EE",
         node: "#FFD27A",
       },
+      food: {
+        "dairy-and-eggs": "#76B7B2",
+        "oils-and-oilseeds": "#EDC948",
+        starches: "#4E79A7",
+        fruits: "#FF9DA7",
+        grains: "#F28E2B",
+        pulses: "#B07AA1",
+        vegetables: "#59A14F",
+        treenuts: "#9C755F",
+        "meat-and-fish": "#E15759",
+        other: "#BAB0AC",
+      },
       neutral: {
         50: "#F9FAFB",
         100: "#F2F4F7",
