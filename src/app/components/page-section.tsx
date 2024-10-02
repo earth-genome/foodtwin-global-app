@@ -58,7 +58,7 @@ export function MetricRow({ children }: IMetricRow) {
 
 interface IMetric {
   label: string;
-  value: number | null;
+  value: number | null | undefined;
   unit?: string;
 }
 

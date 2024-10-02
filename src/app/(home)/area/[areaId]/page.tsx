@@ -35,9 +35,19 @@ const AreaPage = async ({
     },
   });
 
+  const meta = area.meta as {
+    iso3?: string;
+    totalpop?: number;
+    hdi?: number;
+    aggdp_2010?: number;
+    gdppc?: number;
+  };
+
+  const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
+
   return (
     <div className="w-[480px]">
-      <PageHeader title={area.name} itemType={EItemType.area} />
+      <PageHeader title={areaLabel} itemType={EItemType.area} />
       <PageSection>
         <SectionHeader label="Food Produced" />
         <MetricRow>
@@ -48,14 +58,18 @@ const AreaPage = async ({
           />
           <Metric
             label="Agriculture sector in GDP"
-            value={null}
+            value={meta.aggdp_2010}
             unit="billion 2010 USD$"
           />
-          <Metric label="GDP per capita" value={null} unit="2011 USD$" />
+          <Metric label="GDP per capita" value={meta.gdppc} unit="2011 USD$" />
         </MetricRow>
         <MetricRow>
-          <Metric label="Total population" value={null} unit="million people" />
-          <Metric label="Human Development Index" value={null} />
+          <Metric
+            label="Total population"
+            value={meta.totalpop}
+            unit="million people"
+          />
+          <Metric label="Human Development Index" value={meta.hdi} />
         </MetricRow>
       </PageSection>
     </div>
