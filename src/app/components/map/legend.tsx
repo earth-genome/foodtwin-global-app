@@ -38,16 +38,19 @@ function Legend() {
         <div className="p-4 border-r border-neutral-300 flex-grow">
           <h3 className="mb-2 font-bold">Categories</h3>
           <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-            <LegendItem color="neutral-900" label="Dairy and Eggs" />
-            <LegendItem color="neutral-900" label="Oils and Oilseed" />
-            <LegendItem color="neutral-900" label="Starches" />
-            <LegendItem color="neutral-900" label="Fruits" />
-            <LegendItem color="neutral-900" label="Grains" />
-            <LegendItem color="neutral-900" label="Pulses" />
-            <LegendItem color="neutral-900" label="Vegetables" />
-            <LegendItem color="neutral-900" label="Treenuts" />
-            <LegendItem color="neutral-900" label="Meet and Fish" />
-            <LegendItem color="neutral-900" label="Others" />
+            <LegendItem color="food-dairy-and-eggs" label="Dairy and Eggs" />
+            <LegendItem
+              color="food-oils-and-oilseeds"
+              label="Oils and Oilseed"
+            />
+            <LegendItem color="food-starches" label="Starches" />
+            <LegendItem color="food-fruits" label="Fruits" />
+            <LegendItem color="food-grains" label="Grains" />
+            <LegendItem color="food-pulses" label="Pulses" />
+            <LegendItem color="food-vegetables" label="Vegetables" />
+            <LegendItem color="food-treenuts" label="Treenuts" />
+            <LegendItem color="food-meat-and-fish" label="Meet and Fish" />
+            <LegendItem color="food-other" label="Other" />
           </div>
         </div>
         <div className="p-4 flex-grow">
