@@ -8,18 +8,21 @@ import Map, {
   MapRef,
   LngLatBoundsLike,
 } from "react-map-gl";
-import {
-  CircleLayerSpecification,
-  FillLayerSpecification,
-  LineLayerSpecification,
-} from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import mask from "@turf/mask";
+import { MultiPolygon } from "geojson";
 
 import MapPopup from "@/app/components/map-popup";
 
 import { MachineContext, MachineProvider } from "./state";
 import EdgeLayer from "./layers/edges";
-import { areaStyle, foodgroupsStyle, lineStyle } from "./cartography";
+import {
+  areaMaskOutlineStyle,
+  areaMaskStyle,
+  areaStyle,
+  foodgroupsStyle,
+  lineStyle,
+} from "./cartography";
 
 // Environment variables used in this component
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -53,6 +56,9 @@ function GlobeInner() {
   );
   const mapPopup = MachineContext.useSelector(
     (state) => state.context.mapPopup
+  );
+  const currentArea = MachineContext.useSelector(
+    (state) => state.context.currentArea
   );
 
   const handleMouseMove = useCallback((event: MapMouseEvent) => {
@@ -119,6 +125,21 @@ function GlobeInner() {
           style={{ width: "100%", height: "100%" }}
           mapStyle={mapboxStyleUrl}
         >
+          {currentArea && (
+            <Source
+              id="highlight-mask"
+              type="geojson"
+              data={mask(currentArea.geometry as MultiPolygon)}
+            >
+              <Layer id="highlight-layer" type="fill" paint={areaMaskStyle} />
+              <Layer
+                id="highlight-layer-outline"
+                type="line"
+                paint={areaMaskOutlineStyle}
+              />
+            </Source>
+          )}
+
           <Source
             id="foodgroups-source"
             type="vector"
@@ -128,7 +149,7 @@ function GlobeInner() {
               id="foodgroups-layer"
               type="circle"
               source-layer="foodgroup2max"
-              paint={foodgroupsStyle as CircleLayerSpecification["paint"]}
+              paint={foodgroupsStyle}
             />
           </Source>
 
@@ -141,13 +162,13 @@ function GlobeInner() {
               id="area-outline"
               type="line"
               source-layer="default"
-              paint={lineStyle as LineLayerSpecification["paint"]}
+              paint={lineStyle}
             />
             <Layer
               id="area-clickable-polygon"
               type="fill"
               source-layer="default"
-              paint={areaStyle as FillLayerSpecification["paint"]}
+              paint={areaStyle}
             />
           </Source>
 

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { MultiPolygon } from "geojson";
 
 export interface FetchAreaResponse {
   id: string;
   name: string;
-  boundingBox: GeoJSON.Feature | null;
+  boundingBox: GeoJSON.Feature;
+  geometry: MultiPolygon;
 }
 
 export async function GET(
@@ -14,25 +16,18 @@ export async function GET(
   const { id } = params;
 
   try {
-    const area = await prisma.area.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-      },
-    });
+    const areas = (await prisma.$queryRaw`
+      SELECT id, name, ST_AsGeoJSON(ST_Transform(limits, 4326)) as geometry, ST_AsGeoJSON(ST_Extent(ST_Transform(limits, 4326))) as "boundingBox" FROM "Area" WHERE id = ${id} group by id, name
+    `) as { boundingBox: string; geometry: string }[];
 
-    if (!area) {
+    if (areas.length === 0) {
       return NextResponse.json({ error: "Area not found" }, { status: 404 });
     }
 
-    const boundingBox = (await prisma.$queryRaw`
-      SELECT ST_AsGeoJSON(ST_Extent(ST_Transform(limits, 4326))) as geojson FROM "Area" WHERE id = ${id}
-    `) as { geojson: string }[];
-
     const result = {
-      ...area,
-      boundingBox: JSON.parse(boundingBox[0]?.geojson) || null, // Extract the bounding box as GeoJSON
+      ...areas[0],
+      geometry: JSON.parse(areas[0].geometry),
+      boundingBox: JSON.parse(areas[0]?.boundingBox) || null, // Extract the bounding box as GeoJSON
     };
 
     return NextResponse.json(result);

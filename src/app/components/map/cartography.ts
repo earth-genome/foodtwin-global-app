@@ -1,12 +1,18 @@
+import {
+  CircleLayerSpecification,
+  FillLayerSpecification,
+  LineLayerSpecification,
+} from "mapbox-gl";
+
 // Colors
 const AREA_HIGHLIGHT_OUTLINE_COLOR = "rgba(28, 25, 23, 0.6)";
 const AREA_DEFAULT_OUTLINE_COLOR = "rgba(28, 25, 23, 0.05)";
 
-export const areaStyle = {
+export const areaStyle: FillLayerSpecification["paint"] = {
   "fill-color": "transparent",
 };
 
-export const lineStyle = {
+export const lineStyle: LineLayerSpecification["paint"] = {
   "line-color": [
     "case",
     ["boolean", ["feature-state", "hover"], false],
@@ -16,7 +22,16 @@ export const lineStyle = {
   "line-width": ["interpolate", ["exponential", 1.99], ["zoom"], 3, 1, 7, 3],
 };
 
-export const foodgroupsStyle = {
+export const areaMaskStyle: FillLayerSpecification["paint"] = {
+  "fill-color": "rgba(255,255,255,0.6)",
+};
+
+export const areaMaskOutlineStyle: LineLayerSpecification["paint"] = {
+  "line-color": AREA_HIGHLIGHT_OUTLINE_COLOR,
+  "line-width": ["interpolate", ["exponential", 1.99], ["zoom"], 3, 1, 7, 3],
+};
+
+export const foodgroupsStyle: CircleLayerSpecification["paint"] = {
   "circle-emissive-strength": 1,
   "circle-color": [
     "match",

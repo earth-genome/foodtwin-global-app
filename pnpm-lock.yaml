@@ -38,6 +38,9 @@ importers:
       '@turf/bbox':
         specifier: ^7.1.0
         version: 7.1.0
+      '@turf/mask':
+        specifier: ^7.1.0
+        version: 7.1.0
       '@xstate/react':
         specifier: ^4.1.1
         version: 4.1.3(@types/react@18.3.10)(react@18.3.1)(xstate@5.18.2)
@@ -1815,6 +1818,9 @@ packages:
   '@turf/clone@5.1.5':
     resolution: {integrity: sha512-//pITsQ8xUdcQ9pVb4JqXiSqG4dos5Q9N4sYFoWghX21tfOV2dhc5TGqYOhnHrQS7RiKQL1vQ48kIK34gQ5oRg==, tarball: https://registry.npmjs.org/@turf/clone/-/clone-5.1.5.tgz}
 
+  '@turf/clone@7.1.0':
+    resolution: {integrity: sha512-5R9qeWvL7FDdBIbEemd0eCzOStr09oburDvJ1hRiPCFX6rPgzcZBQ0gDmZzoF4AFcNLb5IwknbLZjVLaUGWtFA==, tarball: https://registry.npmjs.org/@turf/clone/-/clone-7.1.0.tgz}
+
   '@turf/helpers@5.1.5':
     resolution: {integrity: sha512-/lF+JR+qNDHZ8bF9d+Cp58nxtZWJ3sqFe6n3u3Vpj+/0cqkjk4nXKYBSY0azm+GIYB5mWKxUXvuP/m0ZnKj1bw==, tarball: https://registry.npmjs.org/@turf/helpers/-/helpers-5.1.5.tgz}
 
@@ -1823,6 +1829,9 @@ packages:
 
   '@turf/invariant@5.2.0':
     resolution: {integrity: sha512-28RCBGvCYsajVkw2EydpzLdcYyhSA77LovuOvgCJplJWaNVyJYH6BOR3HR9w50MEkPqb/Vc/jdo6I6ermlRtQA==, tarball: https://registry.npmjs.org/@turf/invariant/-/invariant-5.2.0.tgz}
+
+  '@turf/mask@7.1.0':
+    resolution: {integrity: sha512-d+u3IIiRhe17TDfP/+UMn9qRlJYPJpK7sj6WorsssluGi0yIG/Z24uWpcLskWKSI8NNgkIbDrp+GIYkJi2t7SA==, tarball: https://registry.npmjs.org/@turf/mask/-/mask-7.1.0.tgz}
 
   '@turf/meta@5.2.0':
     resolution: {integrity: sha512-ZjQ3Ii62X9FjnK4hhdsbT+64AYRpaI8XMBMcyftEOGSmPMUVnkbvuv3C9geuElAXfQU7Zk1oWGOcrGOD9zr78Q==, tarball: https://registry.npmjs.org/@turf/meta/-/meta-5.2.0.tgz}
@@ -3755,6 +3764,9 @@ packages:
     resolution: {integrity: sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==, tarball: https://registry.npmjs.org/pirates/-/pirates-4.0.6.tgz}
     engines: {node: '>= 6'}
 
+  polygon-clipping@0.15.7:
+    resolution: {integrity: sha512-nhfdr83ECBg6xtqOAJab1tbksbBAOMUltN60bU+llHVOL0e5Onm1WpAXXWXVB39L8AJFssoIhEVuy/S90MmotA==, tarball: https://registry.npmjs.org/polygon-clipping/-/polygon-clipping-0.15.7.tgz}
+
   possible-typed-array-names@1.0.0:
     resolution: {integrity: sha512-d7Uw+eZoloe0EHDIYoe+bQ5WXnGMOpmiZFTuMWCwpjzzkL2nTjcKiAk4hh8TjnGye2TwWOk3UXucZ+3rbmBa8Q==, tarball: https://registry.npmjs.org/possible-typed-array-names/-/possible-typed-array-names-1.0.0.tgz}
     engines: {node: '>= 0.4'}
@@ -4114,6 +4126,9 @@ packages:
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==, tarball: https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.1.tgz}
     engines: {node: '>=0.10.0'}
+
+  splaytree@3.1.2:
+    resolution: {integrity: sha512-4OM2BJgC5UzrhVnnJA4BkHKGtjXNzzUfpQjCO8I05xYPsfS/VuQDwjCGGMi8rYQilHEV4j8NBqTFbls/PZEE7A==, tarball: https://registry.npmjs.org/splaytree/-/splaytree-3.1.2.tgz}
 
   split-string@3.1.0:
     resolution: {integrity: sha512-NzNVhJDYpwceVVii8/Hu6DKfD2G+NrQHlS/V/qgv763EYudVwEcMQNxd2lh+0VrUByXN/oJkl5grOhYWvQUYiw==, tarball: https://registry.npmjs.org/split-string/-/split-string-3.1.0.tgz}
@@ -7083,6 +7098,12 @@ snapshots:
     dependencies:
       '@turf/helpers': 5.1.5
 
+  '@turf/clone@7.1.0':
+    dependencies:
+      '@turf/helpers': 7.1.0
+      '@types/geojson': 7946.0.14
+      tslib: 2.7.0
+
   '@turf/helpers@5.1.5': {}
 
   '@turf/helpers@7.1.0':
@@ -7093,6 +7114,14 @@ snapshots:
   '@turf/invariant@5.2.0':
     dependencies:
       '@turf/helpers': 5.1.5
+
+  '@turf/mask@7.1.0':
+    dependencies:
+      '@turf/clone': 7.1.0
+      '@turf/helpers': 7.1.0
+      '@types/geojson': 7946.0.14
+      polygon-clipping: 0.15.7
+      tslib: 2.7.0
 
   '@turf/meta@5.2.0':
     dependencies:
@@ -9388,6 +9417,11 @@ snapshots:
 
   pirates@4.0.6: {}
 
+  polygon-clipping@0.15.7:
+    dependencies:
+      robust-predicates: 3.0.2
+      splaytree: 3.1.2
+
   possible-typed-array-names@1.0.0: {}
 
   postcss-import@15.1.0(postcss@8.4.47):
@@ -9770,6 +9804,8 @@ snapshots:
       union-value: 1.0.1
 
   source-map-js@1.2.1: {}
+
+  splaytree@3.1.2: {}
 
   split-string@3.1.0:
     dependencies:
