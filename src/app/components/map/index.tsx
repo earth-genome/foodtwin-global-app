@@ -8,6 +8,7 @@ import Map, {
   MapRef,
   LngLatBoundsLike,
 } from "react-map-gl";
+import { CircleLayerSpecification, FillLayerSpecification } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import MapPopup from "@/app/components/map-popup";
@@ -15,17 +16,12 @@ import MapPopup from "@/app/components/map-popup";
 import { MachineContext, MachineProvider } from "./state";
 import EdgeLayer from "./layers/edges";
 import Legend from "./legend";
+import { areaStyle, foodgroupsStyle } from "./cartography";
 
 // Environment variables used in this component
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 const mapboxStyleUrl = process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL;
-
-// Colors
-const AREA_HIGHLIGHT_COLOR = "rgba(250, 250, 249, 0.7)";
-const AREA_DEFAULT_COLOR = "rgba(250, 250, 249, 0.3)";
-const AREA_HIGHLIGHT_OUTLINE_COLOR = "rgba(0, 0, 0, 1)";
-const AREA_DEFAULT_OUTLINE_COLOR = "rgba(0, 0, 0, 0.3)";
 
 export const worldViewState = {
   bounds: [
@@ -63,6 +59,12 @@ function GlobeInner() {
     });
   }, []);
 
+  const handleMouseOut = useCallback(() => {
+    actorRef.send({
+      type: "event:map:mouseout",
+    });
+  }, [actorRef]);
+
   useEffect(() => {
     actorRef.send({
       type: "event:page:mount",
@@ -95,17 +97,6 @@ function GlobeInner() {
     }
   }, []);
 
-  // Enable/disable map mousemove
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    if (eventHandlers.mousemove) {
-      mapRef.current.on("mousemove", handleMouseMove);
-    } else {
-      mapRef.current.off("mousemove", handleMouseMove);
-    }
-  }, [handleMouseMove, eventHandlers.mousemove, mapRef.current]);
-
   return (
     <div className="flex-1 bg-gray-100 flex items-center justify-center">
       <div className="relative w-full h-full overflow-hidden">
@@ -121,6 +112,8 @@ function GlobeInner() {
               mapRef: mapRef.current as MapRef,
             });
           }}
+          onMouseMove={eventHandlers.mousemove ? handleMouseMove : undefined}
+          onMouseOut={eventHandlers.mousemove ? handleMouseOut : undefined}
           style={{ width: "100%", height: "100%" }}
           mapStyle={mapboxStyleUrl}
         >
@@ -139,20 +132,20 @@ function GlobeInner() {
               id="area-clickable-polygon"
               type="fill"
               source-layer="default"
-              paint={{
-                "fill-color": [
-                  "case",
-                  ["boolean", ["feature-state", "hover"], false],
-                  AREA_HIGHLIGHT_COLOR,
-                  AREA_DEFAULT_COLOR,
-                ],
-                "fill-outline-color": [
-                  "case",
-                  ["boolean", ["feature-state", "hover"], false],
-                  AREA_HIGHLIGHT_OUTLINE_COLOR,
-                  AREA_DEFAULT_OUTLINE_COLOR,
-                ],
-              }}
+              paint={areaStyle as FillLayerSpecification["paint"]}
+            />
+          </Source>
+
+          <Source
+            id="foodgroups-source"
+            type="vector"
+            url="mapbox://devseed.dlel0qkq"
+          >
+            <Layer
+              id="foodgroups-layer"
+              type="circle"
+              source-layer="foodgroup2max"
+              paint={foodgroupsStyle as CircleLayerSpecification["paint"]}
             />
           </Source>
 
