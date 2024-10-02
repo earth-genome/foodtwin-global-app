@@ -8,7 +8,20 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
-  safelist: ["text-category-area", "text-category-route", "text-category-node"],
+  safelist: [
+    "text-category-area",
+    "text-category-route",
+    "text-category-node",
+    "bg-food-oils-and-oilseeds",
+    "bg-food-starches",
+    "bg-food-fruits",
+    "bg-food-grains",
+    "bg-food-pulses",
+    "bg-food-vegetables",
+    "bg-food-treenuts",
+    "bg-food-meat-and-fish",
+    "bg-food-other",
+  ],
   theme: {
     extend: {
       fontFamily: {
