@@ -41,11 +41,16 @@ export function SectionHeader({ label, tooltip }: ISectionHeader) {
 }
 
 interface IPageSection {
+  id: string;
   children: React.ReactNode;
 }
 
-export function PageSection({ children }: IPageSection) {
-  return <div className="p-4">{children}</div>;
+export function PageSection({ id, children }: IPageSection) {
+  return (
+    <div id={id} className="p-4">
+      {children}
+    </div>
+  );
 }
 
 interface IMetricRow {

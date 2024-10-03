@@ -13,6 +13,10 @@ interface ActionParseUrl {
   currentArea?: GeoJSON.Feature | null;
 }
 
+interface ActionParseAreaSection {
+  type: "action:parseAreaSection";
+}
+
 interface ActionSetMapRef {
   type: "action:setMapRef";
   mapRef: MapRef;
@@ -50,6 +54,7 @@ interface ActionAreaClear {
 
 export type StateActions =
   | ActionParseUrl
+  | ActionParseAreaSection
   | ActionSetMapRef
   | ActionSetHighlightedArea
   | ActionClearHighlightedArea

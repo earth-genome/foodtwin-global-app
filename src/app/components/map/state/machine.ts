@@ -30,7 +30,7 @@ interface StateContext {
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggIZlicKxgUYAMZsA2gAYAuolAAHNLFxtcaFrJAAPRADYATET16AHAGYA7OZPmAnHp06JAVgA0IAJ6IAtAEYnB0x0fYwAWQNM9cwljPQBfWLdUTBw6EnJKGjpGZnYEAFtOOXy0AFcBPLRmSRkkEAUlFTUNbQQ9JxsiGydnGwkQ8x0QoJ83TwRfHyIHPR87YKCTMxD4xPQsPEI0iipaQmzWDhKKBAOwMmqNeuVVdVqWoKIJHz0LV-9LK1HEU3aibuMdKZTBIJDpuj4+isQEl1qkCkUKiV2LgWFB9rl4cUkeJpJdFNcmndvIFJsDejobMYnMYaTovghwVMnCE+uYWf0nFYoTCUptuLwEAAzMBsYQACxRaIgajARBR1DQAGtZTyNsR+XxhaKJaiEPK0MJOI0WNULrUrsbmogfEMOsYJJSLOZjD5zPSuqYiCFjOYnM9Aj7maZuWteeqeHxdgwmAcuBGEMIhNwzfJ8ZaiQggp7HBCnE7zLM-PSBhJDOZTD5whZIj4fCHkmqiBrMnsY7lmwIhKIU3U0zcrQhbJMnE5HAMWcCzMZ6QDJmY9M4lqYbKYQk567C+fGo+iOJjEeVKmAexb+xnIh1Kw6Kf4bcY7PSIRYiK6qWD2vfOeYN2Gm9usm2hzHKc5y4uafaEqALReAMRADDYIRGDYvq9FY04eIgs5EPOEIFguvpxAk0Kho2cicDACDoJwED0CeEG3FBmEPCCoKUiuiFPKY9JDKSgyAiOVhdDo5Y-qR5FgJRaDUbRPg1KmDRnoxCDPA6L5RD4Og0vabJhPSwkGNS7TRCOdj3oRqwNqkZEUYiyKoruCDWRJtk4nJvYKZBWjEoCcEOrYpgAr0LI2PSLw6IYfQstSUTMjSyxQiwaAQHAGiqnQeIeQxXnjCEta+chK6BX0Dr0l4LwdMyNi1ghyEOKCwZEWlmykNsLYEBlBJZS0IQdIMuEROW9hriMGHKRp2GjmYlIum0PUNRZm7EPupR2VAHXpkpXirsYhiBFEDrtEMzohPSy7hVVCzekhzw2qJqTNlq4qSutinZTa9hwWEVJhEd7R6Kd1J-FVMTLiEYP2OZxGWVuApRi9nktC85hTK6GnCQMgTROhYwAqWVX+D1JjBO0Oh3ZsTmSdR8NdcSFZTMh-gAi8YOjnpUSPHhLK2N6HJk8QFMuc94GZQOW3dFMFhhAFAWVt6j4si+NgOBSILUvYXTxPEQA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggIZlicKxgUYAMZsA2gAYAuolAAHNLFxtcaFrJAAPRADYATET16AHAGYA7OZPmAnHp06JAVgA0IAJ6IAtAEYnB0x0fYwAWQNM9cwljPQBfWLdUTBw6EnJKGjpGZnYEAFtOOXy0AFcBPLRmSRkkEAUlFTUNbQQ9JxsiGydnGwkQ8x0QoJ83TwRfHyIHPR87YKCTMxD4xPQsPEI0iipaQmzWDgKiirKwUvFpDXrlVXValpD7IlN-CR8JSwjB1w9vdqn9LMZsYFsYlisQEl1qlSNtMnsmAcECUKAgDmAyNUroobk17rpJm89BYSf5LFZRogXh1uiDTKYJBIdN13ssEpC1ilNkdiiV2LgWFB9rkeSd2FjatdGndQC0vIFJgzejobMYnGCQZSECypk4Qn1zPr+k4rBCoVziNxeAgAGZgNjCAAWAqFEDUYCIAuoaAA1h7zRtLTw+HaHc7BQgvWhhJxpdUJfIcdLmogfEMOsYJKqLOZjD5zFquqYiCFjOYnD5iToy3rTGbOYGiFa+LsGIjcs2EMIhNwE3Uk7cUwgQnYSzZTD59NWfC9TGqteY051id0rGYJMTzPXko3O63hRxOwIhKI+1LB-iELZJk4nI4BvqGWZjFqQZMzHpnEtTOOQk5t9Cmx7lk7aHIUvLlJUYBngOeKyro5hEM4Hz9CYsw2JWehau8i6dPmLw6IuTgvJWAEWk2wbwm2ORgccpQCOcMENBe8HDnOnTRF0fjDMSL6-Ag7yqoYM7vHe7QWCqZG7pR+6gciqLopilySrBMpaN4AxEAMNiPHoNjlr0a6vkERAfjhlYfP4UmpHInAwAg6CcBA9BMbiaktG+SGMiqxi-p+M5akMiqDDoLwmnpd7mHW7IBjZdlgA5aBOS5Pg1ImzFwepAmfh0+ZvNWYIoWEWqEQY6rtNEt52L5cQxQ2cX2WKKiCgeCC2Y1pTisp6VuUO8qhVpWa2HOKp9FmWpVoYfT6uqUR6mCbLsiwaAQHAGixYQ2IZe53ghD4kxRPp44gr0+o2FqXjEhmQRqs4LL+C81mbLCGStltvWXiOUx7R8ERRfYf4jPx+06KZd5mKqeZtCO0WrDuqSip1zVQO9yaXvKpaGIEURZu0Qy5iEWo-qDGELKWRgYTMbJw4BQbWqGTouqjLFZWmTyGnOtb4+0WH8S8xhEO0wRXSEov2LVNPkcBm0qdtQ6blM+aToRAyBNEfFjCCEh4f4I5oWqNg6E9xDtQljkQMzmVyvSkwquWJj6KYot3iVURIYuej6rYpbGsbRCm7y-KCpbO3jC82uhRzc5zjOpbYfqRCzA4o1fvYXTxPEQA */
     id: "globeView",
 
     types: {
@@ -138,12 +138,12 @@ export const globeViewMachine = createMachine(
           "event:url:enter": {
             target: "page:load",
             reenter: true,
-            actions: {
+            actions: [{
               type: "action:parseUrl",
               params: ({ event }) => ({
                 pathname: event.pathname,
               }),
-            },
+            }, "action:parseAreaSection"],
           },
         },
 
@@ -202,6 +202,30 @@ export const globeViewMachine = createMachine(
           currentAreaId: null,
           currentArea: null,
         };
+      }),
+      "action:parseAreaSection": assign(({ event }) => {
+        assertEvent(event, "event:url:enter");
+        switch (window.location.hash) {
+          case "#food-transportation":
+            console.log("#food-transportation")
+            // show ports
+            // show area outline
+            // show target area outlines
+            // show routes
+            break;
+          case "#impact":
+            console.log("#impact")
+            // show area outline
+            // show target area with impact colours
+            break;
+          default:
+            console.log("#food-produced")
+            // show dotmap
+            // show area mask
+            // hide ports
+            break;
+        }
+        return {};
       }),
       "action:setMapRef": assign(({ event }) => {
         assertEvent(event, "event:map:mount");

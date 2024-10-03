@@ -8,6 +8,7 @@ import {
   PageSection,
   SectionHeader,
 } from "@/app/components/page-section";
+import ScrollTracker from "./scroll-tracker";
 
 const AreaPage = async ({
   params,
@@ -36,28 +37,43 @@ const AreaPage = async ({
   });
 
   return (
-    <div className="w-[480px]">
+    <div className="w-[480px] h-screen grid grid-rows-[max-content_1fr]">
       <PageHeader title={area.name} itemType={EItemType.area} />
-      <PageSection>
-        <SectionHeader label="Food Produced" />
-        <MetricRow>
-          <Metric
-            label="Calories produced"
-            value={totalFlow._sum.value}
-            unit="tonnes"
-          />
-          <Metric
-            label="Agriculture sector in GDP"
-            value={null}
-            unit="billion 2010 USD$"
-          />
-          <Metric label="GDP per capita" value={null} unit="2011 USD$" />
-        </MetricRow>
-        <MetricRow>
-          <Metric label="Total population" value={null} unit="million people" />
-          <Metric label="Human Development Index" value={null} />
-        </MetricRow>
-      </PageSection>
+      <ScrollTracker>
+        <PageSection id="food-produced">
+          <SectionHeader label="Food Produced" />
+          <MetricRow>
+            <Metric
+              label="Calories produced"
+              value={totalFlow._sum.value}
+              unit="tonnes"
+            />
+            <Metric
+              label="Agriculture sector in GDP"
+              value={null}
+              unit="billion 2010 USD$"
+            />
+            <Metric label="GDP per capita" value={null} unit="2011 USD$" />
+          </MetricRow>
+          <MetricRow>
+            <Metric
+              label="Total population"
+              value={null}
+              unit="million people"
+            />
+            <Metric label="Human Development Index" value={null} />
+          </MetricRow>
+          <div className="bg-neutral-100 h-[400px]">chart</div>
+        </PageSection>
+        <PageSection id="food-transportation">
+          <SectionHeader label="Food Transportation" />
+          <div className="bg-neutral-100 h-[400px]">chart</div>
+        </PageSection>
+        <PageSection id="impact">
+          <SectionHeader label="Impact on people" />
+          <div className="bg-neutral-100 h-[400px]">chart</div>
+        </PageSection>
+      </ScrollTracker>
     </div>
   );
 };
