@@ -8,6 +8,7 @@ import {
   PageSection,
   SectionHeader,
 } from "@/app/components/page-section";
+import { SIDEBAR_WIDTH } from "@/app/config";
 
 const AreaPage = async ({
   params,
@@ -36,7 +37,7 @@ const AreaPage = async ({
   });
 
   return (
-    <div className="w-[480px]">
+    <div className={`w-[${SIDEBAR_WIDTH}px]`}>
       <PageHeader title={area.name} itemType={EItemType.area} />
       <PageSection>
         <SectionHeader label="Food Produced" />
