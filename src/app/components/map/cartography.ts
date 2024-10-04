@@ -6,7 +6,7 @@ import {
 
 // Colors
 const AREA_HIGHLIGHT_OUTLINE_COLOR = "rgba(28, 25, 23, 0.6)";
-const AREA_DEFAULT_OUTLINE_COLOR = "rgba(28, 25, 23, 0.05)";
+const AREA_DEFAULT_OUTLINE_COLOR = "rgba(28, 25, 23, 0.02)";
 
 export const areaStyle: FillLayerSpecification["paint"] = {
   "fill-color": "transparent",
