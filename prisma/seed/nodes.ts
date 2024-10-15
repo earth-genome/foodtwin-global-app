@@ -15,6 +15,36 @@ import {
 import fs from "fs-extra";
 import { parse } from "csv-parse";
 
+enum IndicatorColumn {
+  LIVESTOCK_SUM = "livestock_sum",
+  TRAVEL_MEAN = "travel_mean",
+  NUM_F_CHILDBEARING = "num_f_childbearing",
+  NUM_ELDERLY = "num_elderly",
+  NUM_UNDER5 = "num_under5",
+  TOTALPOP = "totalpop",
+  PCT_F_CHILDBEARING = "pct_f_childbearing",
+  PCT_ELDERLY = "pct_elderly",
+  PCT_UNDER5 = "pct_under5",
+  GDPPC = "gdppc",
+  HDI = "hdi",
+  NUM_RURAL = "num_rural",
+  PCT_RURAL = "pct_rural",
+  AGGDP_2010 = "aggdp_2010",
+}
+
+interface AreaIndicatorsRow {
+  ID: string;
+  iso3: string;
+  admin_name: string;
+  [key: string]: string; // Index signature for dynamic access
+}
+
+export type AreaMeta = {
+  [K in IndicatorColumn]?: number;
+} & {
+  iso3?: string;
+};
+
 export const ingestNodes = async (prisma: PrismaClient) => {
   await prisma.$executeRaw`TRUNCATE "Node" RESTART IDENTITY CASCADE`;
   await prisma.$executeRaw`TRUNCATE "Area" RESTART IDENTITY CASCADE`;
@@ -31,36 +61,23 @@ export const ingestNodes = async (prisma: PrismaClient) => {
 
   // Ingest meta
   const areaIndicatorsCsv = await fs.readFile(ADMIN_INDICATORS_PATH, "utf-8");
-  const areaIndicatorsRows = await new Promise((resolve, reject) => {
-    parse(
-      areaIndicatorsCsv,
-      { columns: true, skip_empty_lines: true },
-      (err, records) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(records);
+  const areaIndicatorsRows = await new Promise<AreaIndicatorsRow[]>(
+    (resolve, reject) => {
+      parse(
+        areaIndicatorsCsv,
+        { columns: true, skip_empty_lines: true },
+        (err, records) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(records);
+          }
         }
-      }
-    );
-  });
+      );
+    }
+  );
 
-  const indicatorColumns = [
-    "livestock_sum",
-    "travel_mean",
-    "num_f_childbearing",
-    "num_elderly",
-    "num_under5",
-    "totalpop",
-    "pct_f_childbearing",
-    "pct_elderly",
-    "pct_under5",
-    "gdppc",
-    "hdi",
-    "num_rural",
-    "pct_rural",
-    "aggdp_2010",
-  ];
+  const indicatorColumns = Object.values(IndicatorColumn);
 
   for (const areaIndicatorsRow of areaIndicatorsRows) {
     await prisma.area.update({
@@ -72,7 +89,7 @@ export const ingestNodes = async (prisma: PrismaClient) => {
           },
           {
             iso3: areaIndicatorsRow.iso3, // add iso3 as string
-          }
+          } as Record<string, number | string>
         ),
       },
       where: { id: areaIndicatorsRow.ID },

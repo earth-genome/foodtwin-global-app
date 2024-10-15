@@ -13,7 +13,7 @@ export const MetricRow: React.FC<MetricRowProps> = ({ children }) => {
 
 interface MetricProps {
   label: string;
-  value: number | null;
+  value?: number;
   unit?: string;
   formatType: "metric" | "weight";
   decimalPlaces: number;
@@ -26,8 +26,9 @@ export const Metric: React.FC<MetricProps> = ({
   formatType,
   decimalPlaces,
 }) => {
-  const formattedValue =
-    value !== null ? formatKeyIndicator(value, formatType, decimalPlaces) : "-";
+  const formattedValue = value
+    ? formatKeyIndicator(value, formatType, decimalPlaces)
+    : "-";
 
   return (
     <div className="flex flex-col text-center text-ink px-4 [&:not(:last-child)]:border-r-1 border-neutral-200">

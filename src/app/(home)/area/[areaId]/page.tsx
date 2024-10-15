@@ -4,6 +4,7 @@ import PageHeader from "@/app/components/page-header";
 import { EItemType } from "@/types/components";
 import { PageSection, SectionHeader } from "@/app/components/page-section";
 import { Metric, MetricRow } from "@/app/components/metric";
+import { AreaMeta } from "../../../../../prisma/seed/nodes";
 
 const AreaPage = async ({
   params,
@@ -31,13 +32,7 @@ const AreaPage = async ({
     },
   });
 
-  const meta = area.meta as {
-    iso3: string | null;
-    totalpop: number | null;
-    hdi: number | null;
-    aggdp_2010: number | null;
-    gdppc: number | null;
-  };
+  const meta = area.meta as AreaMeta;
 
   const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
 
@@ -49,7 +44,7 @@ const AreaPage = async ({
         <MetricRow>
           <Metric
             label="Total production"
-            value={totalFlow.value}
+            value={totalFlow.value ?? undefined}
             formatType="weight"
             decimalPlaces={0}
           />
