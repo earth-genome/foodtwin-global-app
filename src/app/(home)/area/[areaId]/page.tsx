@@ -37,7 +37,9 @@ const AreaPage = async ({
   });
 
   return (
-    <div className={`w-[${SIDEBAR_WIDTH}px]`}>
+    <div
+      className={`w-[${SIDEBAR_WIDTH}px] absolute top-0 right-0 bottom-0 bg-white`}
+    >
       <PageHeader title={area.name} itemType={EItemType.area} />
       <PageSection>
         <SectionHeader label="Food Produced" />

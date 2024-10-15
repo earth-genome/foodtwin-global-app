@@ -1,5 +1,7 @@
+import { SIDEBAR_WIDTH } from "@/app/config";
 import { ArrowDown, ArrowUp } from "@phosphor-icons/react";
 import { useState } from "react";
+import { MachineContext } from "./state";
 
 interface ILegendItem {
   color: string;
@@ -17,9 +19,16 @@ function LegendItem({ color, label }: ILegendItem) {
 
 function Legend() {
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const areaShowing = MachineContext.useSelector(
+    (s) => !!s.context.currentAreaId
+  );
+
+  const legendLeftOffset = areaShowing ? SIDEBAR_WIDTH : 0;
 
   return (
-    <div className="absolute bottom-4 left-[50%] translate-x-[-50%] z-50 bg-neutral-100/60 rounded text-xs backdrop-blur w-[530px]">
+    <div
+      className={`absolute bottom-4 left-[calc((100vw-${legendLeftOffset}px)/2)] translate-x-[-50%] z-50 bg-neutral-100/60 rounded text-xs backdrop-blur w-[530px]`}
+    >
       <button
         className={`flex gap-4 items-center px-4 py-2 w-[100%] bg-neutral-200/80 font-header text-xxs uppercase ${isExpanded ? "rounded-t" : "rounded"}`}
         onClick={() => setIsExpanded((prev) => !prev)}
