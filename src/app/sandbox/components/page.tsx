@@ -42,14 +42,14 @@ export default function Components() {
           <SectionHeader label="Food Produced" />
           <MetricRow>
             <Metric
-              value={999999}
+              value={25000000}
               label="Total production"
               formatType="weight"
               decimalPlaces={0}
             />
             <Metric
               label="Agriculture sector in GDP"
-              value={8.364}
+              value={83642039}
               formatType="metric"
               decimalPlaces={3}
               unit="2010 USD$"
@@ -65,9 +65,9 @@ export default function Components() {
           <MetricRow>
             <Metric
               label="Total population"
-              value={1000000}
+              value={29309203}
               formatType="metric"
-              decimalPlaces={0}
+              decimalPlaces={1}
             />
             <Metric
               label="Human Development Index"
@@ -88,15 +88,25 @@ export default function Components() {
           <MetricRow>
             <Metric
               label="Calories produced"
-              value={999999}
-              unit="billion Kcal"
+              value={1200000}
+              unit="tonnes"
+              formatType="metric"
+              decimalPlaces={1}
             />
             <Metric
               label="Agriculture sector in GDP"
-              value={8.364}
-              unit="billion 2010 USD$"
+              value={836420393}
+              unit="2010 USD$"
+              formatType="metric"
+              decimalPlaces={3}
             />
-            <Metric label="GDP per capita" value={49447} unit="2011 USD$" />
+            <Metric
+              label="GDP per capita"
+              value={49447}
+              unit="2011 USD$"
+              formatType="metric"
+              decimalPlaces={2}
+            />
           </MetricRow>
         </PageSection>
       </div>
