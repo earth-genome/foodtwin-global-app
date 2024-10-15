@@ -8,7 +8,6 @@ import Map, {
   MapRef,
   LngLatBoundsLike,
 } from "react-map-gl";
-import { CircleLayerSpecification, FillLayerSpecification } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import MapPopup from "@/app/components/map-popup";
@@ -16,7 +15,7 @@ import MapPopup from "@/app/components/map-popup";
 import { MachineContext, MachineProvider } from "./state";
 import EdgeLayer from "./layers/edges";
 import Legend from "./legend";
-import { areaStyle, foodgroupsStyle } from "./cartography";
+import { areaStyle, foodgroupsStyle, lineStyle } from "./cartography";
 
 // Environment variables used in this component
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -126,13 +125,13 @@ function GlobeInner() {
               id="area-outline"
               type="line"
               source-layer="default"
-              paint={{ "line-color": "#000", "line-width": 0.2 }}
+              paint={lineStyle}
             />
             <Layer
               id="area-clickable-polygon"
               type="fill"
               source-layer="default"
-              paint={areaStyle as FillLayerSpecification["paint"]}
+              paint={areaStyle}
             />
           </Source>
 
@@ -145,7 +144,7 @@ function GlobeInner() {
               id="foodgroups-layer"
               type="circle"
               source-layer="foodgroup2max"
-              paint={foodgroupsStyle as CircleLayerSpecification["paint"]}
+              paint={foodgroupsStyle}
             />
           </Source>
 

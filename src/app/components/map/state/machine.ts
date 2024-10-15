@@ -309,8 +309,19 @@ export const globeViewMachine = createMachine(
 
         return {};
       }),
-      "action:setCurrentAreaId": assign(({ event }) => {
+      "action:setCurrentAreaId": assign(({ event, context }) => {
         assertEvent(event, "event:area:select");
+
+        const { mapRef } = context;
+        const features = mapRef?.querySourceFeatures("area-tiles", {
+          filter: ["id", event.areaId],
+          sourceLayer: "area-clickable-polygon",
+        });
+
+        if (features) {
+          mapRef?.setFeatureState(features[0], { selected: true });
+        }
+
         return {
           currentAreaId: event.areaId,
         };
