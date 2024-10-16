@@ -3,8 +3,18 @@ import { GeoJSONFeature } from "mapbox-gl";
 import { IMapPopup } from "@/app/components/map-popup";
 import { EViewType } from "../machine";
 
-interface ActionParseUrl {
-  type: "action:parseUrl";
+interface ActionWorldViewUrlChange {
+  type: "action:WorldViewUrlChange";
+  params: {
+    pathname: string;
+  };
+  viewType: EViewType | null;
+  currentAreaId?: string | null;
+  currentArea?: GeoJSON.Feature | null;
+}
+
+interface ActionAreaViewUrlChange {
+  type: "action:AreaViewUrlChange";
   params: {
     pathname: string;
   };
@@ -49,7 +59,8 @@ interface ActionAreaClear {
 }
 
 export type StateActions =
-  | ActionParseUrl
+  | ActionWorldViewUrlChange
+  | ActionAreaViewUrlChange
   | ActionSetMapRef
   | ActionSetHighlightedArea
   | ActionClearHighlightedArea

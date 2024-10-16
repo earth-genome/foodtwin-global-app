@@ -30,7 +30,7 @@ interface StateContext {
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggIZlicKxgUYAMZsA2gAYAuolAAHNLFxtcaFrJAAPRADYATET16AHAGYA7OZPmAnHp06JAVgA0IAJ6IAtAEYnB0x0fYwAWQNM9cwljPQBfWLdUTBw6EnJKGjpGZnYEAFtOOXy0AFcBPLRmSRkkEAUlFTUNbQQ9JxsiGydnGwkQ8x0QoJ83TwRfHyIHPR87YKCTMxD4xPQsPEI0iipaQmzWDhKKBAOwMmqNeuVVdVqWoKIJHz0LV-9LK1HEU3aibuMdKZTBIJDpuj4+isQEl1qkCkUKiV2LgWFB9rl4cUkeJpJdFNcmndvIFJsDejobMYnMYaTovghwVMnCE+uYWf0nFYoTCUptuLwEAAzMBsYQACxRaIgajARBR1DQAGtZTyNsR+XxhaKJaiEPK0MJOI0WNULrUrsbmogfEMOsYJJSLOZjD5zPSuqYiCFjOYnM9Aj7maZuWteeqeHxdgwmAcuBGEMIhNwzfJ8ZaiQggp7HBCnE7zLM-PSBhJDOZTD5whZIj4fCHkmqiBrMnsY7lmwIhKIU3U0zcrQhbJMnE5HAMWcCzMZ6QDJmY9M4lqYbKYQk567C+fGo+iOJjEeVKmAexb+xnIh1Kw6Kf4bcY7PSIRYiK6qWD2vfOeYN2Gm9usm2hzHKc5y4uafaEqALReAMRADDYIRGDYvq9FY04eIgs5EPOEIFguvpxAk0Kho2cicDACDoJwED0CeEG3FBmEPCCoKUiuiFPKY9JDKSgyAiOVhdDo5Y-qR5FgJRaDUbRPg1KmDRnoxCDPA6L5RD4Og0vabJhPSwkGNS7TRCOdj3oRqwNqkZEUYiyKoruCDWRJtk4nJvYKZBWjEoCcEOrYpgAr0LI2PSLw6IYfQstSUTMjSyxQiwaAQHAGiqnQeIeQxXnjCEta+chK6BX0Dr0l4LwdMyNi1ghyEOKCwZEWlmykNsLYEBlBJZS0IQdIMuEROW9hriMGHKRp2GjmYlIum0PUNRZm7EPupR2VAHXpkpXirsYhiBFEDrtEMzohPSy7hVVCzekhzw2qJqTNlq4qSutinZTa9hwWEVJhEd7R6Kd1J-FVMTLiEYP2OZxGWVuApRi9nktC85hTK6GnCQMgTROhYwAqWVX+D1JjBO0Oh3ZsTmSdR8NdcSFZTMh-gAi8YOjnpUSPHhLK2N6HJk8QFMuc94GZQOW3dFMFhhAFAWVt6j4si+NgOBSILUvYXTxPEQA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggLYCGADl2gCusMJzTMA2gAYAuolC80sXG1xoW8kAA9EAFgDsAJiIBOXVICM+gMwAOKSf1nd1gDQgAnogC0h3UVsAVl0TKSlAizMANkMLKKiAXwT3VEwcOhJySho6RmZ2Lj4BYTAhNmk5JBBFZVV1TR0EKN0LIil9dqj2m0NmwPcvBG8LSyJAsJs7QMMnYJMklPQsPEJMiipaQjzWDkEKBB2wMgrNGpU1DSrGqNbLQ2sbG2n9F8MBxGtAkzGpWyjraxhKLjEa6BYgVLLDI8fhiQTsXAsKDbAow4rsE5VM51S6gRreaw3IiA0JRExBWyUqLvBAgojA8wGRn6QJGcGQ9KrbhkMDcBAAMzAbAAxgALRHIiDqMBERHUNAAaxlHJWxG5vIFQrFEoQcrQwu4OIqmIUSnO9SuiAsujJAQctge+lsVhpJkC1iIulsLIs9yi3uC1nZS05ap5fM2DCYOwQ6r5wpQvOOslOZpxDUQNw9XRG7pe+kiFn6nkQ+i6RBm1gshIBRgLFmDaVVRDjOS20dRRThIjEkhTWLTFwzCFznrsvQsFkpRcCQRpoP0xNZ8VnhhMhnCYOSEJDzdbkZRHDR3dKgnK-dNtSHloQLKkASzJnXcUnJmpJZHUgMS7LwNsa43YJGyhLlwzbKN8l2fZDmTSpL3NXFtB8MsiDLMxDDXFlQiMWwaT+VoHVidpfXaaZgNDIheG4GAEHQbgIHoE1qkHC08UQfC2iBckTGsXQN2rGkbVaQkbU+Vk10CKIbHI5sqJouiGIkCw4OYq9WKQkcN2+KxLH9Sl2l0FwaSk4xZy+X5Ai+QxbHXGSMjksB0VUJFDwQBynKY7FrzYoYa1QhwnDsMkvwcGk-QrL9zFnDpgkpLdtxYNAIDgTQVToVM1MQ-EWlaDpHB4v5QnMEwaWGGzOPaAEghmN1Ajs1ZSHWcCMoQ4cQnpFpKsrXpdAiec4gCSSHXJZ1DDmINtzS1ZjyEBEkRa9MbwJL0K0JDoHC+G0nV0GlrDfUwXz8f8119a16rDDVBRFcV5oHTLh2tXpUJcIIXC2qzdtnMYTCne5nD4mJzpbMDIwW7yNPuRcbgLeIXn+LpKTw8sfumEJrKnL5Ekm3d7OoxyFLB9T8QBVoyRZayYl43r30GKT72Ivx2jMWwDDq7Gm1xmi4TmqBCaynxPnvf59BcOw7GrL153MIhIniYLwn-Mk2aSIA */
     id: "globeView",
 
     types: {
@@ -55,12 +55,6 @@ export const globeViewMachine = createMachine(
     states: {
       "world:view": {
         on: {
-          "event:area:select": {
-            target: "area:fetching",
-            actions: "action:setCurrentAreaId",
-            reenter: true,
-          },
-
           "event:map:mousemove": {
             target: "world:view",
             actions: "action:setHighlightedArea",
@@ -76,7 +70,7 @@ export const globeViewMachine = createMachine(
             reenter: true,
             actions: [
               {
-                type: "action:parseUrl",
+                type: "action:WorldViewUrlChange",
                 params: ({ event }) => ({
                   pathname: event.pathname,
                 }),
@@ -119,12 +113,6 @@ export const globeViewMachine = createMachine(
             reenter: true,
           },
 
-          "event:area:select": {
-            target: "area:fetching",
-            reenter: true,
-            actions: "action:setCurrentAreaId",
-          },
-
           "event:map:mousemove": {
             target: "area:view",
             actions: "action:setHighlightedArea",
@@ -138,12 +126,14 @@ export const globeViewMachine = createMachine(
           "event:url:enter": {
             target: "page:load",
             reenter: true,
-            actions: {
-              type: "action:parseUrl",
-              params: ({ event }) => ({
-                pathname: event.pathname,
-              }),
-            },
+            actions: [
+              {
+                type: "action:AreaViewUrlChange",
+                params: ({ event }) => ({
+                  pathname: event.pathname,
+                }),
+              },
+            ],
           },
         },
 
@@ -170,7 +160,7 @@ export const globeViewMachine = createMachine(
             reenter: true,
             actions: [
               {
-                type: "action:parseUrl",
+                type: "action:WorldViewUrlChange",
                 params: ({ event }) => ({
                   pathname: event.pathname,
                 }),
@@ -185,10 +175,9 @@ export const globeViewMachine = createMachine(
   },
   {
     actions: {
-      "action:parseUrl": assign((_, params: { pathname: string }) => {
+      "action:WorldViewUrlChange": assign((_, params: { pathname: string }) => {
         if (params.pathname.startsWith("/area/")) {
           const [, , areaId] = params.pathname.split("/");
-
           return {
             viewType: EViewType.area,
             currentAreaId: areaId,
@@ -203,6 +192,39 @@ export const globeViewMachine = createMachine(
           currentArea: null,
         };
       }),
+      "action:AreaViewUrlChange": assign(
+        ({ context }, params: { pathname: string }) => {
+          const [, , areaId] = params.pathname.split("/");
+
+          const { mapRef, currentArea } = context;
+
+          if (mapRef && currentArea) {
+            const features = mapRef.querySourceFeatures("area-tiles", {
+              filter: ["==", "id", currentArea.id],
+              sourceLayer: "default",
+            });
+
+            for (let i = 0, len = features.length; i < len; i++) {
+              const feature = features[i];
+              if (feature.id) {
+                mapRef.setFeatureState(
+                  {
+                    source: "area-tiles",
+                    sourceLayer: "default",
+                    id: feature.id,
+                  },
+                  { selected: false }
+                );
+              }
+            }
+          }
+
+          return {
+            viewType: EViewType.area,
+            currentAreaId: areaId,
+          };
+        }
+      ),
       "action:setMapRef": assign(({ event }) => {
         assertEvent(event, "event:map:mount");
 
@@ -268,8 +290,25 @@ export const globeViewMachine = createMachine(
           mapPopup: null,
         };
       }),
-      "action:setCurrentArea": assign(({ event }) => {
+      "action:setCurrentArea": assign(({ event, context }) => {
         assertEvent(event, "xstate.done.actor.0.globeView.area:fetching");
+        const { mapRef } = context;
+
+        const features = mapRef?.querySourceFeatures("area-tiles", {
+          filter: ["==", "id", event.output.id],
+          sourceLayer: "default",
+        });
+        const feature = features && features[0];
+        if (feature && feature.id) {
+          mapRef?.setFeatureState(
+            {
+              source: "area-tiles",
+              sourceLayer: "default",
+              id: feature.id,
+            },
+            { selected: true }
+          );
+        }
 
         return {
           currentArea: event.output,
@@ -308,23 +347,6 @@ export const globeViewMachine = createMachine(
         mapRef.fitBounds(worldViewState.bounds);
 
         return {};
-      }),
-      "action:setCurrentAreaId": assign(({ event, context }) => {
-        assertEvent(event, "event:area:select");
-
-        const { mapRef } = context;
-        const features = mapRef?.querySourceFeatures("area-tiles", {
-          filter: ["id", event.areaId],
-          sourceLayer: "area-clickable-polygon",
-        });
-
-        if (features) {
-          mapRef?.setFeatureState(features[0], { selected: true });
-        }
-
-        return {
-          currentAreaId: event.areaId,
-        };
       }),
       "action:area:clear": assign({
         currentAreaId: null,

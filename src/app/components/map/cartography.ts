@@ -8,14 +8,25 @@ import {
 const AREA_HIGHLIGHT_OUTLINE_COLOR = "rgba(28, 25, 23, 0.6)";
 const AREA_DEFAULT_OUTLINE_COLOR = "rgba(28, 25, 23, 0.02)";
 
-export const areaStyle: FillLayerSpecification["paint"] = {
+export const areaDefaultStyle: FillLayerSpecification["paint"] = {
   "fill-color": "transparent",
+};
+
+export const areaStyle: FillLayerSpecification["paint"] = {
+  "fill-color": [
+    "case",
+    ["boolean", ["feature-state", "selected"], false],
+    "transparent",
+    "rgba(255,255,255,0.6)",
+  ],
 };
 
 export const lineStyle: LineLayerSpecification["paint"] = {
   "line-color": [
     "case",
     ["boolean", ["feature-state", "hover"], false],
+    AREA_HIGHLIGHT_OUTLINE_COLOR,
+    ["boolean", ["feature-state", "selected"], false],
     AREA_HIGHLIGHT_OUTLINE_COLOR,
     AREA_DEFAULT_OUTLINE_COLOR,
   ],
