@@ -70,7 +70,7 @@ export const globeViewMachine = createMachine(
             reenter: true,
             actions: [
               {
-                type: "action:WorldViewUrlChange",
+                type: "action:parseUrl",
                 params: ({ event }) => ({
                   pathname: event.pathname,
                 }),
@@ -128,10 +128,13 @@ export const globeViewMachine = createMachine(
             reenter: true,
             actions: [
               {
-                type: "action:AreaViewUrlChange",
+                type: "action:parseUrl",
                 params: ({ event }) => ({
                   pathname: event.pathname,
                 }),
+              },
+              {
+                type: "action:resetAreaHighlight",
               },
             ],
           },
@@ -160,7 +163,7 @@ export const globeViewMachine = createMachine(
             reenter: true,
             actions: [
               {
-                type: "action:WorldViewUrlChange",
+                type: "action:parseUrl",
                 params: ({ event }) => ({
                   pathname: event.pathname,
                 }),
@@ -175,13 +178,12 @@ export const globeViewMachine = createMachine(
   },
   {
     actions: {
-      "action:WorldViewUrlChange": assign((_, params: { pathname: string }) => {
+      "action:parseUrl": assign((_, params: { pathname: string }) => {
         if (params.pathname.startsWith("/area/")) {
           const [, , areaId] = params.pathname.split("/");
           return {
             viewType: EViewType.area,
             currentAreaId: areaId,
-            currentArea: null,
           };
         }
 
@@ -192,39 +194,32 @@ export const globeViewMachine = createMachine(
           currentArea: null,
         };
       }),
-      "action:AreaViewUrlChange": assign(
-        ({ context }, params: { pathname: string }) => {
-          const [, , areaId] = params.pathname.split("/");
+      "action:resetAreaHighlight": assign(({ context }) => {
+        const { mapRef, currentArea } = context;
 
-          const { mapRef, currentArea } = context;
+        if (mapRef && currentArea) {
+          const features = mapRef.querySourceFeatures("area-tiles", {
+            filter: ["==", "id", currentArea.id],
+            sourceLayer: "default",
+          });
 
-          if (mapRef && currentArea) {
-            const features = mapRef.querySourceFeatures("area-tiles", {
-              filter: ["==", "id", currentArea.id],
-              sourceLayer: "default",
-            });
-
-            for (let i = 0, len = features.length; i < len; i++) {
-              const feature = features[i];
-              if (feature.id) {
-                mapRef.setFeatureState(
-                  {
-                    source: "area-tiles",
-                    sourceLayer: "default",
-                    id: feature.id,
-                  },
-                  { selected: false }
-                );
-              }
+          for (let i = 0, len = features.length; i < len; i++) {
+            const feature = features[i];
+            if (feature.id) {
+              mapRef.setFeatureState(
+                {
+                  source: "area-tiles",
+                  sourceLayer: "default",
+                  id: feature.id,
+                },
+                { selected: false }
+              );
             }
           }
-
-          return {
-            viewType: EViewType.area,
-            currentAreaId: areaId,
-          };
         }
-      ),
+
+        return {};
+      }),
       "action:setMapRef": assign(({ event }) => {
         assertEvent(event, "event:map:mount");
 
