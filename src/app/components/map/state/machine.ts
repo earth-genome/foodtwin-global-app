@@ -9,7 +9,6 @@ import { IMapPopup } from "../../map-popup";
 import { EItemType } from "@/types/components";
 import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 import { worldViewState } from "..";
-import { SIDEBAR_WIDTH } from "@/app/config";
 
 export enum EViewType {
   world = "world",
@@ -283,6 +282,8 @@ export const globeViewMachine = createMachine(
           return {};
         }
 
+        mapRef.resize();
+
         const bounds = bbox(currentArea.boundingBox);
 
         mapRef.fitBounds(
@@ -295,7 +296,7 @@ export const globeViewMachine = createMachine(
               top: 100,
               left: 100,
               bottom: 100,
-              right: SIDEBAR_WIDTH + 100,
+              right: 100,
             },
           }
         );
@@ -310,6 +311,8 @@ export const globeViewMachine = createMachine(
         if (!mapRef) {
           return {};
         }
+
+        mapRef.resize();
 
         mapRef.fitBounds(worldViewState.bounds);
 

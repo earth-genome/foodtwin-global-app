@@ -98,7 +98,7 @@ function GlobeInner() {
   }, []);
 
   return (
-    <div className="absolute top-0 right-0 bottom-0 left-0 overflow-hidden">
+    <div className="flex flex-col w-full h-full relative">
       <Legend />
       <Map
         mapboxAccessToken={mapboxAccessToken}
@@ -113,7 +113,7 @@ function GlobeInner() {
         }}
         onMouseMove={eventHandlers.mousemove ? handleMouseMove : undefined}
         onMouseOut={eventHandlers.mousemove ? handleMouseOut : undefined}
-        style={{ width: "100%", height: "100%" }}
+        style={{ width: "100%", height: "100%", flex: 1 }}
         mapStyle={mapboxStyleUrl}
       >
         <Source
