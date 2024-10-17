@@ -37,7 +37,7 @@ const AreaPage = async ({
   const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
 
   return (
-    <div className={`w-[480px] bg-white`}>
+    <div className={`w-[600px] bg-white`}>
       <PageHeader title={areaLabel} itemType={EItemType.area} />
       <PageSection>
         <SectionHeader label="Food Produced" />
