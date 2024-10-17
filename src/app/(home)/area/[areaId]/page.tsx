@@ -36,7 +36,7 @@ const AreaPage = async ({
   });
 
   return (
-    <div className="w-[480px]">
+    <div className={`w-[480px] bg-white`}>
       <PageHeader title={area.name} itemType={EItemType.area} />
       <PageSection>
         <SectionHeader label="Food Produced" />
