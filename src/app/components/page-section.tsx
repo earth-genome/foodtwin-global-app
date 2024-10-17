@@ -1,4 +1,3 @@
-import { formatNumber } from "@/utils/numbers";
 import {
   Button,
   Tooltip,
@@ -46,30 +45,6 @@ interface IPageSection {
 
 export function PageSection({ children }: IPageSection) {
   return <div className="p-4">{children}</div>;
-}
-
-interface IMetricRow {
-  children: React.ReactNode;
-}
-
-export function MetricRow({ children }: IMetricRow) {
-  return <div className="flex justify-center my-8">{children}</div>;
-}
-
-interface IMetric {
-  label: string;
-  value: number | null;
-  unit?: string;
-}
-
-export function Metric({ label, value, unit }: IMetric) {
-  return (
-    <div className="text-center text-ink px-4 [&:not(:last-child)]:border-r-1 border-neutral-200">
-      <p className="text-neutral-500 text-xs">{label}</p>
-      <p className="text-2xl">{value ? formatNumber(value) : "-"}</p>
-      {unit && <p className="text-xs font-bold mt-1">{unit}</p>}
-    </div>
-  );
 }
 
 export function Tabs({ children, ...props }: TabsProps) {

@@ -2,12 +2,9 @@ import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import PageHeader from "@/app/components/page-header";
 import { EItemType } from "@/types/components";
-import {
-  Metric,
-  MetricRow,
-  PageSection,
-  SectionHeader,
-} from "@/app/components/page-section";
+import { PageSection, SectionHeader } from "@/app/components/page-section";
+import { Metric, MetricRow } from "@/app/components/metric";
+import { AreaMeta } from "../../../../../prisma/seed/nodes";
 
 const AreaPage = async ({
   params,
@@ -26,7 +23,7 @@ const AreaPage = async ({
     return redirect("/not-found");
   }
 
-  const totalFlow = await prisma.flow.aggregate({
+  const { _sum: totalFlow } = await prisma.flow.aggregate({
     where: {
       fromAreaId: area.id,
     },
@@ -35,27 +32,50 @@ const AreaPage = async ({
     },
   });
 
+  const meta = area.meta as AreaMeta;
+
+  const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
+
   return (
     <div className={`w-[480px] bg-white`}>
-      <PageHeader title={area.name} itemType={EItemType.area} />
+      <PageHeader title={areaLabel} itemType={EItemType.area} />
       <PageSection>
         <SectionHeader label="Food Produced" />
         <MetricRow>
           <Metric
-            label="Calories produced"
-            value={totalFlow._sum.value}
-            unit="tonnes"
+            label="Total production"
+            value={totalFlow.value ?? undefined}
+            formatType="weight"
+            decimalPlaces={0}
           />
           <Metric
             label="Agriculture sector in GDP"
-            value={null}
-            unit="billion 2010 USD$"
+            value={meta.aggdp_2010}
+            formatType="metric"
+            decimalPlaces={3}
+            unit="2010 USD$"
           />
-          <Metric label="GDP per capita" value={null} unit="2011 USD$" />
+          <Metric
+            label="GDP per capita"
+            value={meta.gdppc}
+            formatType="metric"
+            decimalPlaces={1}
+            unit="2011 USD$"
+          />
         </MetricRow>
         <MetricRow>
-          <Metric label="Total population" value={null} unit="million people" />
-          <Metric label="Human Development Index" value={null} />
+          <Metric
+            label="Total population"
+            value={meta.totalpop}
+            formatType="metric"
+            decimalPlaces={1}
+          />
+          <Metric
+            label="Human Development Index"
+            value={meta.hdi}
+            formatType="metric"
+            decimalPlaces={3}
+          />
         </MetricRow>
       </PageSection>
     </div>

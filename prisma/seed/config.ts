@@ -19,6 +19,11 @@ export const ADMIN_LIMITS_PATH = path.join(
 );
 export const ADMIN_LIMITS_TABLENAME = "admin_polygons";
 
+export const ADMIN_INDICATORS_PATH = path.join(
+  SEED_DATA_PATH,
+  "demographics_economics_by_admin1region.csv"
+);
+
 export const INLAND_PORTS_PATH = path.join(
   SEED_DATA_PATH,
   `IWWNodes_infrastructure.gpkg`

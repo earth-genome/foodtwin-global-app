@@ -17,6 +17,7 @@ model Area {
   flowsTo   Flow[]                                       @relation("ToArea")
   centroid  Unsupported("geometry(Point, 3857)")?
   limits    Unsupported("geometry(MultiPolygon, 3857)")?
+  meta      Json?
 
   @@index([centroid], name: "centroid_idx", type: Gist)
   @@index([limits], name: "limits_idx", type: Gist)
