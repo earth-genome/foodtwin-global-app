@@ -316,6 +316,8 @@ export const globeViewMachine = createMachine(
           return {};
         }
 
+        mapRef.resize();
+
         const bounds = bbox(currentArea.boundingBox);
 
         mapRef.fitBounds(
@@ -324,7 +326,12 @@ export const globeViewMachine = createMachine(
             [bounds[2], bounds[3]],
           ],
           {
-            padding: 100,
+            padding: {
+              top: 100,
+              left: 100,
+              bottom: 100,
+              right: 100,
+            },
           }
         );
 
@@ -338,6 +345,8 @@ export const globeViewMachine = createMachine(
         if (!mapRef) {
           return {};
         }
+
+        mapRef.resize();
 
         mapRef.fitBounds(worldViewState.bounds);
 

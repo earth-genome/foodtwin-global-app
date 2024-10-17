@@ -105,62 +105,60 @@ function GlobeInner() {
   }, []);
 
   return (
-    <div className="flex-1 bg-gray-100 flex items-center justify-center">
-      <div className="relative w-full h-full overflow-hidden">
-        <Legend />
-        <Map
-          mapboxAccessToken={mapboxAccessToken}
-          ref={mapRef}
-          initialViewState={worldViewState}
-          onClick={onClick}
-          onLoad={() => {
-            actorRef.send({
-              type: "event:map:mount",
-              mapRef: mapRef.current as MapRef,
-            });
-          }}
-          onMouseMove={eventHandlers.mousemove ? handleMouseMove : undefined}
-          onMouseOut={eventHandlers.mousemove ? handleMouseOut : undefined}
-          style={{ width: "100%", height: "100%" }}
-          mapStyle={mapboxStyleUrl}
+    <div className="flex flex-col w-full h-full relative">
+      <Legend />
+      <Map
+        mapboxAccessToken={mapboxAccessToken}
+        ref={mapRef}
+        initialViewState={worldViewState}
+        onClick={onClick}
+        onLoad={() => {
+          actorRef.send({
+            type: "event:map:mount",
+            mapRef: mapRef.current as MapRef,
+          });
+        }}
+        onMouseMove={eventHandlers.mousemove ? handleMouseMove : undefined}
+        onMouseOut={eventHandlers.mousemove ? handleMouseOut : undefined}
+        style={{ width: "100%", height: "100%", flex: 1 }}
+        mapStyle={mapboxStyleUrl}
+      >
+        <Source
+          id="foodgroups-source"
+          type="vector"
+          url="mapbox://devseed.dlel0qkq"
         >
-          <Source
-            id="foodgroups-source"
-            type="vector"
-            url="mapbox://devseed.dlel0qkq"
-          >
-            <Layer
-              id="foodgroups-layer"
-              type="circle"
-              source-layer="foodgroup2max"
-              paint={foodgroupsStyle}
-            />
-          </Source>
+          <Layer
+            id="foodgroups-layer"
+            type="circle"
+            source-layer="foodgroup2max"
+            paint={foodgroupsStyle}
+          />
+        </Source>
 
-          <Source
-            id="area-tiles"
-            type="vector"
-            tiles={[`${appUrl}/api/tiles/areas/{z}/{x}/{y}`]}
-          >
-            <Layer
-              id="area-clickable-polygon"
-              type="fill"
-              source-layer="default"
-              paint={areaSelected ? areaStyle : areaDefaultStyle}
-            />
-            <Layer
-              id="area-outline"
-              type="line"
-              source-layer="default"
-              paint={lineStyle}
-            />
-          </Source>
+        <Source
+          id="area-tiles"
+          type="vector"
+          tiles={[`${appUrl}/api/tiles/areas/{z}/{x}/{y}`]}
+        >
+          <Layer
+            id="area-clickable-polygon"
+            type="fill"
+            source-layer="default"
+            paint={areaSelected ? areaStyle : areaDefaultStyle}
+          />
+          <Layer
+            id="area-outline"
+            type="line"
+            source-layer="default"
+            paint={lineStyle}
+          />
+        </Source>
 
-          <EdgeLayer />
+        <EdgeLayer />
 
-          {mapPopup && <MapPopup {...mapPopup} />}
-        </Map>
-      </div>
+        {mapPopup && <MapPopup {...mapPopup} />}
+      </Map>
     </div>
   );
 }
