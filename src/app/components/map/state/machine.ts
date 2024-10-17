@@ -128,13 +128,13 @@ export const globeViewMachine = createMachine(
             reenter: true,
             actions: [
               {
+                type: "action:resetAreaHighlight",
+              },
+              {
                 type: "action:parseUrl",
                 params: ({ event }) => ({
                   pathname: event.pathname,
                 }),
-              },
-              {
-                type: "action:resetAreaHighlight",
               },
             ],
           },
