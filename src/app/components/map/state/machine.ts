@@ -30,7 +30,7 @@ interface StateContext {
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggLYCGADl2gCusMJzTMA2gAYAuolC80sXG1xoW8kAA9EAFgDsAJiIBOXVICM+gMwAOKSf1nd1gDQgAnogC0h3UVsAVl0TKSlAizMANkMLKKiAXwT3VEwcOhJySho6RmZ2Lj4BYTAhNmk5JBBFZVV1TR0EKN0LIil9dqj2m0NmwPcvBG8LSyJAsJs7QMMnYJMklPQsPEJMiipaQjzWDkEKBB2wMgrNGpU1DSrGqNbLQ2sbG2n9F8MBxGtAkzGpWyjraxhKLjEa6BYgVLLDI8fhiQTsXAsKDbAow4rsE5VM51S6gRreaw3IiA0JRExBWyUqLvBAgojA8wGRn6QJGcGQ9KrbhkMDcBAAMzAbAAxgALRHIiDqMBERHUNAAaxlHJWxG5vIFQrFEoQcrQwu4OIqmIUSnO9SuiAsujJAQctge+lsVhpJkC1iIulsLIs9yi3uC1nZS05ap5fM2DCYOwQ6r5wpQvOOslOZpxDUQNw9XRG7pe+kiFn6nkQ+i6RBm1gshIBRgLFmDaVVRDjOS20dRRThIjEkhTWLTFwzCFznrsvQsFkpRcCQRpoP0xNZ8VnhhMhnCYOSEJDzdbkZRHDR3dKgnK-dNtSHloQLKkASzJnXcUnJmpJZHUgMS7LwNsa43YJGyhLlwzbKN8l2fZDmTSpL3NXFtB8MsiDLMxDDXFlQiMWwaT+VoHVidpfXaaZgNDIheG4GAEHQbgIHoE1qkHC08UQfC2iBckTGsXQN2rGkbVaQkbU+Vk10CKIbHI5sqJouiGIkCw4OYq9WKQkcN2+KxLH9Sl2l0FwaSk4xZy+X5Ai+QxbHXGSMjksB0VUJFDwQBynKY7FrzYoYa1QhwnDsMkvwcGk-QrL9zFnDpgkpLdtxYNAIDgTQVToVM1MQ-EWlaDpHB4v5QnMEwaWGGzOPaAEghmN1Ajs1ZSHWcCMoQ4cQnpFpKsrXpdAiec4gCSSHXJZ1DDmINtzS1ZjyEBEkRa9MbwJL0K0JDoHC+G0nV0GlrDfUwXz8f8119a16rDDVBRFcV5oHTLh2tXpUJcIIXC2qzdtnMYTCne5nD4mJzpbMDIwW7yNPuRcbgLeIXn+LpKTw8sfumEJrKnL5Ekm3d7OoxyFLB9T8QBVoyRZayYl43r30GKT72Ivx2jMWwDDq7Gm1xmi4TmqBCaynxPnvf59BcOw7GrL153MIhIniYLwn-Mk2aSIA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggLYCGADl2gCusMJzTMA2gAYAuolC80sXG1xoW8kAA9EAdgCMAViIBOABxmAbGYAsAJhP6p+s-oA0IAJ6IAtPssmRJb6LrqGunaGdgEAzCYAvvEeqJg4dCTklDR0jMzsXHwCwmBCbNJySCCKyqrqmjoIJpY2RHZmJjHWllLhuk0e3gg+Di1SMWZ2NlGWMX2ulonJ6Fh4hBkUVLSEuawcghQIu2Bk5ZrVKmoalQ0+No5Ehu2WfTa6E1KuA74jRGMTU9FZuZ-IsQCkVukePwxIJ2LgWFAdvkoUV2KdKudaldQDcrGZTLpdDEnFJJmE3l8EDM7EFbPpdDYphFDJZDKDwWk1twyGBuAgAGZgNgAYwAFvDERB1GAiPDqGgANYyjmrYjc3kCoViiUIOVoYXcLHldEKJQXOrXRD6GwBIhmKTmWZvemUkyGGJEGxmML6Oydb2GGwxdnLTlqnl8rYMJi7BDqvnClC8k6yM5mrH1RAxOKemJjSwOJwhOyU-QmQJuuL6cYzEwM6Ih1Kqojx7LbGPIwowkRiSSpjHpy6ZobNB52Ax-WZmOIxEteRDPFrlmbNaIRDoJJJg0PN1tRpEcFHdkqCMr9001IeWob+0zuhzj4mOFyUgL6T2M6w1guvTdLJvpHuOQdnsBxHCmFQXua2LaL4i6-LOQZ2PShiktWpbOIE9qMt6UiMgywSNhCXIRm24YalGApoGgEAAApkDRgjCpAB5xqRIhJsKbAAGLURAAAqZDcCwsCKGQbCGpcJpVIOFo4r4fS-MhTLRF0kwxK+WFRLYhI9P6wZbiqgGkVGLYmXQVE0YJwmieQElYqxrYcWAXG8TR9GMcxEDSZiV7yTebpEPWeb+P4MReuh84IGEQUWA6Ewsr6Bi6ERYZmRRxkZYQlkCUJIlifZlyOexYCcWwACSnC8NwXE+bJME3LOvxujMhhuoY7qWCulKzh6Bbjq8qGdX0qW7uZJFZQQupVTVbDFRqzmuXx1n5XZknqHVl5ybBQz2FIRDhdOMSof4zzTD1fpBHYA1hHpzxmKN6TVTACDoNwED0Jt0HDiE9J2rOFhJQRFJRfYgR3N6wSMm15Z4Y9azPWAr1oO9n36JBMlbQ1Vp2A6RD0s41hxQyQavhEDxmG1HwdSYbS0-DxCI6iqgIqxTMwmi56Y9914+N676zOEzx4UYDruFF2aBNp44TOpsMLKCLA0XAmhGYQaZY8OPiOIEgu6MLNii44lK3N6B3BP4HThSyPQM+sWRRhrPP+c0+0dBE1jVpTViGCb2bvqys6+u69hxAydtHkIcIIk7Ga85TxjNF7nSTF1xug1YB14W8rI+jYzh262goiuKMcDpr17WtEQVBpTQY2mEtM9Y8DyOBMcSMvYBaF+NBCx35O23NYB1etmJ1dWE0Qm-4+3Tob-jetEy4pYZO6ZZG69kTlHkQExkD99tNwuIEafVo84xBsSlgm9X2aG3hVhtPPjI95N6Ub9l-LLXltnietMG+UPt8D4QRDb61xu0DoeFSy01MFIBkzgbT2h6NWV+H9yLoOmtVLiB9sZDDCkpKYPsDDlj6NfUGdxWjBGiFIRcyFZx2yZm9CAuCtYFnBuMBkThaYzBtH7csdoLYBDXI4a6Ct-zEUZtwF6HMWZQFYfHFueFZip0fBYEwlJkLvjaLoeBbodaOGeIkRIQA */
     id: "globeView",
 
     types: {
@@ -95,8 +95,9 @@ export const globeViewMachine = createMachine(
       "area:fetching": {
         invoke: {
           src: "actor:fetchArea",
-          input: ({ context: { currentAreaId } }) => ({
+          input: ({ context: { currentAreaId, currentArea } }) => ({
             areaId: currentAreaId,
+            currentArea
           }),
           onDone: {
             target: "area:view",
@@ -106,6 +107,34 @@ export const globeViewMachine = createMachine(
       },
 
       "area:view": {
+        initial: "area:view:foodProduced",
+        states: {
+          "area:view:foodProduced": {
+            on: {
+              "event:area:selectFoodTransportation": {
+                target: "area:view:foodTransportation",
+                reenter: true
+              }
+            }
+          },
+          "area:view:foodTransportation": {
+            on: {
+              "event:area:selectFoodProduced": {
+                target: "area:view:foodProduced"
+              },
+              "event:area:selectImpact": {
+                target: "area:view:impact"
+              }
+            }
+          },
+          "area:view:impact": {
+            on: {
+              "event:area:selectFoodTransportation": {
+                target: "area:view:foodTransportation"
+              }
+            }
+          },
+        },
         on: {
           "event:area:clear": {
             target: "world:view",
@@ -116,6 +145,7 @@ export const globeViewMachine = createMachine(
           "event:map:mousemove": {
             target: "area:view",
             actions: "action:setHighlightedArea",
+            reenter: true
           },
 
           "event:map:mouseout": {
@@ -140,7 +170,10 @@ export const globeViewMachine = createMachine(
           },
         },
 
-        entry: "action:setAreaMapView",
+        entry: [
+          "action:parseAreaSection",
+          "action:setAreaMapView",
+        ],
       },
 
       "page:load": {
@@ -195,7 +228,6 @@ export const globeViewMachine = createMachine(
         };
       }),
       "action:parseAreaSection": assign(({ event }) => {
-        assertEvent(event, "event:url:enter");
         switch (window.location.hash) {
           case "#food-transportation":
             console.log("#food-transportation")
@@ -280,12 +312,12 @@ export const globeViewMachine = createMachine(
           highlightedArea: feature || null,
           mapPopup: feature?.properties
             ? {
-                id: feature.properties.id,
-                label: feature.properties.name,
-                itemType: EItemType.area,
-                longitude: event.mapEvent.lngLat.lng,
-                latitude: event.mapEvent.lngLat.lat,
-              }
+              id: feature.properties.id,
+              label: feature.properties.name,
+              itemType: EItemType.area,
+              longitude: event.mapEvent.lngLat.lng,
+              latitude: event.mapEvent.lngLat.lat,
+            }
             : null,
         };
       }),
@@ -387,8 +419,12 @@ export const globeViewMachine = createMachine(
       },
     },
     actors: {
-      "actor:fetchArea": fromPromise<FetchAreaResponse, { areaId: string }>(
+      "actor:fetchArea": fromPromise<FetchAreaResponse, { areaId: string, currentArea: FetchAreaResponse }>(
         async ({ input }) => {
+          const { areaId, currentArea } = input;
+          if (areaId === currentArea?.id) {
+            return currentArea;
+          }
           const response = await fetch(`/api/areas/${input.areaId}`);
           return await response.json();
         }

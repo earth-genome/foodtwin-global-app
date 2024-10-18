@@ -37,6 +37,18 @@ interface EventAreaClear {
   type: "event:area:clear";
 }
 
+interface EventAreaSelectFoodTransportation {
+  type: "event:area:selectFoodTransportation";
+}
+
+interface EventAreaSelectImpact {
+  type: "event:area:selectImpact";
+}
+
+interface EventAreaSelectFoodProduced {
+  type: "event:area:selectFoodProduced";
+}
+
 export type StateEvents =
   | EventPageMount
   | EventUrlEnter
@@ -44,4 +56,7 @@ export type StateEvents =
   | EventMapMouseMove
   | EventFetchAreaDone
   | EventAreaClear
-  | EventMapMouseOut;
+  | EventMapMouseOut
+  | EventAreaSelectFoodTransportation
+  | EventAreaSelectImpact
+  | EventAreaSelectFoodProduced;
