@@ -1,7 +1,11 @@
 "use client";
 import React, { useEffect, useCallback, useRef } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import Map, { MapMouseEvent, MapRef, LngLatBoundsLike } from "react-map-gl";
+import Map, {
+  MapMouseEvent,
+  MapRef,
+  LngLatBoundsLike,
+} from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import MapPopup from "@/app/components/map-popup";
@@ -45,6 +49,9 @@ function GlobeInner() {
   );
   const mapPopup = MachineContext.useSelector(
     (state) => state.context.mapPopup
+  );
+  const areaSelected = MachineContext.useSelector(
+    (state) => !!state.context.currentArea
   );
 
   const handleMouseMove = useCallback((event: MapMouseEvent) => {
@@ -92,32 +99,29 @@ function GlobeInner() {
   }, []);
 
   return (
-    <div className="flex-1 bg-gray-100 flex items-center justify-center">
-      <div className="relative w-full h-full overflow-hidden">
-        <Legend />
-        <Map
-          mapboxAccessToken={mapboxAccessToken}
-          ref={mapRef}
-          initialViewState={worldViewState}
-          onClick={onClick}
-          onLoad={() => {
-            actorRef.send({
-              type: "event:map:mount",
-              mapRef: mapRef.current as MapRef,
-            });
-          }}
-          onMouseMove={eventHandlers.mousemove ? handleMouseMove : undefined}
-          onMouseOut={eventHandlers.mousemove ? handleMouseOut : undefined}
-          style={{ width: "100%", height: "100%" }}
-          mapStyle={mapboxStyleUrl}
-        >
-          <AreaLayer />
-          <FoodGroupsLayer />
-          <EdgeLayer />
-
-          {mapPopup && <MapPopup {...mapPopup} />}
-        </Map>
-      </div>
+    <div className="flex flex-col w-full h-full relative">
+      <Legend />
+      <Map
+        mapboxAccessToken={mapboxAccessToken}
+        ref={mapRef}
+        initialViewState={worldViewState}
+        onClick={onClick}
+        onLoad={() => {
+          actorRef.send({
+            type: "event:map:mount",
+            mapRef: mapRef.current as MapRef,
+          });
+        }}
+        onMouseMove={eventHandlers.mousemove ? handleMouseMove : undefined}
+        onMouseOut={eventHandlers.mousemove ? handleMouseOut : undefined}
+        style={{ width: "100%", height: "100%", flex: 1 }}
+        mapStyle={mapboxStyleUrl}
+      >
+        <AreaLayer areaSelected={areaSelected} />
+        <FoodGroupsLayer />
+        <EdgeLayer />
+        {mapPopup && <MapPopup {...mapPopup} />}
+      </Map>
     </div>
   );
 }

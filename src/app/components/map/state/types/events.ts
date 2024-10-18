@@ -25,11 +25,6 @@ interface EventMapMouseOut {
   type: "event:map:mouseout";
 }
 
-interface EventAreaSelect {
-  type: "event:area:select";
-  areaId: string;
-}
-
 interface EventFetchAreaDone {
   type: "xstate.done.actor.0.globeView.area:fetching";
   input: {
@@ -47,7 +42,6 @@ export type StateEvents =
   | EventUrlEnter
   | EventMapMount
   | EventMapMouseMove
-  | EventAreaSelect
   | EventFetchAreaDone
   | EventAreaClear
   | EventMapMouseOut;

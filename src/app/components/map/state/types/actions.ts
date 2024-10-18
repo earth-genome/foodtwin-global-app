@@ -17,6 +17,10 @@ interface ActionParseAreaSection {
   type: "action:parseAreaSection";
 }
 
+interface ResetAreaHighlight {
+  type: "action:resetAreaHighlight";
+}
+
 interface ActionSetMapRef {
   type: "action:setMapRef";
   mapRef: MapRef;
@@ -55,6 +59,7 @@ interface ActionAreaClear {
 export type StateActions =
   | ActionParseUrl
   | ActionParseAreaSection
+  | ResetAreaHighlight
   | ActionSetMapRef
   | ActionSetHighlightedArea
   | ActionClearHighlightedArea
