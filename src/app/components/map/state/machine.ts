@@ -243,22 +243,29 @@ export const globeViewMachine = createMachine(
         }
 
         const features = mapRef.queryRenderedFeatures(event.mapEvent.point, {
-          layers: ["area-clickable-polygon"],
+          layers: ["ports-point", "area-clickable-polygon"],
         });
 
         const feature = features && features[0];
 
-        if (feature) {
+        let highlightArea = null;
+        if (feature && feature.layer?.id === "area-clickable-polygon") {
           mapRef.setFeatureState(feature, { hover: true });
+          highlightArea = feature;
+        }
+
+        const icons: {[key: string]: EItemType} = {
+          "ports-point": EItemType.node,
+          "area-clickable-polygon": EItemType.area
         }
 
         return {
-          highlightedArea: feature || null,
+          highlightedArea: highlightArea,
           mapPopup: feature?.properties
             ? {
                 id: feature.properties.id,
                 label: feature.properties.name,
-                itemType: EItemType.area,
+                itemType: icons[feature.layer!.id],
                 longitude: event.mapEvent.lngLat.lng,
                 latitude: event.mapEvent.lngLat.lat,
               }
