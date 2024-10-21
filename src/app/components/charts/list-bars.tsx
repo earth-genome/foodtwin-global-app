@@ -1,3 +1,4 @@
+import { formatKeyIndicator } from "@/utils/numbers";
 import { useMemo } from "react";
 
 interface IDataPoint {
@@ -9,13 +10,17 @@ interface IDataPoint {
 interface IBar extends IDataPoint {
   fraction: number;
   showPercentage?: boolean;
-  unit: string;
+  unit?: string;
+  formatType: "metric" | "weight";
+  decimalPlaces: number;
 }
 
 interface IListBars {
   showPercentage?: boolean;
   data: IDataPoint[];
-  unit: string;
+  unit?: string;
+  formatType: "metric" | "weight";
+  decimalPlaces?: number;
 }
 
 function Bar({
@@ -25,8 +30,11 @@ function Bar({
   fraction,
   showPercentage,
   unit,
+  formatType,
+  decimalPlaces,
 }: IBar) {
   const percent = (fraction * 100).toFixed(2);
+  const formattedValue = formatKeyIndicator(value, formatType, decimalPlaces);
 
   return (
     <div className="my-4">
@@ -35,10 +43,10 @@ function Bar({
           <span aria-hidden="true" className="mr-2" style={{ color }}>
             &#9679;
           </span>
-          {label}
+          <b>{label}</b>
         </div>
         <div>
-          {value} {unit}
+          {formattedValue} {unit}
           {showPercentage && (
             <>
               <span className="text-neutral-400" aria-hidden="true">
@@ -60,7 +68,7 @@ function Bar({
   );
 }
 
-function ListBars({ data, showPercentage, unit }: IListBars) {
+function ListBars({ data, showPercentage, unit, formatType, decimalPlaces = 0 }: IListBars) {
   const sum = useMemo(() => {
     return data.reduce((sum, { value }) => sum + value, 0);
   }, [data]);
@@ -78,6 +86,8 @@ function ListBars({ data, showPercentage, unit }: IListBars) {
             fraction={fraction}
             showPercentage={showPercentage}
             unit={unit}
+            formatType={formatType}
+            decimalPlaces={decimalPlaces}
           />
         );
       })}
