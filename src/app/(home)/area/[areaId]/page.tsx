@@ -23,14 +23,18 @@ const AreaPage = async ({
     return redirect("/not-found");
   }
 
-  const { _sum: totalFlow } = await prisma.flow.aggregate({
-    where: {
-      fromAreaId: area.id,
-    },
-    _sum: {
-      value: true,
-    },
-  });
+  const [
+    { _sum: totalFlow }
+  ] = await Promise.all([
+    prisma.flow.aggregate({
+      where: {
+        fromAreaId: area.id,
+      },
+      _sum: {
+        value: true,
+      },
+    })
+  ]);
 
   const meta = area.meta as AreaMeta;
 
