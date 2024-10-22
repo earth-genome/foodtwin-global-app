@@ -21,6 +21,7 @@ import {
   foodgroupsStyle,
   lineStyle,
 } from "./cartography";
+import PortsLayer from "./layers/ports";
 
 // Environment variables used in this component
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -156,6 +157,7 @@ function GlobeInner() {
         </Source>
 
         <EdgeLayer />
+        <PortsLayer />
 
         {mapPopup && <MapPopup {...mapPopup} />}
       </Map>
