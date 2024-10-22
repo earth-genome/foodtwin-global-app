@@ -11,10 +11,9 @@ const PortsLayer = () => {
     map.current.loadImage("/icons/port.png", (error, image) => {
       if (error) throw error;
       if (map.current && image) {
-        map.current.addImage('port-icon', image);
+        map.current.addImage("port-icon", image);
       }
-    })
-
+    });
   }, [map]);
 
   return (
@@ -29,7 +28,7 @@ const PortsLayer = () => {
         source-layer="default"
         layout={{
           "icon-image": "port-icon",
-          "icon-size": 0.3
+          "icon-size": 0.3,
         }}
       />
     </Source>

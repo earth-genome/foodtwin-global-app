@@ -254,10 +254,14 @@ export const globeViewMachine = createMachine(
           highlightArea = feature;
         }
 
-        const icons: {[key: string]: EItemType} = {
+        const layerToIconTypeMap: Record<string, EItemType> = {
           "ports-point": EItemType.node,
-          "area-clickable-polygon": EItemType.area
-        }
+          "area-clickable-polygon": EItemType.area,
+        };
+
+        const itemType = feature?.layer?.id
+          ? layerToIconTypeMap[feature.layer.id]
+          : undefined;
 
         return {
           highlightedArea: highlightArea,
@@ -265,7 +269,7 @@ export const globeViewMachine = createMachine(
             ? {
                 id: feature.properties.id,
                 label: feature.properties.name,
-                itemType: icons[feature.layer!.id],
+                itemType: itemType || EItemType.area,
                 longitude: event.mapEvent.lngLat.lng,
                 latitude: event.mapEvent.lngLat.lat,
               }
