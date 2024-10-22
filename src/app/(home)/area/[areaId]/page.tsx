@@ -131,102 +131,104 @@ const AreaPage = async ({
   const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
 
   return (
-    <div className={`w-[600px] bg-white`}>
+    <div className={`w-[600px] bg-white h-screen grid grid-rows-[max-content_1fr]`}>
       <PageHeader title={areaLabel} itemType={EItemType.area} />
-      <PageSection>
-        <SectionHeader label="Food Produced" />
-        <MetricRow>
-          <Metric
-            label="Total production"
-            value={totalFlow ?? undefined}
-            formatType="weight"
-            decimalPlaces={0}
-          />
-          <Metric
-            label="Agriculture sector in GDP"
-            value={meta.aggdp_2010}
-            formatType="metric"
-            decimalPlaces={3}
-            unit="2010 USD$"
-          />
-          <Metric
-            label="GDP per capita"
-            value={meta.gdppc}
-            formatType="metric"
-            decimalPlaces={1}
-            unit="2011 USD$"
-          />
-        </MetricRow>
-        <MetricRow>
-          <Metric
-            label="Total population"
-            value={meta.totalpop}
-            formatType="metric"
-            decimalPlaces={1}
-          />
-          <Metric
-            label="Human Development Index"
-            value={meta.hdi}
-            formatType="metric"
-            decimalPlaces={3}
-          />
-        </MetricRow>
+      <div className="overflow-y-auto">
+        <PageSection>
+          <SectionHeader label="Food Produced" />
+          <MetricRow>
+            <Metric
+              label="Total production"
+              value={totalFlow ?? undefined}
+              formatType="weight"
+              decimalPlaces={0}
+            />
+            <Metric
+              label="Agriculture sector in GDP"
+              value={meta.aggdp_2010}
+              formatType="metric"
+              decimalPlaces={3}
+              unit="2010 USD$"
+            />
+            <Metric
+              label="GDP per capita"
+              value={meta.gdppc}
+              formatType="metric"
+              decimalPlaces={1}
+              unit="2011 USD$"
+            />
+          </MetricRow>
+          <MetricRow>
+            <Metric
+              label="Total population"
+              value={meta.totalpop}
+              formatType="metric"
+              decimalPlaces={1}
+            />
+            <Metric
+              label="Human Development Index"
+              value={meta.hdi}
+              formatType="metric"
+              decimalPlaces={3}
+            />
+          </MetricRow>
 
-        <ListBars
-          showPercentage
-          formatType="weight"
-          data={Object.values(foodGroupAgg).map(
-            ({ name, sum }) => ({
-              label: name,
-              value: sum,
-            })
-          )}
-        />
-      </PageSection>
-      <PageSection>
-        <SectionHeader label="Food Transportation" />
-        <MetricRow>
-          <Metric
-            label="Exported outside the region"
-            value={totalExport}
+          <ListBars
+            showPercentage
             formatType="weight"
-            decimalPlaces={0}
-          />
-          <Metric
-            label="Suplied to the region"
-            value={(inBoundFlows as ImportSum[])[0].sum}
-            formatType="weight"
-            decimalPlaces={0}
-          />
-        </MetricRow>
-        <Sankey
-          width={480}
-          height={600}
-          data={{
-            nodes: [
-              { id: area.id, label: area.name, type: EItemType["area"] },
-              { id: "other", label: "Other", type: EItemType["node"] },
-              ...(outboundFlows as ExportFlow[]).map(({ toAreaId, name, value }) => ({
-                id: toAreaId,
+            data={Object.values(foodGroupAgg).map(
+              ({ name, sum }) => ({
                 label: name,
-                type: EItemType["node"]
-              }))
-            ],
-            links: [
-                ...(outboundFlows as ExportFlow[]).slice(0, 10).map(({ toAreaId, value }) => ({
-                  source: area.id,
-                  target: toAreaId,
-                  value
-                })),
-                {
-                  source: area.id,
-                  target: "other",
-                  value: (outboundFlows as ExportFlow[]).slice(10).reduce((sum, { value }) => sum + value, 0),
-                }
-            ]
-          }}
-        />
-      </PageSection>
+                value: sum,
+              })
+            )}
+          />
+        </PageSection>
+        <PageSection>
+          <SectionHeader label="Food Transportation" />
+          <MetricRow>
+            <Metric
+              label="Exported outside the region"
+              value={totalExport}
+              formatType="weight"
+              decimalPlaces={0}
+            />
+            <Metric
+              label="Suplied to the region"
+              value={(inBoundFlows as ImportSum[])[0].sum}
+              formatType="weight"
+              decimalPlaces={0}
+            />
+          </MetricRow>
+          <Sankey
+            width={400}
+            height={600}
+            data={{
+              nodes: [
+                { id: area.id, label: area.name, type: EItemType["area"] },
+                { id: "other", label: "Other", type: EItemType["node"] },
+                ...(outboundFlows as ExportFlow[]).map(({ toAreaId, name, value }) => ({
+                  id: toAreaId,
+                  label: name,
+                  type: EItemType["node"]
+                }))
+              ],
+              links: [
+                  ...(outboundFlows as ExportFlow[]).slice(0, 10).map(({ toAreaId, value }) => ({
+                    source: area.id,
+                    target: toAreaId,
+                    value
+                  })),
+                  {
+                    source: area.id,
+                    target: "other",
+                    value: (outboundFlows as ExportFlow[]).slice(10).reduce((sum, { value }) => sum + value, 0),
+                  }
+              ]
+            }}
+          />
+        </PageSection>
+      </div>
     </div>
   );
 };
