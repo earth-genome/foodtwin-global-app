@@ -6,6 +6,7 @@ import ScrollTracker from "./scroll-tracker";
 import { PageSection, SectionHeader } from "@/app/components/page-section";
 import { Metric, MetricRow } from "@/app/components/metric";
 import { AreaMeta } from "../../../../../prisma/seed/nodes";
+import { EAreaViewType } from "@/app/components/map/state/machine";
 
 const AreaPage = async ({
   params,
@@ -35,13 +36,13 @@ const AreaPage = async ({
 
   const meta = area.meta as AreaMeta;
 
-  const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
-
   return (
-    <div className={`w-[600px] bg-white h-screen grid grid-rows-[max-content_1fr]`}>
+    <div
+      className={`w-[600px] bg-white h-screen grid grid-rows-[max-content_1fr]`}
+    >
       <PageHeader title={area.name} itemType={EItemType.area} />
       <ScrollTracker>
-        <PageSection id="food-produced">
+        <PageSection id={EAreaViewType.production}>
           <SectionHeader label="Food Produced" />
           <MetricRow>
             <Metric
@@ -81,11 +82,11 @@ const AreaPage = async ({
           </MetricRow>
           <div className="bg-neutral-100 h-[400px]">chart</div>
         </PageSection>
-        <PageSection id="food-transportation">
+        <PageSection id={EAreaViewType.transportation}>
           <SectionHeader label="Food Transportation" />
           <div className="bg-neutral-100 h-[400px]">chart</div>
         </PageSection>
-        <PageSection id="impact">
+        <PageSection id={EAreaViewType.impact}>
           <SectionHeader label="Impact on people" />
           <div className="bg-neutral-100 h-[400px]">chart</div>
         </PageSection>

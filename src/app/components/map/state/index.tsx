@@ -13,6 +13,11 @@ export const MachineContext = createActorContext(globeViewMachine, {
           )
             return;
 
+          // Ignore mouse events
+          if (inspectEvent.event?.type?.includes("mouse")) {
+            return;
+          }
+
           console.groupCollapsed(
             "%c event",
             "color: gray; font-weight: lighter;",

@@ -1,11 +1,7 @@
 "use client";
 import React, { useEffect, useCallback, useRef } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import Map, {
-  MapMouseEvent,
-  MapRef,
-  LngLatBoundsLike,
-} from "react-map-gl";
+import Map, { MapMouseEvent, MapRef, LngLatBoundsLike } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import MapPopup from "@/app/components/map-popup";

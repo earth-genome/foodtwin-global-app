@@ -15,12 +15,19 @@ export enum EViewType {
   area = "area",
 }
 
+export enum EAreaViewType {
+  production = "production",
+  transportation = "transportation",
+  impact = "impact",
+}
+
 interface StateContext {
   viewType: EViewType | null;
   mapRef: MapRef | null;
   highlightedArea: GeoJSONFeature | null;
   currentAreaId: string | null;
   currentArea: FetchAreaResponse | null;
+  currentAreaViewType: EAreaViewType | null;
   mapPopup: IMapPopup | null;
   mapBounds: BBox | null;
   eventHandlers: {
@@ -30,7 +37,7 @@ interface StateContext {
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggLYCGADl2gCusMJzTMA2gAYAuolC80sXG1xoW8kAA9EAdgCMAViIBOABxmAbGYAsAJhP6p+s-oA0IAJ6IAtPssmRJb6LrqGunaGdgEAzCYAvvEeqJg4dCTklDR0jMzsXHwCwmBCbNJySCCKyqrqmjoIJpY2RHZmJjHWllLhuk0e3gg+Di1SMWZ2NlGWMX2ulonJ6Fh4hBkUVLSEuawcghQIu2Bk5ZrVKmoalQ0+No5Ehu2WfTa6E1KuA74jRGMTU9FZuZ-IsQCkVukePwxIJ2LgWFAdvkoUV2KdKudaldQDcrGZTLpdDEnFJJmE3l8EDM7EFbPpdDYphFDJZDKDwWk1twyGBuAgAGZgNgAYwAFvDERB1GAiPDqGgANYyjmrYjc3kCoViiUIOVoYXcLHldEKJQXOrXRD6GwBIhmKTmWZvemUkyGGJEGxmML6Oydb2GGwxdnLTlqnl8rYMJi7BDqvnClC8k6yM5mrH1RAxOKemJjSwOJwhOyU-QmQJuuL6cYzEwM6Ih1Kqojx7LbGPIwowkRiSSpjHpy6ZobNB52Ax-WZmOIxEteRDPFrlmbNaIRDoJJJg0PN1tRpEcFHdkqCMr9001IeWob+0zuhzj4mOFyUgL6T2M6w1guvTdLJvpHuOQdnsBxHCmFQXua2LaL4i6-LOQZ2PShiktWpbOIE9qMt6UiMgywSNhCXIRm24YalGApoGgEAAApkDRgjCpAB5xqRIhJsKbAAGLURAAAqZDcCwsCKGQbCGpcJpVIOFo4r4fS-MhTLRF0kwxK+WFRLYhI9P6wZbiqgGkVGLYmXQVE0YJwmieQElYqxrYcWAXG8TR9GMcxEDSZiV7yTebpEPWeb+P4MReuh84IGEQUWA6Ewsr6Bi6ERYZmRRxkZYQlkCUJIlifZlyOexYCcWwACSnC8NwXE+bJME3LOvxujMhhuoY7qWCulKzh6Bbjq8qGdX0qW7uZJFZQQupVTVbDFRqzmuXx1n5XZknqHVl5ybBQz2FIRDhdOMSof4zzTD1fpBHYA1hHpzxmKN6TVTACDoNwED0Jt0HDiE9J2rOFhJQRFJRfYgR3N6wSMm15Z4Y9azPWAr1oO9n36JBMlbQ1Vp2A6RD0s41hxQyQavhEDxmG1HwdSYbS0-DxCI6iqgIqxTMwmi56Y9914+N676zOEzx4UYDruFF2aBNp44TOpsMLKCLA0XAmhGYQaZY8OPiOIEgu6MLNii44lK3N6B3BP4HThSyPQM+sWRRhrPP+c0+0dBE1jVpTViGCb2bvqys6+u69hxAydtHkIcIIk7Ga85TxjNF7nSTF1xug1YB14W8rI+jYzh262goiuKMcDpr17WtEQVBpTQY2mEtM9Y8DyOBMcSMvYBaF+NBCx35O23NYB1etmJ1dWE0Qm-4+3Tob-jetEy4pYZO6ZZG69kTlHkQExkD99tNwuIEafVo84xBsSlgm9X2aG3hVhtPPjI95N6Ub9l-LLXltnietMG+UPt8D4QRDb61xu0DoeFSy01MFIBkzgbT2h6NWV+H9yLoOmtVLiB9sZDDCkpKYPsDDlj6NfUGdxWjBGiFIRcyFZx2yZm9CAuCtYFnBuMBkThaYzBtH7csdoLYBDXI4a6Ct-zEUZtwF6HMWZQFYfHFueFZip0fBYEwlJkLvjaLoeBbodaOGeIkRIQA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggLYCGADl2gCusMJzTMA2gAYAuolC80sXG1xoW8kAA9EAWgBMAdgDMRACwAOfVLMBWfRdvH9ATlu2ANCACeiMwDYif2MpAEYpEKczY399AF84r1RMHDoSckoaOkZmdi4+AWEwITZpOSQQRWVVdU0dBEMpIikXYzdbM0aza0N9L18EAKCQ8MjjaNiEpPQsPEJ0iipaQhzWDkEKBDWwMjLNKpU1DQr63WNjCyIrfyl9fRv9EIsXfr1-FyJQi1DQw1sXFzXL5mKYgZKzNI8fhiQTsXAsKCrPJQwrsPYVA41Y6gU7+UK2IhGfxWCK2UL6WzvV4IXQ3QJmMwuKSOFw3P62Qyg8GpebcMhgbgIABmYDYAGMABbwxEQdRgIjw6hoADW8u5c2IfIFwtFkulCEVaDF3CxZXRCiUh1qJ0Q4XJRFsEQszNu52pFMCtgslisgP8hhuMS5Mx5xF43BgCHQ3Ag9HNlUtWLqelaRHZ9nsoTsUn+nh8egpoXMlMM3SMLkMvVCxmDKQ1RHDkejsYkoXKFuqR2TCGCBOZz16LjMoSZAepBjJxf9ZcMFarNcSYJD9cbYCjaBjcf07YTnetONtEQ+-razguWa+FnH-od05Chh+oX8w4stYh81XqNUCKRHE-MLRWR9kTLsbRpPFDCIVoLG+aIvXcCxjHHCx-AJVlKyHb1iQBeJF3VNItUFZYCC2dgdmlOMgIxED920RAzwdANzhLRkHHual7ECGCOQfYx3BcEcQTw5cCP5Ii6FIthyJ-Vsd0xUCDwQVx6QibMBKHexqWnT4UI6J8rHsTlhLrUTtWIyTpMRCRt2AvdsTohBjADK5nRiTpq3uVlqWdJoAgCckUOcbpbDfUMiEIrJCAQXgyDQCBBDFLFfwQDYUAs3YqI7K17NOTygnQtw8VQow+nzBB7CaYJnizP5zgBUJQvrCLzLYMhuBYWBFDINgTSOZLUvS+N5No3L3ny-1CqfQzSoGfwb1aCszGZVldIa4z301MTIpI3BOHDRL+s2bYMrkmicoLMb3gmykppK6lZzMQlfneAS-lcZ4EkXFg4rgTR8MIWzsu7WlnTTDp3FdI9vnHcJviINpYliHMbgsIzphM+ZSEWbbAaTMDdHJD47mfYkYOJzorzK3QXH0NMUMcFDfn8r5GshAoAO-KBcYUhzaVuQkbGiFphwfKxxwfD4RwC59WXxKxWd5LaRXFKUEW5kbDxsK49IuVSGSMalhyCQwGe6RkJjsIT0Y2hsIzXZt1fO8DnDBuxHUeKHQnHaJIP+MJ6tiIkF2tsL-yEOE1eouzgZuR66UrQSGQuccAUe6xnlaTpWikOaFc2syJOO6VHe7YlAnODyyVcf5GQ4-RHqc2HwkrcZiTz8KtvMmK4oSvGsr73nUPh8lOk6E32QrDivgdRD7keX5S0Bdvmok1r2s68geoH4and0SsoIEgJ3kaSspAiLSh5gtp02ecY1pDprO4k3b9rYEv8cZKC7keNxvScpi8wDFnKYQSdw+JhDCL8T6cQgA */
     id: "globeView",
 
     types: {
@@ -45,6 +52,7 @@ export const globeViewMachine = createMachine(
       highlightedArea: null,
       currentAreaId: null,
       currentArea: null,
+      currentAreaViewType: null,
       mapPopup: null,
       mapBounds: null,
       eventHandlers: {
@@ -68,14 +76,6 @@ export const globeViewMachine = createMachine(
           "event:url:enter": {
             target: "page:load",
             reenter: true,
-            actions: [
-              {
-                type: "action:parseUrl",
-                params: ({ event }) => ({
-                  pathname: event.pathname,
-                }),
-              },
-            ],
           },
         },
 
@@ -97,83 +97,14 @@ export const globeViewMachine = createMachine(
           src: "actor:fetchArea",
           input: ({ context: { currentAreaId, currentArea } }) => ({
             areaId: currentAreaId,
-            currentArea
+            currentArea,
           }),
           onDone: {
-            target: "area:view",
-            actions: "action:setCurrentArea",
-          },
-        },
-      },
-
-      "area:view": {
-        initial: "area:view:foodProduced",
-        states: {
-          "area:view:foodProduced": {
-            on: {
-              "event:area:selectFoodTransportation": {
-                target: "area:view:foodTransportation",
-                reenter: true
-              }
-            }
-          },
-          "area:view:foodTransportation": {
-            on: {
-              "event:area:selectFoodProduced": {
-                target: "area:view:foodProduced"
-              },
-              "event:area:selectImpact": {
-                target: "area:view:impact"
-              }
-            }
-          },
-          "area:view:impact": {
-            on: {
-              "event:area:selectFoodTransportation": {
-                target: "area:view:foodTransportation"
-              }
-            }
-          },
-        },
-        on: {
-          "event:area:clear": {
-            target: "world:view",
-            actions: "action:area:clear",
+            target: "area:view:entering",
+            actions: ["action:setCurrentArea", "action:setAreaMapView"],
             reenter: true,
           },
-
-          "event:map:mousemove": {
-            target: "area:view",
-            actions: "action:setHighlightedArea",
-            reenter: true
-          },
-
-          "event:map:mouseout": {
-            target: "area:view",
-            actions: "action:clearHighlightedArea",
-          },
-
-          "event:url:enter": {
-            target: "page:load",
-            reenter: true,
-            actions: [
-              {
-                type: "action:resetAreaHighlight",
-              },
-              {
-                type: "action:parseUrl",
-                params: ({ event }) => ({
-                  pathname: event.pathname,
-                }),
-              },
-            ],
-          },
         },
-
-        entry: [
-          "action:parseAreaSection",
-          "action:setAreaMapView",
-        ],
       },
 
       "page:load": {
@@ -183,10 +114,21 @@ export const globeViewMachine = createMachine(
             guard: "guard:isWorldView",
           },
           {
+            target: "area:view:entering",
+            guard: "guard:isCurrentAreaLoaded",
+          },
+          {
             target: "area:fetching",
             reenter: true,
           },
         ],
+
+        entry: {
+          type: "action:parseUrl",
+          params: ({ event }) => ({
+            pathname: event.pathname,
+          }),
+        },
       },
 
       "page:mounting": {
@@ -205,6 +147,56 @@ export const globeViewMachine = createMachine(
           },
         },
       },
+
+      "area:view:entering": {
+        always: [
+          {
+            target: "area:view:production",
+            guard: "guard:isAreaProductionView",
+          },
+          {
+            target: "area:view:transportation",
+            guard: "guard:isAreaTransportationView",
+          },
+          {
+            target: "area:view:impact",
+            reenter: true,
+          },
+        ],
+      },
+
+      "area:view:production": {
+        on: {
+          "event:url:enter": {
+            target: "page:load",
+            reenter: true,
+          },
+        },
+
+        entry: "action:setProductionAreaView",
+      },
+
+      "area:view:transportation": {
+        on: {
+          "event:url:enter": {
+            target: "page:load",
+            reenter: true,
+          },
+        },
+
+        entry: "action:setTransportationAreaView",
+      },
+
+      "area:view:impact": {
+        on: {
+          "event:url:enter": {
+            target: "page:load",
+            reenter: true,
+          },
+        },
+
+        entry: "action:setImpactAreaView",
+      },
     },
 
     initial: "page:mounting",
@@ -212,11 +204,24 @@ export const globeViewMachine = createMachine(
   {
     actions: {
       "action:parseUrl": assign((_, params: { pathname: string }) => {
-        if (params.pathname.startsWith("/area/")) {
+        // Parse area view URLs
+        if (params?.pathname?.startsWith("/area/")) {
           const [, , areaId] = params.pathname.split("/");
+
+          let areaViewType = null;
+
+          if (params.pathname.includes("#food-transportation")) {
+            areaViewType = EAreaViewType.transportation;
+          } else if (params.pathname.includes("#impact")) {
+            areaViewType = EAreaViewType.impact;
+          } else {
+            areaViewType = EAreaViewType.production;
+          }
+
           return {
             viewType: EViewType.area,
             currentAreaId: areaId,
+            currentAreaViewType: areaViewType,
           };
         }
 
@@ -227,29 +232,7 @@ export const globeViewMachine = createMachine(
           currentArea: null,
         };
       }),
-      "action:parseAreaSection": assign(({ event }) => {
-        switch (window.location.hash) {
-          case "#food-transportation":
-            console.log("#food-transportation")
-            // show ports
-            // show area outline
-            // show target area outlines
-            // show routes
-            break;
-          case "#impact":
-            console.log("#impact")
-            // show area outline
-            // show target area with impact colours
-            break;
-          default:
-            console.log("#food-produced")
-            // show dotmap
-            // show area mask
-            // hide ports
-            break;
-        }
-        return {};
-      }),
+
       "action:resetAreaHighlight": assign(({ context }) => {
         const { mapRef, currentArea } = context;
 
@@ -312,12 +295,12 @@ export const globeViewMachine = createMachine(
           highlightedArea: feature || null,
           mapPopup: feature?.properties
             ? {
-              id: feature.properties.id,
-              label: feature.properties.name,
-              itemType: EItemType.area,
-              longitude: event.mapEvent.lngLat.lng,
-              latitude: event.mapEvent.lngLat.lat,
-            }
+                id: feature.properties.id,
+                label: feature.properties.name,
+                itemType: EItemType.area,
+                longitude: event.mapEvent.lngLat.lng,
+                latitude: event.mapEvent.lngLat.lat,
+              }
             : null,
         };
       }),
@@ -364,6 +347,27 @@ export const globeViewMachine = createMachine(
         return {
           currentArea: event.output,
         };
+      }),
+      "action:setProductionAreaView": assign(({ context }) => {
+        console.log("action:setProductionAreaView");
+
+        // apply map effects for production view
+
+        return {};
+      }),
+      "action:setTransportationAreaView": assign(({ context }) => {
+        console.log("action:setTransportationAreaView");
+
+        // apply map effects for transportation view
+
+        return {};
+      }),
+      "action:setImpactAreaView": assign(({ context }) => {
+        console.log("action:setImpactAreaView");
+
+        // apply map effects for impact view
+
+        return {};
       }),
       "action:setAreaMapView": assign(({ context }) => {
         const { mapRef, currentArea } = context;
@@ -417,18 +421,31 @@ export const globeViewMachine = createMachine(
       "guard:isWorldView": ({ context }) => {
         return context.viewType === EViewType.world;
       },
+      "guard:isAreaProductionView": ({ context }) => {
+        return context.currentAreaViewType === EAreaViewType.production;
+      },
+      "guard:isAreaTransportationView": ({ context }) => {
+        return context.currentAreaViewType === EAreaViewType.transportation;
+      },
+      "guard:isAreaImpactView": ({ context }) => {
+        return context.currentAreaViewType === EAreaViewType.impact;
+      },
+      "guard:isCurrentAreaLoaded": ({ context }) => {
+        return context.currentArea?.id === context.currentAreaId;
+      },
     },
     actors: {
-      "actor:fetchArea": fromPromise<FetchAreaResponse, { areaId: string, currentArea: FetchAreaResponse }>(
-        async ({ input }) => {
-          const { areaId, currentArea } = input;
-          if (areaId === currentArea?.id) {
-            return currentArea;
-          }
-          const response = await fetch(`/api/areas/${input.areaId}`);
-          return await response.json();
+      "actor:fetchArea": fromPromise<
+        FetchAreaResponse,
+        { areaId: string; currentArea: FetchAreaResponse }
+      >(async ({ input }) => {
+        const { areaId, currentArea } = input;
+        if (areaId === currentArea?.id) {
+          return currentArea;
         }
-      ),
+        const response = await fetch(`/api/areas/${input.areaId}`);
+        return await response.json();
+      }),
     },
   }
 );
