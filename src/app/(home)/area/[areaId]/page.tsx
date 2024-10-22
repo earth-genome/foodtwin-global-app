@@ -5,9 +5,8 @@ import { EItemType } from "@/types/components";
 import { PageSection, SectionHeader } from "@/app/components/page-section";
 import { Metric, MetricRow } from "@/app/components/metric";
 import { AreaMeta } from "../../../../../prisma/seed/nodes";
-import { FoodGroup } from "@prisma/client";
-import { ListBars } from "@/app/components/charts";
-import { formatKeyIndicator } from "@/utils/numbers";
+import { FoodGroup, Prisma } from "@prisma/client";
+import { ListBars, Sankey } from "@/app/components/charts";
 
 interface IFoodGroupAgg extends FoodGroup {
   sum: number;
@@ -19,6 +18,18 @@ interface IFoodGroupAgg extends FoodGroup {
 
 interface IFoodGroupAggObj {
   [key: string]: IFoodGroupAgg
+}
+
+interface ImportSum {
+  sum: number;
+}
+
+interface ExportFlow {
+  mode: "road" | "rail" | "IWW";
+  value: number;
+  toAreaId: string;
+  name: string;
+  type: "MARITIME" | "PORT" | "INLAND_PORT" | "RAIL_STATION" | "ADMIN";
 }
 
 function findParent(id: number, foodGroups: FoodGroup[]) {
@@ -49,7 +60,9 @@ const AreaPage = async ({
 
   const [
     foodGroupExports,
-    foodGroups
+    foodGroups,
+    inBoundFlows,
+    outboundFlows,
   ] = await Promise.all([
     prisma.flow.groupBy({
       where: {
@@ -60,11 +73,25 @@ const AreaPage = async ({
         value: true,
       },
     }),
-    prisma.foodGroup.findMany()
+    prisma.foodGroup.findMany(),
+    prisma.$queryRawUnsafe(`
+      SELECT sum(value)
+        FROM "FlowSegment"
+        LEFT JOIN "Flow" ON "FlowSegment"."flowId" = "Flow"."id"
+        WHERE "flowId" like '%-${area.id}-%';
+    `),
+    prisma.$queryRawUnsafe(
+      `SELECT "mode", sum("value") as value, "toAreaId", "Node"."name", "Node"."type"
+        FROM "FlowSegment"
+        LEFT JOIN "Flow" ON "FlowSegment"."flowId" = "Flow"."id"
+        LEFT JOIN "Node" ON "Flow"."toAreaId" = "Node"."id"
+        WHERE "flowId" LIKE '${area.id}-%' AND "order" = 1
+        GROUP BY "toAreaId", "mode", "Node"."name", "Node"."type"
+        ORDER BY value DESC;
+    `),
   ]);
 
   const foodGroupAgg = foodGroupExports.reduce((agg: IFoodGroupAggObj, group): IFoodGroupAggObj => {
-
     const parent = findParent(group.foodGroupId, foodGroups);
 
     if (!parent) return agg;
@@ -95,9 +122,10 @@ const AreaPage = async ({
         }
       }
     }
-  }, {})
+  }, {});
 
-  const totalFlow = foodGroupExports.reduce((partialSum, { _sum }) => _sum.value ? partialSum + _sum.value : partialSum, 0)
+  const totalFlow = foodGroupExports.reduce((partialSum, { _sum }) => _sum.value ? partialSum + _sum.value : partialSum, 0);
+  const totalExport = (outboundFlows as ExportFlow[]).reduce((partialSum, { value }) => partialSum + value, 0);
   const meta = area.meta as AreaMeta;
 
   const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
@@ -153,6 +181,50 @@ const AreaPage = async ({
               value: sum,
             })
           )}
+        />
+      </PageSection>
+      <PageSection>
+        <SectionHeader label="Food Transportation" />
+        <MetricRow>
+          <Metric
+            label="Exported outside the region"
+            value={totalExport}
+            formatType="weight"
+            decimalPlaces={0}
+          />
+          <Metric
+            label="Suplied to the region"
+            value={(inBoundFlows as ImportSum[])[0].sum}
+            formatType="weight"
+            decimalPlaces={0}
+          />
+        </MetricRow>
+        <Sankey
+          width={480}
+          height={600}
+          data={{
+            nodes: [
+              { id: area.id, label: area.name, type: EItemType["area"] },
+              { id: "other", label: "Other", type: EItemType["node"] },
+              ...(outboundFlows as ExportFlow[]).map(({ toAreaId, name, value }) => ({
+                id: toAreaId,
+                label: name,
+                type: EItemType["node"]
+              }))
+            ],
+            links: [
+                ...(outboundFlows as ExportFlow[]).slice(0, 10).map(({ toAreaId, value }) => ({
+                  source: area.id,
+                  target: toAreaId,
+                  value
+                })),
+                {
+                  source: area.id,
+                  target: "other",
+                  value: (outboundFlows as ExportFlow[]).slice(10).reduce((sum, { value }) => sum + value, 0),
+                }
+            ]
+          }}
         />
       </PageSection>
     </div>
