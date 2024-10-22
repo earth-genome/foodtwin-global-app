@@ -19,7 +19,7 @@ interface Node extends SankeyExtraProperties {
 }
 
 interface LinkPopupDatum {
-  value: number;
+  value: number | string;
   label: string;
   unit?: string;
 }

@@ -7,6 +7,7 @@ import { Metric, MetricRow } from "@/app/components/metric";
 import { AreaMeta } from "../../../../../prisma/seed/nodes";
 import { FoodGroup, Prisma } from "@prisma/client";
 import { ListBars, Sankey } from "@/app/components/charts";
+import { formatKeyIndicator } from "@/utils/numbers";
 
 interface IFoodGroupAgg extends FoodGroup {
   sum: number;
@@ -217,7 +218,11 @@ const AreaPage = async ({
                   ...(outboundFlows as ExportFlow[]).slice(0, 10).map(({ toAreaId, value }) => ({
                     source: area.id,
                     target: toAreaId,
-                    value
+                    value,
+                    popupData: [{
+                      label: "Volume",
+                      value: formatKeyIndicator(value, "weight", 0),
+                    }]
                   })),
                   {
                     source: area.id,
