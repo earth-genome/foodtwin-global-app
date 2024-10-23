@@ -38,7 +38,7 @@ export default function Components() {
       <h2>Page Sections</h2>
 
       <div className="w-[480px] mb-8 border-y-1">
-        <PageSection>
+        <PageSection id="production">
           <SectionHeader label="Food Produced" />
           <MetricRow>
             <Metric
@@ -80,7 +80,7 @@ export default function Components() {
       </div>
 
       <div className="w-[480px] mb-8 border-y-1">
-        <PageSection>
+        <PageSection id="transportation">
           <SectionHeader
             label="Food Transportation"
             tooltip="These routes represent the path that food takes from where it is produced to where it is consumed. The nodes represent major maritime ports, inland waterway ports, or rail depots that are recognized in the model as aggregation points and places where food flows change transportation mode."

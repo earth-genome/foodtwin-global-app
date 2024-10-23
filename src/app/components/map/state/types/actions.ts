@@ -5,12 +5,13 @@ import { EViewType } from "../machine";
 
 interface ActionParseUrl {
   type: "action:parseUrl";
-  params: {
-    pathname: string;
-  };
   viewType: EViewType | null;
   currentAreaId?: string | null;
   currentArea?: GeoJSON.Feature | null;
+}
+
+interface ActionParseAreaSection {
+  type: "action:parseAreaSection";
 }
 
 interface ResetAreaHighlight {
@@ -44,9 +45,20 @@ interface ActionSetCurrentArea {
 interface ActionSetAreaMapView {
   type: "action:setAreaMapView";
 }
+interface ActionEnterProductionAreaView {
+  type: "action:setProductionAreaView";
+}
 
-interface ActionSetWorldMapView {
-  type: "action:setWorldMapView";
+interface ActionSetTransportationAreaView {
+  type: "action:setTransportationAreaView";
+}
+
+interface ActionSetImpactAreaView {
+  type: "action:setImpactAreaView";
+}
+
+interface ActionEnterWorldMapView {
+  type: "action:enterWorldMapView";
 }
 interface ActionAreaClear {
   type: "action:area:clear";
@@ -54,12 +66,16 @@ interface ActionAreaClear {
 
 export type StateActions =
   | ActionParseUrl
+  | ActionParseAreaSection
   | ResetAreaHighlight
   | ActionSetMapRef
   | ActionSetHighlightedArea
   | ActionClearHighlightedArea
   | ActionSetCurrentAreaId
   | ActionSetCurrentArea
+  | ActionEnterProductionAreaView
+  | ActionSetTransportationAreaView
+  | ActionSetImpactAreaView
   | ActionSetAreaMapView
-  | ActionSetWorldMapView
+  | ActionEnterWorldMapView
   | ActionAreaClear;
