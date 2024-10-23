@@ -67,7 +67,6 @@ function GlobeInner() {
   useEffect(() => {
     actorRef.send({
       type: "event:page:mount",
-      pathname,
     });
   }, []);
 

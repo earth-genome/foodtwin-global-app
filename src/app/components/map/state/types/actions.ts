@@ -5,9 +5,6 @@ import { EViewType } from "../machine";
 
 interface ActionParseUrl {
   type: "action:parseUrl";
-  params: {
-    pathname: string;
-  };
   viewType: EViewType | null;
   currentAreaId?: string | null;
   currentArea?: GeoJSON.Feature | null;

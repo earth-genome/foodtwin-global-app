@@ -2,13 +2,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
-type IConfig = Record<
-  string,
-  {
-    bbox: string;
-  }
->;
-
 interface IScrollTracker {
   children: React.ReactNode;
 }
@@ -19,7 +12,7 @@ function ScrollTracker({ children }: IScrollTracker) {
 
   const [ref, setRef] = useState<HTMLDivElement>();
   const onRef = (e: HTMLDivElement) => setRef(e);
-  const currentSection = useRef<string|null>("");
+  const currentSection = useRef<string | null>("");
 
   useEffect(() => {
     if (!ref) return;
@@ -36,7 +29,6 @@ function ScrollTracker({ children }: IScrollTracker) {
             currentSection.current = sectionId;
             router.push(`${pathname}#${sectionId}`);
           }
-
         }
       },
       {

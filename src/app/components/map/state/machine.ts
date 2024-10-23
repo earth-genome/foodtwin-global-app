@@ -127,9 +127,6 @@ export const globeViewMachine = createMachine(
 
         entry: {
           type: "action:parseUrl",
-          params: ({ event }) => ({
-            pathname: event.pathname,
-          }),
         },
       },
 
@@ -138,14 +135,6 @@ export const globeViewMachine = createMachine(
           "event:page:mount": {
             target: "map:mounting",
             reenter: true,
-            actions: [
-              {
-                type: "action:parseUrl",
-                params: ({ event }) => ({
-                  pathname: event.pathname,
-                }),
-              },
-            ],
           },
         },
       },
@@ -235,16 +224,17 @@ export const globeViewMachine = createMachine(
   },
   {
     actions: {
-      "action:parseUrl": assign((_, params: { pathname: string }) => {
+      "action:parseUrl": assign(() => {
         // Parse area view URLs
-        if (params?.pathname?.startsWith("/area/")) {
-          const [, , areaId] = params.pathname.split("/");
+        const pathname = window.location.pathname;
+        if (pathname.startsWith("/area/")) {
+          const [, , areaId] = pathname.split("/");
 
           let areaViewType = null;
 
-          if (params.pathname.includes("#food-transportation")) {
+          if (pathname.includes("#transportation")) {
             areaViewType = EAreaViewType.transportation;
-          } else if (params.pathname.includes("#impact")) {
+          } else if (pathname.includes("#impact")) {
             areaViewType = EAreaViewType.impact;
           } else {
             areaViewType = EAreaViewType.production;
@@ -414,8 +404,6 @@ export const globeViewMachine = createMachine(
       }),
 
       "action:setTransportationAreaView": assign(({ context }) => {
-        console.log("action:setTransportationAreaView");
-
         const { mapRef } = context;
 
         if (mapRef) {
@@ -426,8 +414,6 @@ export const globeViewMachine = createMachine(
         return {};
       }),
       "action:setImpactAreaView": assign(({ context }) => {
-        console.log("action:setImpactAreaView");
-
         const { mapRef } = context;
 
         if (mapRef) {
@@ -501,14 +487,14 @@ export const globeViewMachine = createMachine(
       "guard:isWorldView": ({ context }) => {
         return context.viewType === EViewType.world;
       },
-      "guard:isAreaProductionView": ({ context }) => {
-        return window.location.hash === "#production";
+      "guard:isAreaProductionView": () => {
+        return window.location.hash === `#${EAreaViewType.production}`;
       },
-      "guard:isAreaTransportationView": ({ context }) => {
-        return window.location.hash === "#transportation";
+      "guard:isAreaTransportationView": () => {
+        return window.location.hash === `#${EAreaViewType.transportation}`;
       },
-      "guard:isAreaImpactView": ({ context }) => {
-        return window.location.hash === "#impact";
+      "guard:isAreaImpactView": () => {
+        return window.location.hash === `#${EAreaViewType.impact}`;
       },
       "guard:isCurrentAreaLoaded": ({ context }) => {
         return context.currentArea?.id === context.currentAreaId;

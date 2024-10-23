@@ -3,12 +3,11 @@ import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 
 interface EventPageMount {
   type: "event:page:mount";
-  pathname: string;
 }
 
 interface EventUrlEnter {
   type: "event:url:enter";
-  pathname: string;
+  pathname: string | undefined;
 }
 
 interface EventMapMount {
