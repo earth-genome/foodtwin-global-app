@@ -9,6 +9,7 @@ import { IMapPopup } from "../../map-popup";
 import { EItemType } from "@/types/components";
 import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 import { worldViewState } from "..";
+import { combineBboxes } from "@/utils/geometries";
 
 export enum EViewType {
   world = "world",
@@ -29,7 +30,6 @@ interface StateContext {
   currentArea: FetchAreaResponse | null;
   currentAreaViewType: EAreaViewType | null;
   mapPopup: IMapPopup | null;
-  mapBounds: BBox | null;
   eventHandlers: {
     mousemove: boolean;
   };
@@ -54,7 +54,6 @@ export const globeViewMachine = createMachine(
       currentArea: null,
       currentAreaViewType: null,
       mapPopup: null,
-      mapBounds: null,
       eventHandlers: {
         mousemove: true,
       },
@@ -101,7 +100,7 @@ export const globeViewMachine = createMachine(
           }),
           onDone: {
             target: "area:view:entering",
-            actions: ["action:setCurrentArea", "action:setAreaMapView"],
+            actions: ["action:setCurrentArea"],
             reenter: true,
           },
         },
@@ -391,11 +390,43 @@ export const globeViewMachine = createMachine(
       }),
       "action:setProductionAreaView": assign(({ context }) => {
         console.log("action:setProductionAreaView");
-        const { mapRef } = context;
+        const { mapRef, currentArea } = context;
 
-        if (mapRef) {
+        if (mapRef && currentArea) {
           const m = mapRef.getMap();
           m.setLayoutProperty("foodgroups-layer", "visibility", "visible");
+
+          const targetAreaIds = currentArea.flowDestinations.features.map(({ properties }) => properties.id);
+          const features = mapRef.querySourceFeatures("area-tiles", {
+            filter: ["in", "id", ...targetAreaIds],
+            sourceLayer: "default",
+          });
+          for (let i = 0,  len = features.length; i < len; i ++) {
+            mapRef.setFeatureState(
+              {
+                source: "area-tiles",
+                sourceLayer: "default",
+                id: features[i].id!,
+              },
+              { target: false }
+            );
+          }
+
+          const bounds = bbox(currentArea.boundingBox);
+          mapRef.fitBounds(
+            [
+              [bounds[0], bounds[1]],
+              [bounds[2], bounds[3]],
+            ],
+            {
+              padding: {
+                top: 100,
+                left: 100,
+                bottom: 100,
+                right: 100,
+              },
+            }
+          );
         }
 
         return {};
@@ -403,11 +434,44 @@ export const globeViewMachine = createMachine(
       "action:setTransportationAreaView": assign(({ context }) => {
         console.log("action:setTransportationAreaView");
 
-        const { mapRef } = context;
+        const { mapRef, currentArea } = context;
 
-        if (mapRef) {
+        if (mapRef && currentArea) {
           const m = mapRef.getMap();
           m.setLayoutProperty("foodgroups-layer", "visibility", "none");
+
+          const targetAreaIds = currentArea.flowDestinations.features.map(({ properties }) => properties.id);
+          const targetAreaBbox = bbox(currentArea.flowDestinations);
+          const combinedBboxes = combineBboxes([targetAreaBbox, bbox(currentArea.boundingBox)]);
+          mapRef.fitBounds(
+            [
+              [combinedBboxes[0], combinedBboxes[1]],
+              [combinedBboxes[2], combinedBboxes[3]],
+            ],
+            {
+              padding: {
+                top: 100,
+                left: 100,
+                bottom: 100,
+                right: 100,
+              },
+            }
+          );
+
+          const features = mapRef.querySourceFeatures("area-tiles", {
+            filter: ["in", "id", ...targetAreaIds],
+            sourceLayer: "default",
+          });
+          for (let i = 0,  len = features.length; i < len; i ++) {
+            mapRef.setFeatureState(
+              {
+                source: "area-tiles",
+                sourceLayer: "default",
+                id: features[i].id!,
+              },
+              { target: true }
+            );
+          }
         }
 
         return {};
@@ -423,36 +487,6 @@ export const globeViewMachine = createMachine(
         }
 
         return {};
-      }),
-      "action:setAreaMapView": assign(({ context }) => {
-        const { mapRef, currentArea } = context;
-
-        if (!mapRef || !currentArea || !currentArea.boundingBox) {
-          return {};
-        }
-
-        mapRef.resize();
-
-        const bounds = bbox(currentArea.boundingBox);
-
-        mapRef.fitBounds(
-          [
-            [bounds[0], bounds[1]],
-            [bounds[2], bounds[3]],
-          ],
-          {
-            padding: {
-              top: 100,
-              left: 100,
-              bottom: 100,
-              right: 100,
-            },
-          }
-        );
-
-        return {
-          mapBounds: bounds,
-        };
       }),
       "action:setWorldMapView": assign(({ context }) => {
         const { mapRef } = context;

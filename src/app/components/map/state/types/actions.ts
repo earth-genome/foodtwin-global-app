@@ -45,9 +45,6 @@ interface ActionSetCurrentArea {
   area: GeoJSON.Feature;
 }
 
-interface ActionSetAreaMapView {
-  type: "action:setAreaMapView";
-}
 interface ActionSetProductionAreaView {
   type: "action:setProductionAreaView";
 }
@@ -79,6 +76,5 @@ export type StateActions =
   | ActionSetProductionAreaView
   | ActionSetTransportationAreaView
   | ActionSetImpactAreaView
-  | ActionSetAreaMapView
   | ActionSetWorldMapView
   | ActionAreaClear;
