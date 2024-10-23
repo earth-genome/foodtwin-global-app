@@ -361,22 +361,36 @@ export const globeViewMachine = createMachine(
       }),
       "action:setProductionAreaView": assign(({ context }) => {
         console.log("action:setProductionAreaView");
+        const { mapRef } = context;
 
-        // apply map effects for production view
+        if (mapRef) {
+          const m = mapRef.getMap();
+          m.setLayoutProperty("foodgroups-layer", "visibility", "visible");
+        }
 
         return {};
       }),
       "action:setTransportationAreaView": assign(({ context }) => {
         console.log("action:setTransportationAreaView");
 
-        // apply map effects for transportation view
+        const { mapRef } = context;
+
+        if (mapRef) {
+          const m = mapRef.getMap();
+          m.setLayoutProperty("foodgroups-layer", "visibility", "none");
+        }
 
         return {};
       }),
       "action:setImpactAreaView": assign(({ context }) => {
         console.log("action:setImpactAreaView");
 
-        // apply map effects for impact view
+        const { mapRef } = context;
+
+        if (mapRef) {
+          const m = mapRef.getMap();
+          m.setLayoutProperty("foodgroups-layer", "visibility", "none");
+        }
 
         return {};
       }),
