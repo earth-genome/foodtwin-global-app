@@ -48,7 +48,7 @@ interface ActionSetCurrentArea {
 interface ActionSetAreaMapView {
   type: "action:setAreaMapView";
 }
-interface ActionSetProductionAreaView {
+interface ActionEnterProductionAreaView {
   type: "action:setProductionAreaView";
 }
 
@@ -60,8 +60,8 @@ interface ActionSetImpactAreaView {
   type: "action:setImpactAreaView";
 }
 
-interface ActionSetWorldMapView {
-  type: "action:setWorldMapView";
+interface ActionEnterWorldMapView {
+  type: "action:enterWorldMapView";
 }
 interface ActionAreaClear {
   type: "action:area:clear";
@@ -76,9 +76,9 @@ export type StateActions =
   | ActionClearHighlightedArea
   | ActionSetCurrentAreaId
   | ActionSetCurrentArea
-  | ActionSetProductionAreaView
+  | ActionEnterProductionAreaView
   | ActionSetTransportationAreaView
   | ActionSetImpactAreaView
   | ActionSetAreaMapView
-  | ActionSetWorldMapView
+  | ActionEnterWorldMapView
   | ActionAreaClear;
