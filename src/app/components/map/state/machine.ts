@@ -433,13 +433,13 @@ export const globeViewMachine = createMachine(
         return context.viewType === EViewType.world;
       },
       "guard:isAreaProductionView": ({ context }) => {
-        return context.currentAreaViewType === EAreaViewType.production;
+        return window.location.hash === '#production';
       },
       "guard:isAreaTransportationView": ({ context }) => {
-        return context.currentAreaViewType === EAreaViewType.transportation;
+        return window.location.hash === '#transportation';
       },
       "guard:isAreaImpactView": ({ context }) => {
-        return context.currentAreaViewType === EAreaViewType.impact;
+        return window.location.hash === '#impact';
       },
       "guard:isCurrentAreaLoaded": ({ context }) => {
         return context.currentArea?.id === context.currentAreaId;
