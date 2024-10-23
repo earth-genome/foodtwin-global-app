@@ -37,7 +37,7 @@ interface StateContext {
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggLYCGADl2gCusMJzTMA2gAYAuolC80sXG1xoW8kAA9EAWgBMAdgDMRACwAOfVLMBWfRdvH9ATlu2ANCACeiMwDYif2MpAEYpEKczY399AF84r1RMHDoSckoaOkZmdi4+AWEwITZpOSQQRWVVdU0dBEMpIikXYzdbM0aza0N9L18EAKCQ8MjjaNiEpPQsPEJ0iipaQhzWDkEKBDWwMjLNKpU1DQr63WNjCyIrfyl9fRv9EIsXfr1-FyJQi1DQw1sXFzXL5mKYgZKzNI8fhiQTsXAsKCrPJQwrsPYVA41Y6gU7+UK2IhGfxWCK2UL6WzvV4IXQ3QJmMwuKSOFw3P62Qyg8GpebcMhgbgIABmYDYAGMABbwxEQdRgIjw6hoADW8u5c2IfIFwtFkulCEVaDF3CxZXRCiUh1qJ0Q4XJRFsEQszNu52pFMCtgslisgP8hhuMS5Mx5xF43BgCHQ3Ag9HNlUtWLqelaRHZ9nsoTsUn+nh8egpoXMlMM3SMLkMvVCxmDKQ1RHDkejsYkoXKFuqR2TCGCBOZz16LjMoSZAepBjJxf9ZcMFarNcSYJD9cbYCjaBjcf07YTnetONtEQ+-razguWa+FnH-od05Chh+oX8w4stYh81XqNUCKRHE-MLRWR9kTLsbRpPFDCIVoLG+aIvXcCxjHHCx-AJVlKyHb1iQBeJF3VNItUFZYCC2dgdmlOMgIxED920RAzwdANzhLRkHHual7ECGCOQfYx3BcEcQTw5cCP5Ii6FIthyJ-Vsd0xUCDwQVx6QibMBKHexqWnT4UI6J8rHsTlhLrUTtWIyTpMRCRt2AvdsTohBjADK5nRiTpq3uVlqWdJoAgCckUOcbpbDfUMiEIrJCAQXgyDQCBBDFLFfwQDYUAs3YqI7K17NOTygnQtw8VQow+nzBB7CaYJnizP5zgBUJQvrCLzLYMhuBYWBFDINgTSOZLUvS+N5No3L3ny-1CqfQzSoGfwb1aCszGZVldIa4z301MTIpI3BOHDRL+s2bYMrkmicoLMb3gmykppK6lZzMQlfneAS-lcZ4EkXFg4rgTR8MIWzsu7WlnTTDp3FdI9vnHcJviINpYliHMbgsIzphM+ZSEWbbAaTMDdHJD47mfYkYOJzorzK3QXH0NMUMcFDfn8r5GshAoAO-KBcYUhzaVuQkbGiFphwfKxxwfD4RwC59WXxKxWd5LaRXFKUEW5kbDxsK49IuVSGSMalhyCQwGe6RkJjsIT0Y2hsIzXZt1fO8DnDBuxHUeKHQnHaJIP+MJ6tiIkF2tsL-yEOE1eouzgZuR66UrQSGQuccAUe6xnlaTpWikOaFc2syJOO6VHe7YlAnODyyVcf5GQ4-RHqc2HwkrcZiTz8KtvMmK4oSvGsr73nUPh8lOk6E32QrDivgdRD7keX5S0Bdvmok1r2s68geoH4and0SsoIEgJ3kaSspAiLSh5gtp02ecY1pDprO4k3b9rYEv8cZKC7keNxvScpi8wDFnKYQSdw+JhDCL8T6cQgA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggLYCGADl2gCusMJzTMA2gAYAuolC80sXG1xoW8kAA9EAWgBMAdgDMRACwAOfVLMBWfRdvH9ATlu2ANCACeiMwDYif2MpAEYpEKczY399AF84r1RMHDoSckoaOkZmdi4+AWEwITZpOSQQRWVVdU0dBDMpfSJbE1DjGKMXCykLMy9fBH1QlxbbEb6m7uNQ-X8EpPQsPEJ0iipaQhzWDkEKBB2wMjLNKpU1DQr63Q6LIit-JrmmkIsXAb1-UdCLUNDDWwubpzH5mBYgZLLNI8fhiQTsXAsKDbPIwwrsE4VM41S6ga7+UK2IhGfxWCLjfS2L4fBC6R6BMxmFy9QGPAGtcGQ1KrbhkMDcBAAMzAbAAxgALRHIiDqMBERHUNAAazlXJWxF5-KFIolUoQCrQou4OLKmIUSnOtSuiHCsxaER6PX0HRplMCtj6Fis3X8hkeMU5S25xF43BgCHQ3Ag9DNlQtOLqehcpnZ9nsoTsUkBnh8ekpoXMVMMZn0XUMhmGxkDKXVRFD4cj0YkoXK5uqF0TCGCRN6bwrLjMIykfppBnGhd9JbLFfa1ahq3rYAjaCjMf0rbj7ateJtEVGvuMyedv0HXtHvpak5Chj+oX8p7nwbrYaXcIRSJRHEX6NKslO8Y7a1aQJQwiGTL0M2MD13AsYxRwsfwiRcX1DAHPpSSBeJEghINa01AVNgIA52COKUYz-LEAO3bREGcUxWmCKDJxcBw5hpexAi9VobygwERjBbC1TSfCskIYi2FIj9mw3bFAJ3IZkPMCJMxcfj7BpSciB+RDB1JSkjEfPC+QIuhxMk5EJHXf8t1xGiEGMP17h6GIzB4uZkJpHopHMe8CQcYJ9BLWxDOE4zRKI3gyDQCBBFFHFPwQPYUDM44KLbS1bOudygmQ1CqTvewK3Y6wgmMN4MwBDogVCEKeTCwiEEi6LYvipgdgQETRRQflUpkqjMsQKQaSkWqNXq0ympiuKLgStE4REMRJDSzcMs7IbcwQEbBNw0KtQayaWpmtrUQKebikEX8+pstbhtGogRIatgyG4FhYEUMg2GNI7cl2fZDl66zVqAgwvhy303AJRCjH0DSL2TFxi16ZCEPGO6HtMp6Xre8hPtan6OrCrqetjWTqPqdbBi2xYa12kyxMx173tx772rmoQFvEMASf6m6NqpnCabqvaMeexmca+9RZtO9nzsuwGEyAinBrR8axNwThQzihKkpS7nruB7KvnB-KoaKjbULMYl-i+VSAVcN4VeFtWNe4LXjo4Trut5PWgfkqlAkJWIviLKR71CGk-lGAILABQcHG6RwXEdumiPVzW2Cl2EZcWrnltJgau3sIIJgzUtrFBGlMKIYtLEpBGbwJATqfnMandTl23fxtmihKH2Ffk6GwJLG9y38RCK2LGljEHIgsxMZTbEaV4q3BFhorgTQhMIeW5Lsukemrxf3BePdflHcJfmrpHF8JaJDAiO7SHWcKd7JvRZlGUtfK9Kw5lcixRwsWrghRwCF-gBD+BYO63d3xQFfgXOkTRiQ2GiFIAc-wfgww2roG83xVL+SZASD0WFm5PhEsKMUkokTwM7OEGw9wb5lWUoyIwNIZ6+lASWJk0R7yLzut+RsNDgYBUPnYWwJ9Dxn2wXfFozIRiqViCSFepDazfjfKoahlF9byUQZbek5Z+KMjKoAgcyC3jJlcsmUO8xtqC1binFKUohHyVJIEDo7R8yuEBEyYqlsHIX3COWaepJk7hUalFKa-cVpRPxESGYgVizlhju4BG7EfgtFgnMZ0-xizdFCY9UW2MPoS1svnTsODQLVQCF8e+5YpARFhkSL0h5UxvGnjVWxLd7qq3bunZxe8mRgTLoeD0d8-RQRpKhUw-FSxQTCGEf4CQEhAA */
     id: "globeView",
 
     types: {
@@ -171,6 +171,16 @@ export const globeViewMachine = createMachine(
             target: "page:load",
             reenter: true,
           },
+
+          "event:map:mousemove": {
+            target: "area:view:production",
+            actions: "action:setHighlightedArea",
+          },
+
+          "event:map:mouseout": {
+            target: "area:view:production",
+            actions: "action:clearHighlightedArea",
+          },
         },
 
         entry: "action:setProductionAreaView",
@@ -182,6 +192,16 @@ export const globeViewMachine = createMachine(
             target: "page:load",
             reenter: true,
           },
+
+          "event:map:mousemove": {
+            target: "area:view:transportation",
+            actions: "action:setHighlightedArea",
+          },
+
+          "event:map:mouseout": {
+            target: "area:view:transportation",
+            actions: "action:clearHighlightedArea",
+          },
         },
 
         entry: "action:setTransportationAreaView",
@@ -192,6 +212,16 @@ export const globeViewMachine = createMachine(
           "event:url:enter": {
             target: "page:load",
             reenter: true,
+          },
+
+          "event:map:mousemove": {
+            target: "area:view:impact",
+            actions: "action:setHighlightedArea",
+          },
+
+          "event:map:mouseout": {
+            target: "area:view:impact",
+            actions: "action:clearHighlightedArea",
           },
         },
 
