@@ -14,10 +14,6 @@ interface ActionParseAreaSection {
   type: "action:parseAreaSection";
 }
 
-interface ResetAreaHighlight {
-  type: "action:resetAreaHighlight";
-}
-
 interface ActionSetMapRef {
   type: "action:setMapRef";
   mapRef: MapRef;
@@ -67,14 +63,10 @@ interface ActionEnterWorldMapView {
 interface ActionEnterAreaView {
   type: "action:enterAreaView";
 }
-interface ActionAreaClear {
-  type: "action:area:clear";
-}
 
 export type StateActions =
   | ActionParseUrl
   | ActionParseAreaSection
-  | ResetAreaHighlight
   | ActionSetMapRef
   | ActionSetHighlightedArea
   | ActionClearHighlightedArea
@@ -86,5 +78,4 @@ export type StateActions =
   | ActionSetImpactAreaView
   | ActionSetAreaMapView
   | ActionEnterWorldMapView
-  | ActionEnterAreaView
-  | ActionAreaClear;
+  | ActionEnterAreaView;

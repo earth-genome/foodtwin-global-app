@@ -32,10 +32,6 @@ interface EventFetchAreaDone {
   output: FetchAreaResponse;
 }
 
-interface EventAreaClear {
-  type: "event:area:clear";
-}
-
 interface EventAreaSelectFoodTransportation {
   type: "event:area:selectFoodTransportation";
 }
@@ -54,7 +50,6 @@ export type StateEvents =
   | EventMapMount
   | EventMapMouseMove
   | EventFetchAreaDone
-  | EventAreaClear
   | EventMapMouseOut
   | EventAreaSelectFoodTransportation
   | EventAreaSelectImpact

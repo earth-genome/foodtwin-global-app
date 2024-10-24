@@ -262,32 +262,6 @@ export const globeViewMachine = createMachine(
         };
       }),
 
-      "action:resetAreaHighlight": assign(({ context }) => {
-        const { mapRef, currentArea } = context;
-
-        if (mapRef && currentArea) {
-          const features = mapRef.querySourceFeatures("area-tiles", {
-            filter: ["==", "id", currentArea.id],
-            sourceLayer: "default",
-          });
-
-          for (let i = 0, len = features.length; i < len; i++) {
-            const feature = features[i];
-            if (feature.id) {
-              mapRef.setFeatureState(
-                {
-                  source: "area-tiles",
-                  sourceLayer: "default",
-                  id: feature.id,
-                },
-                { selected: false }
-              );
-            }
-          }
-        }
-
-        return {};
-      }),
       "action:setMapRef": assign(({ event }) => {
         assertEvent(event, "event:map:mount");
 
@@ -573,10 +547,6 @@ export const globeViewMachine = createMachine(
         const m = mapRef.getMap();
         m.setLayoutProperty("top-ports", "visibility", "none");
       },
-      "action:area:clear": assign({
-        currentAreaId: null,
-        currentArea: null,
-      }),
     },
     guards: {
       "guard:isWorldView": ({ context }) => {
