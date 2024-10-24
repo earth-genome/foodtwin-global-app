@@ -3,12 +3,11 @@ import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 
 interface EventPageMount {
   type: "event:page:mount";
-  pathname: string;
 }
 
 interface EventUrlEnter {
   type: "event:url:enter";
-  pathname: string;
+  pathname: string | undefined;
 }
 
 interface EventMapMount {
@@ -37,6 +36,18 @@ interface EventAreaClear {
   type: "event:area:clear";
 }
 
+interface EventAreaSelectFoodTransportation {
+  type: "event:area:selectFoodTransportation";
+}
+
+interface EventAreaSelectImpact {
+  type: "event:area:selectImpact";
+}
+
+interface EventAreaSelectFoodProduced {
+  type: "event:area:selectFoodProduced";
+}
+
 export type StateEvents =
   | EventPageMount
   | EventUrlEnter
@@ -44,4 +55,7 @@ export type StateEvents =
   | EventMapMouseMove
   | EventFetchAreaDone
   | EventAreaClear
-  | EventMapMouseOut;
+  | EventMapMouseOut
+  | EventAreaSelectFoodTransportation
+  | EventAreaSelectImpact
+  | EventAreaSelectFoodProduced;
