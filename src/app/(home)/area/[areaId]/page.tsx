@@ -2,12 +2,14 @@ import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import PageHeader from "@/app/components/page-header";
 import { EItemType } from "@/types/components";
+import ScrollTracker from "./scroll-tracker";
 import { PageSection, SectionHeader } from "@/app/components/page-section";
 import { Metric, MetricRow } from "@/app/components/metric";
 import { AreaMeta } from "../../../../../prisma/seed/nodes";
 import { FoodGroup, Prisma } from "@prisma/client";
 import { ListBars, Sankey } from "@/app/components/charts";
 import { formatKeyIndicator } from "@/utils/numbers";
+import { EAreaViewType } from "@/app/components/map/state/machine";
 
 interface IFoodGroupAgg extends FoodGroup {
   sum: number;
@@ -128,14 +130,13 @@ const AreaPage = async ({
   const totalFlow = foodGroupExports.reduce((partialSum, { _sum }) => _sum.value ? partialSum + _sum.value : partialSum, 0);
   const totalExport = (outboundFlows as ExportFlow[]).reduce((partialSum, { value }) => partialSum + value, 0);
   const meta = area.meta as AreaMeta;
-
   const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
 
   return (
     <div className={`w-[600px] bg-white h-screen grid grid-rows-[max-content_1fr]`}>
       <PageHeader title={areaLabel} itemType={EItemType.area} />
-      <div className="overflow-y-auto">
-        <PageSection>
+      <ScrollTracker>
+        <PageSection id={EAreaViewType.production}>
           <SectionHeader label="Food Produced" />
           <MetricRow>
             <Metric
@@ -185,7 +186,7 @@ const AreaPage = async ({
             )}
           />
         </PageSection>
-        <PageSection>
+        <PageSection id={EAreaViewType.transportation}>
           <SectionHeader label="Food Transportation" />
           <MetricRow>
             <Metric
@@ -233,7 +234,11 @@ const AreaPage = async ({
             }}
           />
         </PageSection>
-      </div>
+        <PageSection id={EAreaViewType.impact}>
+          <SectionHeader label="Impact on people" />
+          <div className="bg-neutral-100 h-[400px]">chart</div>
+        </PageSection>
+      </ScrollTracker>
     </div>
   );
 };
