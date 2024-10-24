@@ -14,10 +14,6 @@ interface ActionParseAreaSection {
   type: "action:parseAreaSection";
 }
 
-interface ResetAreaHighlight {
-  type: "action:resetAreaHighlight";
-}
-
 interface ActionSetMapRef {
   type: "action:setMapRef";
   mapRef: MapRef;
@@ -43,14 +39,17 @@ interface ActionSetCurrentArea {
 }
 
 interface ActionSetAreaMapView {
-  type: "action:setAreaMapView";
+  type: "action:fitMapToCurrentAreaBounds";
 }
 interface ActionEnterProductionAreaView {
   type: "action:setProductionAreaView";
 }
 
-interface ActionSetTransportationAreaView {
-  type: "action:setTransportationAreaView";
+interface ActionEnterTransportationAreaView {
+  type: "action:enterTransportationAreaView";
+}
+interface ActionExitTransportationAreaView {
+  type: "action:exitTransportationAreaView";
 }
 
 interface ActionSetImpactAreaView {
@@ -60,22 +59,23 @@ interface ActionSetImpactAreaView {
 interface ActionEnterWorldMapView {
   type: "action:enterWorldMapView";
 }
-interface ActionAreaClear {
-  type: "action:area:clear";
+
+interface ActionEnterAreaView {
+  type: "action:enterAreaView";
 }
 
 export type StateActions =
   | ActionParseUrl
   | ActionParseAreaSection
-  | ResetAreaHighlight
   | ActionSetMapRef
   | ActionSetHighlightedArea
   | ActionClearHighlightedArea
   | ActionSetCurrentAreaId
   | ActionSetCurrentArea
   | ActionEnterProductionAreaView
-  | ActionSetTransportationAreaView
+  | ActionEnterTransportationAreaView
+  | ActionExitTransportationAreaView
   | ActionSetImpactAreaView
   | ActionSetAreaMapView
   | ActionEnterWorldMapView
-  | ActionAreaClear;
+  | ActionEnterAreaView;
