@@ -9,6 +9,7 @@ import { IMapPopup } from "../../map-popup";
 import { EItemType } from "@/types/components";
 import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 import { worldViewState } from "..";
+import { combineBboxes } from "@/utils/geometries";
 
 export enum EViewType {
   world = "world",
@@ -404,11 +405,51 @@ export const globeViewMachine = createMachine(
       }),
 
       "action:setTransportationAreaView": assign(({ context }) => {
-        const { mapRef } = context;
+        const { mapRef, currentArea } = context;
 
-        if (mapRef) {
+        if (mapRef && currentArea) {
           const m = mapRef.getMap();
           m.setLayoutProperty("foodgroups-layer", "visibility", "none");
+
+          const destinationAreaIds = currentArea.flowDestinations.features.map(
+            ({ properties }) => properties.id
+          );
+          const destinationAreaBbox = bbox(currentArea.flowDestinations);
+          const combinedBboxes = combineBboxes([
+            destinationAreaBbox,
+            bbox(currentArea.boundingBox),
+          ]);
+
+          mapRef.fitBounds(
+            [
+              [combinedBboxes[0], combinedBboxes[1]],
+              [combinedBboxes[2], combinedBboxes[3]],
+            ],
+            {
+              padding: {
+                top: 100,
+                left: 100,
+                bottom: 100,
+                right: 100,
+              },
+            }
+          );
+
+          // highlight destination areas
+          const features = mapRef.querySourceFeatures("area-tiles", {
+            filter: ["in", "id", ...destinationAreaIds],
+            sourceLayer: "default",
+          });
+          for (let i = 0, len = features.length; i < len; i++) {
+            mapRef.setFeatureState(
+              {
+                source: "area-tiles",
+                sourceLayer: "default",
+                id: features[i].id!,
+              },
+              { destination: true }
+            );
+          }
         }
 
         return {};
