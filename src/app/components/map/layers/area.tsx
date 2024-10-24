@@ -27,7 +27,7 @@ export const lineStyle: LineLayerSpecification["paint"] = {
     AREA_HIGHLIGHT_OUTLINE_COLOR,
     ["boolean", ["feature-state", "selected"], false],
     AREA_HIGHLIGHT_OUTLINE_COLOR,
-    ["boolean", ["feature-state", "target"], false],
+    ["boolean", ["feature-state", "destination"], false],
     AREA_HIGHLIGHT_OUTLINE_COLOR,
     AREA_DEFAULT_OUTLINE_COLOR,
   ],
