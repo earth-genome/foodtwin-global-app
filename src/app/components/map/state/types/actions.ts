@@ -43,7 +43,7 @@ interface ActionSetCurrentArea {
 }
 
 interface ActionSetAreaMapView {
-  type: "action:setAreaMapView";
+  type: "action:fitMapToCurrentAreaBounds";
 }
 interface ActionEnterProductionAreaView {
   type: "action:setProductionAreaView";
