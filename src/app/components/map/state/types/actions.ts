@@ -63,6 +63,10 @@ interface ActionSetImpactAreaView {
 interface ActionEnterWorldMapView {
   type: "action:enterWorldMapView";
 }
+
+interface ActionEnterAreaView {
+  type: "action:enterAreaView";
+}
 interface ActionAreaClear {
   type: "action:area:clear";
 }
@@ -82,4 +86,5 @@ export type StateActions =
   | ActionSetImpactAreaView
   | ActionSetAreaMapView
   | ActionEnterWorldMapView
+  | ActionEnterAreaView
   | ActionAreaClear;

@@ -30,6 +30,7 @@ interface StateContext {
   currentArea: FetchAreaResponse | null;
   currentAreaFeature: GeoJSONFeature | null;
   currentAreaViewType: EAreaViewType | null;
+  destinationPortsIds: number[];
   mapPopup: IMapPopup | null;
   mapBounds: BBox | null;
   eventHandlers: {
@@ -39,7 +40,7 @@ interface StateContext {
 
 export const globeViewMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggLYCGADl2gCusMJzTMA2gAYAuolC80sXG1xoW8kAA9EARgAcAZiIB2AGz7dUswE4ArHbOGATDYA0IAJ6I7zoobNfQwAWYJCnKRtnAF9oj1RMHDoSckoaOkZmdi4+AWEwITZpOSQQRWVVdU0dBEM7KSIbfTMTZ10bFydg-Q9vBAMG3RcpXWdXYOsnG1j49Cw8QhSKKlpCTNYOQQoEDbAyYs1ylTUNUpqAWkNDfSJ9ZzMpMYfnQyl9dy9Ec9siA11dEx2GxNe4GYIzEAJebJHj8MSCdi4FhQdbZWF5dgHUpHSqnUAXMy6OxEZzmO5SOqjRwfPrfaxEUI2N5Ah6AuwmCFQpKLbhkMDcBAAMzAbAAxgALJEoiDqMBEJHUNAAazlXIWxF5-KFIolUoQCrQou4uOKWIUSmOVTOehGfnq13ewTM3QBhl6iGcUhMDJMXoCvuBhiJnLm3OIvG4MAQ6G4EHoZrKFtx1S+HVMDl8vl0wXqQLs7oQ52cdl0DMcJmCYxMNhMrSGIcS6qIEajMbjEl0JXNFROKYQrUGLOLNlGjzuBfOBm9w0rL3+vruDehixbYGjaFj8ecXcTPat+JthhsRBaR5c12zBh6n0LLSI5bCXv+umdBiXYebkbX8MRyNRHFXDEilkQ4k17a1bwBRoHWzOp9AcIwJ2aYkbBaatuidd4onfJtNQFVYCB2dg9ileMQOxMD920RATBCX4X2LUYX18d4CzsUIGUMWs7DuDpHBfHDkjw9JCCItgSL-DsdxxcCD37bNGmzZ1UMiSx2QLf4zD8T0rkrKl7laQSeT5fC6DEiSUQkbdQL3PFqP7ex-BHRwc2zExs2cDTbAaat7CMIFmiJQwjI1EyRMI3gyDQCBBFFXF-wQLYUHM-ZyO7S07IuK4bjuZ57keV59HgtjK1+Iq-KkKRHB4jk4khUNcLCgiEEi6LYvipgNhyOEhBEMRJDS3cMr7YJq38f5gnsAEjHudiC30J17yql4Rw6LDpjqtUhKaszWpiuKTgS9F4REQoExkqiamcO573ch4LAmIqC1sMxGhHJ1mOuJ0Yk2hrtq1Zq2DIbgWFgRQyDYY1Ds67IkpS87KMyr5stufKngKt5ipvf4gUadjJpLQIRnZEKiGEwHgdB8HIY6rIOGO3rRHEMAEdsvsnhPdijxsJ0R0sExrz6IYvV+O72WBBbJdJ8mzKBkGwfIGnobp7q8lOwRgOkxGRseW6gzeWj7qJMwNLCY9XAHdp6ngmtpZ20TcE4CM4oSuHdlSrW2Ygy5rlRvLnkKmk9AsG4HD9MwnCMJwzDtgGzMd522CO3ITqZgbPeGiCXG9HmeYj5pugrE3sfsYli0qocHBCYLfsbf7TIdp3uBdmH6ZTxmzsGi6kf6LTFK41D3gW4sTA03KfU0lpTzGfRYjqlhorgTQtsIGzM7k759B89iw5eCkml0CcrEsJytIFt4mneGPa+XYhSGWcK1+Tb3RnN+5MKKp5RsF1M-AFiweKEiLv8WeN8PwMwRKoZET9ZL2TpNpKQoRXg8wBAYTyN5zjuWPO0UYBdUJEkXGAxqWphRiklNAiiXs5JWEQbcdiQwt4hFCKSAswRSwtHgsPSaYRnTsVJoBNsMDLpfCcH-He9Q95HksBOMI3ogQjGBAxUkTh+FfiAlKIRPc6TBBPNYWs7RQhhB-oWYEOjPRYRCNWV4EdY4N0Iu7DRlD172X0QyBR3R9aYSDrUCsRBEGvCqkVZ4jxwREPruFFqUV9rP3SjEuBgRxrOFGqNAWbIaxsQMPeGaWkgy1kmqA2YddjJx1EnLKmisoZUW7n2Scow-EunuGMR4FY2EaSJN6IerQQQLjsLYiJCdm5sE0TUoqvxQhegCgtR4wIvLOkaKELCV8kkkznkAA */
+    /** @xstate-layout N4IgpgJg5mDOIC5RQDYHsBGYBqBLMA7gHQFoBOKECAbvgQMRjVgB2ALggLYCGADl2gCusMJzTMA2gAYAuolC80sXG1xoW8kAA9EARgAcAZiIB2AGz7dUswE4ArHbOGATDYA0IAJ6I7zoobNfQwAWYJCnKRtnAF9oj1RMHDoSckoaOkZmdi4+AWEwITZpOSQQRWVVdU0dBEM7KSIbfTMTZ10bFydg-Q9vBAMG3RcpXWdXYOsnG1j49Cw8QhSKKlpCTNYOQQoEDbAyYs1ylTUNUpqAWkNDfSJ9ZzMpMYfnQyl9dy9Ec9siA11dEx2GxNe4GYIzEAJebJHj8MSCdi4FhQdbZWF5dgHUpHSqnUAXMy6OxEZzmO5SOqjRwfPrfaxEUI2N5Ah6AuwmCFQpKLbhkMDcBAAMzAbAAxgALJEoiDqMBEJHUNAAazlXIWxF5-KFIolUoQCrQou4uOKWIUSmOVTOehGfnq13ewTM3QBhl6iGcUhMDJMXoCvuBhiJnLm3OIvG4MAQ6G4EHoZrKFtx1S+HVMDl8vl0wXqQLs7oQ52cdl0DMcJmCYxMNhMrSGIcS6qIEajMbjEl0JXNFROKYQrUGLOLNlGjzuBfOBm9w0rL3+vruDehixbYGjaFj8ecXcTPat+JthhsRBaR5c12zBh6n0LLSI5bCXv+umdBiXYebkbX8MRyNRHFXDEilkQ4k17a1bwBRoHWzOp9AcIwJ2aYkbBaatuidd4onfJtNQFVYCB2dg9ileMQOxMD920RATBCX4X2LUYX18d4CzsUIGUMWs7DuDpHBfHDkjw9JCCItgSL-DsdxxcCD37bNGmzZ1UMiSx2QLf4zD8T0rkrKl7laQSeT5fC6DEiSUQkbdQL3PFqP7ex-BHRwc2zExs2cDTbAaat7CMIFmiJQwjI1EyRMI3gyDQCBBFFXF-wQLYUHM-ZyO7S07IuK4bjuZ57keV59HgtjK1+Iq-KkKRHB4jk4khUNcLCgiEEi6LYvipgNhyOEhBEMRJDS3cMr7YJq38f5gnsAEjHudiC30J17yql4Rw6LDpjqtUhKaszWpiuKTgS9F4REQoExkqiamcO573ch4LAmIqC1sMxGhHJ1mOuJ0Yk2hrtq1Zq2DIbgWFgRQyDYY1Ds67IkpS87KMyr5stufKngKt5ipvf4gUadjJpLQIRnZEKiGEwHgdB8HIY6rIOGO3rRHEMAEdsvsnhPdijxsJ0R0sExrz6IYvV+O72WBBbJdJ8mzKBkGwfIGnobp7q8lOwRgOkxGRseW6gzeWj7qJMwNLCY9XAHdp6ngmtpZ20TcE4CM4oSuHdlSrW2Ygy5rlRvLnkKmk9AsG4HD9MwnCMJwzDtgGzMd522CO3ITqZgbPeGiCXG9HmeYj5pugrE3sfsYli0qocHBCYLfsbf7TIdp3uBdmH6ZTxmzsGi6kf6LTFK41D3gW4sTA03KfU0lpTzGfRYjqlhorgTQtsIGzM7k759B89iw5eCkml0CcrEsJynCPP0iVq2Y68WUhlnCtfk290ZzfuTCiqeUbBdTPwBYsHjCRF3+LPWuy5iAMwRKoZEj9ZL2TpNpKQoRXg8wBAYTyN5zjuWPO0UYBdUJEkXKAj8wlhRiklNAiiXs5JWEQbcdiQwt4hFCKSAswRSwtHgsPSaYRnTsVJoBNsMDLpfCcL-He9Q95HksBOMI3ogQjGBAxUkTh+FfiAlKIRPc6TBBPNYWs7RQhhG-oWYEOjPRYRCNWV4EdY4N0Iu7DRlD172X0QyBR3R9aYSDrUCsRBEGvCqkVZ4jxwREManHUSe12qwO7n2b4xIgzOFGqNAWbIaxsQMPeGaWkgy1kmiA6+YCyb20InLKmisoZUVic-UYfiXT3DGI8CsbCNKX1uE0VoIIFx2FseFfUTc4qaLiUVX4oQvQBQWo8YEXlnSNFCFhd4Wkcy1ViEAA */
     id: "globeView",
 
     types: {
@@ -56,6 +57,7 @@ export const globeViewMachine = createMachine(
       currentArea: null,
       currentAreaFeature: null,
       currentAreaViewType: null,
+      destinationPortsIds: [],
       mapPopup: null,
       mapBounds: null,
       eventHandlers: {
@@ -155,6 +157,8 @@ export const globeViewMachine = createMachine(
             reenter: true,
           },
         ],
+
+        entry: "action:enterAreaView",
       },
 
       "area:view:production": {
@@ -307,7 +311,7 @@ export const globeViewMachine = createMachine(
         }
 
         const features = mapRef.queryRenderedFeatures(event.mapEvent.point, {
-          layers: ["ports-point", "area-clickable-polygon"],
+          layers: ["top-ports", "area-clickable-polygon"],
         });
 
         const feature = features && features[0];
@@ -319,7 +323,7 @@ export const globeViewMachine = createMachine(
         }
 
         const layerToIconTypeMap: Record<string, EItemType> = {
-          "ports-point": EItemType.node,
+          "top-ports": EItemType.node,
           "area-clickable-polygon": EItemType.area,
         };
 
@@ -408,55 +412,63 @@ export const globeViewMachine = createMachine(
         return {};
       }),
 
-      "action:enterTransportationAreaView": ({ context }) => {
+      "action:enterTransportationAreaView": assign(({ context }) => {
         const { mapRef, currentArea } = context;
 
-        if (mapRef && currentArea) {
-          const m = mapRef.getMap();
-          m.setLayoutProperty("foodgroups-layer", "visibility", "none");
+        if (!mapRef || !currentArea) return {};
 
-          const destinationAreaIds = currentArea.flowDestinations.features.map(
-            ({ properties }) => properties.id
-          );
-          const destinationAreaBbox = bbox(currentArea.flowDestinations);
-          const combinedBboxes = combineBboxes([
-            destinationAreaBbox,
-            bbox(currentArea.boundingBox),
-          ]);
+        const m = mapRef.getMap();
+        m.setLayoutProperty("foodgroups-layer", "visibility", "none");
 
-          mapRef.fitBounds(
-            [
-              [combinedBboxes[0], combinedBboxes[1]],
-              [combinedBboxes[2], combinedBboxes[3]],
-            ],
-            {
-              padding: {
-                top: 100,
-                left: 100,
-                bottom: 100,
-                right: 100,
-              },
-            }
-          );
+        const destinationAreaIds = currentArea.flowDestinations.features.map(
+          ({ properties }) => properties.id
+        );
+        const destinationAreaBbox = bbox(currentArea.flowDestinations);
+        const destinationPortsBbox = bbox(currentArea.destinationPorts);
+        const combinedBboxes = combineBboxes([
+          destinationAreaBbox,
+          destinationPortsBbox,
+          bbox(currentArea.boundingBox),
+        ]);
 
-          // highlight destination areas
-          const features = mapRef.querySourceFeatures("area-tiles", {
-            filter: ["in", "id", ...destinationAreaIds],
-            sourceLayer: "default",
-          });
-          for (let i = 0, len = features.length; i < len; i++) {
-            mapRef.setFeatureState(
-              {
-                source: "area-tiles",
-                sourceLayer: "default",
-                id: features[i].id!,
-              },
-              { destination: true }
-            );
+        mapRef.fitBounds(
+          [
+            [combinedBboxes[0], combinedBboxes[1]],
+            [combinedBboxes[2], combinedBboxes[3]],
+          ],
+          {
+            padding: {
+              top: 100,
+              left: 100,
+              bottom: 100,
+              right: 100,
+            },
           }
+        );
+
+        // highlight destination areas
+        const features = mapRef.querySourceFeatures("area-tiles", {
+          filter: ["in", "id", ...destinationAreaIds],
+          sourceLayer: "default",
+        });
+        for (let i = 0, len = features.length; i < len; i++) {
+          mapRef.setFeatureState(
+            {
+              source: "area-tiles",
+              sourceLayer: "default",
+              id: features[i].id!,
+            },
+            { destination: true }
+          );
         }
-      },
-      "action:exitTransportationAreaView": ({ context }) => {
+
+        const destinationPortsIds = currentArea.destinationPorts.features.map(
+          ({ properties }) => parseInt(properties.id_int)
+        );
+
+        return { destinationPortsIds };
+      }),
+      "action:exitTransportationAreaView": assign(({ context }) => {
         const { mapRef, currentArea } = context;
 
         if (mapRef && currentArea) {
@@ -480,7 +492,11 @@ export const globeViewMachine = createMachine(
             );
           }
         }
-      },
+
+        return {
+          destinationPortsIds: [],
+        };
+      }),
       "action:setImpactAreaView": assign(({ context }) => {
         const { mapRef } = context;
 
@@ -525,6 +541,9 @@ export const globeViewMachine = createMachine(
         const { mapRef, currentAreaFeature } = context;
 
         if (mapRef) {
+          const m = mapRef.getMap();
+          m.setLayoutProperty("top-ports", "visibility", "visible");
+
           if (currentAreaFeature?.id) {
             mapRef.setFeatureState(
               {
@@ -546,6 +565,14 @@ export const globeViewMachine = createMachine(
           currentAreaFeature: null,
         };
       }),
+      "action:enterAreaView": ({ context }) => {
+        const { mapRef } = context;
+
+        if (!mapRef) return;
+
+        const m = mapRef.getMap();
+        m.setLayoutProperty("top-ports", "visibility", "none");
+      },
       "action:area:clear": assign({
         currentAreaId: null,
         currentArea: null,
