@@ -430,7 +430,7 @@ export const globeViewMachine = createMachine(
             {
               source: "area-tiles",
               sourceLayer: "default",
-              id: features[i].id!,
+              id: features[i].id ?? "",
             },
             { destination: true }
           );
@@ -460,7 +460,7 @@ export const globeViewMachine = createMachine(
               {
                 source: "area-tiles",
                 sourceLayer: "default",
-                id: features[i].id!,
+                id: features[i].id ?? "",
               },
               { destination: false }
             );

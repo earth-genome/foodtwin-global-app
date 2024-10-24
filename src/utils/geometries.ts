@@ -1,10 +1,10 @@
 import { BBox } from "geojson";
 
 export function combineBboxes(bboxes: BBox[]): BBox {
-  let minLeft: number = 180;
-  let minBottom: number = 90;
-  let maxRight: number = -180;
-  let maxTop: number = -90;
+  let minLeft = 180;
+  let minBottom = 90;
+  let maxRight = -180;
+  let maxTop = -90;
 
   bboxes.forEach(([left, bottom, right, top]) => {
     if (left < minLeft) minLeft = left;

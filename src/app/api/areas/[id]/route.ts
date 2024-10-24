@@ -61,7 +61,7 @@ export async function GET(
         select "Area"."id", "Area"."name", ST_AsGeoJSON(ST_Transform(limits, 4326)) as geometry from "Flow" LEFT JOIN "Area" ON "Flow"."toAreaId" = "Area"."id" where "fromAreaId" = ${id};
       `,
         // TODO this is a temporary query to get the 10 closest ports to the area until there is maritime data in the database
-        prisma.$queryRaw<DestinationPort[]>`
+        prisma.$queryRaw`
           SELECT 
             "Node"."id", 
             ((ctid::text::point)[0]::bigint << 32) | (ctid::text::point)[1]::bigint AS id_int,
@@ -99,7 +99,7 @@ export async function GET(
 
     const destinationPorts: GeoJSON.FeatureCollection<
       GeoJSON.Geometry,
-      FlowDestination
+      DestinationPort
     > = {
       type: "FeatureCollection",
       features: (destinationPortsFeatures as DestinationPort[]).map(
@@ -109,8 +109,9 @@ export async function GET(
             id,
             id_int: id_int.toString(),
             name,
+            geometry: JSON.parse(geometry),
           },
-          geometry: JSON.parse(geometry), // Parse the GeoJSON geometry
+          geometry: JSON.parse(geometry),
         })
       ),
     };
