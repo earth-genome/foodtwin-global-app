@@ -42,7 +42,7 @@ const PortsLayer = () => {
         source-layer="default"
         layout={{
           "icon-image": "port-icon",
-          "icon-size": 0.9,
+          "icon-size": 0.5,
         }}
         filter={["in", "$id", ...destinationPortsIds]}
       />
