@@ -117,6 +117,7 @@ export default function Components() {
         <Tabs>
           <Tab title="Food groups">
             <ListBars
+              formatType="weight"
               showPercentage
               unit="million MMt"
               data={[
@@ -135,6 +136,7 @@ export default function Components() {
           </Tab>
           <Tab title="Nutritional value">
             <ListBars
+              formatType="weight"
               unit="Millions people’s needs"
               data={[
                 {

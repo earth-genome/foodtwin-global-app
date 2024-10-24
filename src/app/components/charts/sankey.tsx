@@ -19,7 +19,7 @@ interface Node extends SankeyExtraProperties {
 }
 
 interface LinkPopupDatum {
-  value: number;
+  value: number | string;
   label: string;
   unit?: string;
 }
@@ -123,6 +123,7 @@ function Sankey({ height, width, data }: ISankey) {
       .attr("d", sankeyLinkHorizontal())
       .attr("stroke", "#E7E5E4")
       .attr("opacity", 0.25)
+      .attr("fill", "none")
       .attr("stroke-width", (d) => Math.max(1, d.width || 0))
       .on("mouseover mousemove", (e, d) => {
         const { pageX, pageY } = e;
