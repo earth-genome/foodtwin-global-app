@@ -49,8 +49,11 @@ interface ActionEnterProductionAreaView {
   type: "action:setProductionAreaView";
 }
 
-interface ActionSetTransportationAreaView {
-  type: "action:setTransportationAreaView";
+interface ActionEnterTransportationAreaView {
+  type: "action:enterTransportationAreaView";
+}
+interface ActionExitTransportationAreaView {
+  type: "action:exitTransportationAreaView";
 }
 
 interface ActionSetImpactAreaView {
@@ -74,7 +77,8 @@ export type StateActions =
   | ActionSetCurrentAreaId
   | ActionSetCurrentArea
   | ActionEnterProductionAreaView
-  | ActionSetTransportationAreaView
+  | ActionEnterTransportationAreaView
+  | ActionExitTransportationAreaView
   | ActionSetImpactAreaView
   | ActionSetAreaMapView
   | ActionEnterWorldMapView
