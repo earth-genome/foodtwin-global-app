@@ -5,9 +5,9 @@ import { EItemType } from "@/types/components";
 import ScrollTracker from "./scroll-tracker";
 import { PageSection, SectionHeader } from "@/app/components/page-section";
 import { Metric, MetricRow } from "@/app/components/metric";
-import { AreaMeta } from "../../../../../prisma/seed/nodes";
+import { AreaMeta, IndicatorColumn } from "../../../../../prisma/seed/nodes";
 import { FoodGroup, Prisma } from "@prisma/client";
-import { ListBars, Sankey } from "@/app/components/charts";
+import { Arc, ListBars, Sankey } from "@/app/components/charts";
 import { formatKeyIndicator } from "@/utils/numbers";
 import { EAreaViewType } from "@/app/components/map/state/machine";
 
@@ -236,7 +236,12 @@ const AreaPage = async ({
         </PageSection>
         <PageSection id={EAreaViewType.impact}>
           <SectionHeader label="Impact on people" />
-          <div className="bg-neutral-100 h-[400px]">chart</div>
+          <div className="flex flex-wrap gap-6 justify-around items-end">
+            {meta[IndicatorColumn.PCT_RURAL] && <Arc title="Rural" percentage={meta[IndicatorColumn.PCT_RURAL]} />}
+            {meta[IndicatorColumn.PCT_ELDERLY] && <Arc title="Elderly" percentage={meta[IndicatorColumn.PCT_ELDERLY]} />}
+            {meta[IndicatorColumn.PCT_F_CHILDBEARING] && <Arc title="Women of child-bearing age" percentage={meta[IndicatorColumn.PCT_F_CHILDBEARING]} />}
+            {meta[IndicatorColumn.PCT_UNDER5] && <Arc title="Children under 5" percentage={meta[IndicatorColumn.PCT_UNDER5]} />}
+          </div>
         </PageSection>
       </ScrollTracker>
     </div>

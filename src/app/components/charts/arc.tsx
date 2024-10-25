@@ -42,7 +42,7 @@ function Arc({ title, percentage, width = 144, height = 72 }: IArc) {
         innerRadius: INNER_RADIUS,
         outerRadius: OUTER_RADIUS,
         startAngle: 0,
-        endAngle: percentage * tau
+        endAngle: percentage / 100 * tau
       })
       .style("fill", "rgba(255, 149, 113, 1)")
       .attr("d", arc);
@@ -50,9 +50,9 @@ function Arc({ title, percentage, width = 144, height = 72 }: IArc) {
 
   return (
     <div className="relative" style={{ width: `${width}px`}}>
-      <h4 className="text-center text-sm mb-2">{title}</h4>
+      <h4 className="text-center text-xs mb-2">{title}</h4>
       <div className="absolute bottom-0 left-0 right-0">
-        <span className="block text-xl text-center">{(percentage * 100).toFixed(1)}</span>
+        <span className="block text-xl text-center">{percentage.toFixed(1)}</span>
         <span className="block text-xs text-center">%</span>
       </div>
       <svg width={width} height={height} ref={ref} />

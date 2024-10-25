@@ -15,7 +15,7 @@ import {
 import fs from "fs-extra";
 import { parse } from "csv-parse";
 
-enum IndicatorColumn {
+export enum IndicatorColumn {
   LIVESTOCK_SUM = "livestock_sum",
   TRAVEL_MEAN = "travel_mean",
   NUM_F_CHILDBEARING = "num_f_childbearing",
