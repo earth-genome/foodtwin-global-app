@@ -1,6 +1,6 @@
 "use client";
 
-import { ListBars, Sankey } from "@/app/components/charts";
+import { Arc, ListBars, Sankey } from "@/app/components/charts";
 import { MetricRow, Metric } from "@/app/components/metric";
 import PageHeader from "@/app/components/page-header";
 import {
@@ -191,6 +191,10 @@ export default function Components() {
             ],
           }}
         />
+      </div>
+
+      <div className="w-[480px] mb-8">
+        <Arc title="Rural" percentage={.54365} />
       </div>
     </div>
   );
