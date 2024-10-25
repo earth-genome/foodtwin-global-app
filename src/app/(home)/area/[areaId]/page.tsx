@@ -236,11 +236,19 @@ const AreaPage = async ({
         </PageSection>
         <PageSection id={EAreaViewType.impact}>
           <SectionHeader label="Impact on people" />
+          <MetricRow>
+            <Metric
+              label="Number of people"
+              value={meta[IndicatorColumn.TOTALPOP]}
+              formatType="metric"
+              decimalPlaces={0}
+            />
+          </MetricRow>
           <div className="flex flex-wrap gap-6 justify-around items-end">
-            {meta[IndicatorColumn.PCT_RURAL] && <Arc title="Rural" percentage={meta[IndicatorColumn.PCT_RURAL]} />}
-            {meta[IndicatorColumn.PCT_ELDERLY] && <Arc title="Elderly" percentage={meta[IndicatorColumn.PCT_ELDERLY]} />}
-            {meta[IndicatorColumn.PCT_F_CHILDBEARING] && <Arc title="Women of child-bearing age" percentage={meta[IndicatorColumn.PCT_F_CHILDBEARING]} />}
-            {meta[IndicatorColumn.PCT_UNDER5] && <Arc title="Children under 5" percentage={meta[IndicatorColumn.PCT_UNDER5]} />}
+            {meta[IndicatorColumn.PCT_RURAL] !== undefined && <Arc title="Rural" percentage={meta[IndicatorColumn.PCT_RURAL]} />}
+            {meta[IndicatorColumn.PCT_ELDERLY] !== undefined && <Arc title="Elderly" percentage={meta[IndicatorColumn.PCT_ELDERLY]} />}
+            {meta[IndicatorColumn.PCT_F_CHILDBEARING] !== undefined && <Arc title="Women of child-bearing age" percentage={meta[IndicatorColumn.PCT_F_CHILDBEARING]} />}
+            {meta[IndicatorColumn.PCT_UNDER5] !== undefined && <Arc title="Children under 5" percentage={meta[IndicatorColumn.PCT_UNDER5]} />}
           </div>
         </PageSection>
       </ScrollTracker>
