@@ -35,6 +35,7 @@ export async function GET(
           id,
           ((ctid::text::point)[0]::bigint << 32) | (ctid::text::point)[1]::bigint AS id_int,
           name,
+          (meta->>'totalpop')::float AS totalpop,
           ST_AsMVTGeom(
             limits,
             ST_TileEnvelope(${zNum}, ${xNum}, ${yNum})

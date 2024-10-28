@@ -42,7 +42,10 @@ interface ActionSetAreaMapView {
   type: "action:fitMapToCurrentAreaBounds";
 }
 interface ActionEnterProductionAreaView {
-  type: "action:setProductionAreaView";
+  type: "action:enterProductionAreaView";
+}
+interface ActionExitProductionAreaView {
+  type: "action:exitProductionAreaView";
 }
 
 interface ActionEnterTransportationAreaView {
@@ -52,8 +55,12 @@ interface ActionExitTransportationAreaView {
   type: "action:exitTransportationAreaView";
 }
 
-interface ActionSetImpactAreaView {
-  type: "action:setImpactAreaView";
+interface ActionEnterImpactAreaView {
+  type: "action:enterImpactAreaView";
+}
+
+interface ActionExitImpactAreaView {
+  type: "action:exitImpactAreaView";
 }
 
 interface ActionEnterWorldMapView {
@@ -73,9 +80,11 @@ export type StateActions =
   | ActionSetCurrentAreaId
   | ActionSetCurrentArea
   | ActionEnterProductionAreaView
+  | ActionExitProductionAreaView
   | ActionEnterTransportationAreaView
   | ActionExitTransportationAreaView
-  | ActionSetImpactAreaView
+  | ActionEnterImpactAreaView
+  | ActionExitImpactAreaView
   | ActionSetAreaMapView
   | ActionEnterWorldMapView
   | ActionEnterAreaView;

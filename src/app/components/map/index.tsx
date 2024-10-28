@@ -47,9 +47,6 @@ function GlobeInner() {
   const mapPopup = MachineContext.useSelector(
     (state) => state.context.mapPopup
   );
-  const areaSelected = MachineContext.useSelector(
-    (state) => !!state.context.currentArea
-  );
 
   const handleMouseMove = useCallback((event: MapMouseEvent) => {
     actorRef.send({
@@ -113,8 +110,8 @@ function GlobeInner() {
         style={{ width: "100%", height: "100%", flex: 1 }}
         mapStyle={mapboxStyleUrl}
       >
-        <AreaLayer areaSelected={areaSelected} />
         <FoodGroupsLayer />
+        <AreaLayer />
         <EdgeLayer />
         <PortsLayer />
 
