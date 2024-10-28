@@ -42,11 +42,12 @@ export function SectionHeader({ label, tooltip }: ISectionHeader) {
 interface IPageSection {
   id: string;
   children: React.ReactNode;
+  className?: string;
 }
 
-export function PageSection({ id, children }: IPageSection) {
+export function PageSection({ id, children, className = "" }: IPageSection) {
   return (
-    <div id={id} className="p-4">
+    <div id={id} className={`p-4 ${className}`}>
       {children}
     </div>
   );

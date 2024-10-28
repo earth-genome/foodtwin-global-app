@@ -5,9 +5,9 @@ import { EItemType } from "@/types/components";
 import ScrollTracker from "./scroll-tracker";
 import { PageSection, SectionHeader } from "@/app/components/page-section";
 import { Metric, MetricRow } from "@/app/components/metric";
-import { AreaMeta } from "../../../../../prisma/seed/nodes";
+import { AreaMeta, IndicatorColumn } from "../../../../../prisma/seed/nodes";
 import { FoodGroup } from "@prisma/client";
-import { ListBars, Sankey } from "@/app/components/charts";
+import { Arc, ListBars, Sankey } from "@/app/components/charts";
 import { formatKeyIndicator } from "@/utils/numbers";
 import { EAreaViewType } from "@/app/components/map/state/machine";
 
@@ -244,9 +244,39 @@ const AreaPage = async ({
             }}
           />
         </PageSection>
-        <PageSection id={EAreaViewType.impact}>
+        <PageSection id={EAreaViewType.impact} className="pb-8">
           <SectionHeader label="Impact on people" />
-          <div className="bg-neutral-100 h-[400px]">chart</div>
+          <MetricRow>
+            <Metric
+              label="Number of people"
+              value={meta[IndicatorColumn.TOTALPOP]}
+              formatType="metric"
+              decimalPlaces={0}
+            />
+          </MetricRow>
+          <div className="flex flex-wrap gap-6 justify-around items-end">
+            {meta[IndicatorColumn.PCT_RURAL] !== undefined && (
+              <Arc title="Rural" percentage={meta[IndicatorColumn.PCT_RURAL]} />
+            )}
+            {meta[IndicatorColumn.PCT_ELDERLY] !== undefined && (
+              <Arc
+                title="Elderly"
+                percentage={meta[IndicatorColumn.PCT_ELDERLY]}
+              />
+            )}
+            {meta[IndicatorColumn.PCT_F_CHILDBEARING] !== undefined && (
+              <Arc
+                title="Women of child-bearing age"
+                percentage={meta[IndicatorColumn.PCT_F_CHILDBEARING]}
+              />
+            )}
+            {meta[IndicatorColumn.PCT_UNDER5] !== undefined && (
+              <Arc
+                title="Children under 5"
+                percentage={meta[IndicatorColumn.PCT_UNDER5]}
+              />
+            )}
+          </div>
         </PageSection>
       </ScrollTracker>
     </div>
