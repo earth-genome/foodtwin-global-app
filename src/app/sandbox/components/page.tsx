@@ -194,7 +194,7 @@ export default function Components() {
       </div>
 
       <div className="w-[480px] mb-8">
-        <Arc title="Rural" percentage={.54365} />
+        <Arc title="Rural" percentage={0.54365} />
       </div>
     </div>
   );
