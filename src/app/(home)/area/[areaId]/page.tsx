@@ -244,7 +244,7 @@ const AreaPage = async ({
             }}
           />
         </PageSection>
-        <PageSection id={EAreaViewType.impact}>
+        <PageSection id={EAreaViewType.impact} className="pb-8">
           <SectionHeader label="Impact on people" />
           <MetricRow>
             <Metric
