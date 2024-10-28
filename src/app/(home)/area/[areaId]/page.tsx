@@ -6,7 +6,7 @@ import ScrollTracker from "./scroll-tracker";
 import { PageSection, SectionHeader } from "@/app/components/page-section";
 import { Metric, MetricRow } from "@/app/components/metric";
 import { AreaMeta, IndicatorColumn } from "../../../../../prisma/seed/nodes";
-import { FoodGroup, Prisma } from "@prisma/client";
+import { FoodGroup } from "@prisma/client";
 import { Arc, ListBars, Sankey } from "@/app/components/charts";
 import { formatKeyIndicator } from "@/utils/numbers";
 import { EAreaViewType } from "@/app/components/map/state/machine";
@@ -16,12 +16,10 @@ interface IFoodGroupAgg extends FoodGroup {
   values: {
     _sum: { value: number | null };
     foodGroupId: number;
-  }[]
+  }[];
 }
 
-interface IFoodGroupAggObj {
-  [key: string]: IFoodGroupAgg
-}
+type IFoodGroupAggObj = Record<string, IFoodGroupAgg>;
 
 interface ImportSum {
   sum: number;
@@ -37,12 +35,12 @@ interface ExportFlow {
 
 function findParent(id: number, foodGroups: FoodGroup[]) {
   const g = foodGroups.find((group) => id === group.id);
-  if (!g!.parentId) {
+  if (!g?.parentId) {
     return g;
   } else {
-    return findParent(g!.parentId, foodGroups);
+    return findParent(g?.parentId, foodGroups);
   }
-};
+}
 
 const AreaPage = async ({
   params,
@@ -61,79 +59,85 @@ const AreaPage = async ({
     return redirect("/not-found");
   }
 
-  const [
-    foodGroupExports,
-    foodGroups,
-    inBoundFlows,
-    outboundFlows,
-  ] = await Promise.all([
-    prisma.flow.groupBy({
-      where: {
-        fromAreaId: area.id,
-      },
-      by: ['foodGroupId'],
-      _sum: {
-        value: true,
-      },
-    }),
-    prisma.foodGroup.findMany(),
-    prisma.$queryRawUnsafe(`
+  const [foodGroupExports, foodGroups, inBoundFlows, outboundFlows] =
+    await Promise.all([
+      prisma.flow.groupBy({
+        where: {
+          fromAreaId: area.id,
+        },
+        by: ["foodGroupId"],
+        _sum: {
+          value: true,
+        },
+      }),
+      prisma.foodGroup.findMany(),
+      prisma.$queryRawUnsafe(`
       SELECT sum(value)
         FROM "FlowSegment"
         LEFT JOIN "Flow" ON "FlowSegment"."flowId" = "Flow"."id"
         WHERE "flowId" like '%-${area.id}-%';
     `),
-    prisma.$queryRawUnsafe(
-      `SELECT "mode", sum("value") as value, "toAreaId", "Node"."name", "Node"."type"
+      prisma.$queryRawUnsafe(
+        `SELECT "mode", sum("value") as value, "toAreaId", "Node"."name", "Node"."type"
         FROM "FlowSegment"
         LEFT JOIN "Flow" ON "FlowSegment"."flowId" = "Flow"."id"
         LEFT JOIN "Node" ON "Flow"."toAreaId" = "Node"."id"
         WHERE "flowId" LIKE '${area.id}-%' AND "order" = 1
         GROUP BY "toAreaId", "mode", "Node"."name", "Node"."type"
         ORDER BY value DESC;
-    `),
-  ]);
+    `
+      ),
+    ]);
 
-  const foodGroupAgg = foodGroupExports.reduce((agg: IFoodGroupAggObj, group): IFoodGroupAggObj => {
-    const parent = findParent(group.foodGroupId, foodGroups);
+  const foodGroupAgg = foodGroupExports.reduce(
+    (agg: IFoodGroupAggObj, group): IFoodGroupAggObj => {
+      const parent = findParent(group.foodGroupId, foodGroups);
 
-    if (!parent) return agg;
+      if (!parent) return agg;
 
-    const parentId = parent.id.toString();
+      const parentId = parent.id.toString();
 
-    if (Object.keys(agg).includes(parentId)) {
-      return {
-        ...agg,
-        [parentId]: {
-          ...parent,
-          sum: group._sum.value ? agg[parentId].sum + group._sum.value : agg[parentId].sum,
-          values: [
-            ...agg[parentId].values,
-            group
-          ]
-        }
+      if (Object.keys(agg).includes(parentId)) {
+        return {
+          ...agg,
+          [parentId]: {
+            ...parent,
+            sum: group._sum.value
+              ? agg[parentId].sum + group._sum.value
+              : agg[parentId].sum,
+            values: [...agg[parentId].values, group],
+          },
+        };
+      } else {
+        return {
+          ...agg,
+          [parentId]: {
+            ...parent,
+            sum: group._sum.value || 0,
+            values: [group],
+          },
+        };
       }
-    } else {
-      return {
-        ...agg,
-        [parentId]: {
-          ...parent,
-          sum: group._sum.value || 0,
-          values: [
-            group
-          ]
-        }
-      }
-    }
-  }, {});
+    },
+    {}
+  );
 
-  const totalFlow = foodGroupExports.reduce((partialSum, { _sum }) => _sum.value ? partialSum + _sum.value : partialSum, 0);
-  const totalExport = (outboundFlows as ExportFlow[]).reduce((partialSum, { value }) => partialSum + value, 0);
+  const totalFlow = foodGroupExports.reduce(
+    (partialSum, { _sum }) =>
+      _sum.value ? partialSum + _sum.value : partialSum,
+    0
+  );
+  const totalExport = (outboundFlows as ExportFlow[]).reduce(
+    (partialSum, { value }) => partialSum + value,
+    0
+  );
   const meta = area.meta as AreaMeta;
   const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
 
   return (
-    <div className={`w-[600px] bg-white h-screen grid grid-rows-[max-content_1fr]`}>
+    <div
+      className={`w-[600px] bg-white h-screen grid grid-rows-[max-content_1fr]`}
+    >
       <PageHeader title={areaLabel} itemType={EItemType.area} />
       <ScrollTracker>
         <PageSection id={EAreaViewType.production}>
@@ -178,12 +182,10 @@ const AreaPage = async ({
           <ListBars
             showPercentage
             formatType="weight"
-            data={Object.values(foodGroupAgg).map(
-              ({ name, sum }) => ({
-                label: name,
-                value: sum,
-              })
-            )}
+            data={Object.values(foodGroupAgg).map(({ name, sum }) => ({
+              label: name,
+              value: sum,
+            }))}
           />
         </PageSection>
         <PageSection id={EAreaViewType.transportation}>
@@ -209,28 +211,36 @@ const AreaPage = async ({
               nodes: [
                 { id: area.id, label: area.name, type: EItemType["area"] },
                 { id: "other", label: "Other", type: EItemType["node"] },
-                ...(outboundFlows as ExportFlow[]).map(({ toAreaId, name, value }) => ({
-                  id: toAreaId,
-                  label: name,
-                  type: EItemType["node"]
-                }))
+                ...(outboundFlows as ExportFlow[]).map(
+                  ({ toAreaId, name }) => ({
+                    id: toAreaId,
+                    label: name,
+                    type: EItemType["node"],
+                  })
+                ),
               ],
               links: [
-                  ...(outboundFlows as ExportFlow[]).slice(0, 10).map(({ toAreaId, value }) => ({
+                ...(outboundFlows as ExportFlow[])
+                  .slice(0, 10)
+                  .map(({ toAreaId, value }) => ({
                     source: area.id,
                     target: toAreaId,
                     value,
-                    popupData: [{
-                      label: "Volume",
-                      value: formatKeyIndicator(value, "weight", 0),
-                    }]
+                    popupData: [
+                      {
+                        label: "Volume",
+                        value: formatKeyIndicator(value, "weight", 0),
+                      },
+                    ],
                   })),
-                  {
-                    source: area.id,
-                    target: "other",
-                    value: (outboundFlows as ExportFlow[]).slice(10).reduce((sum, { value }) => sum + value, 0),
-                  }
-              ]
+                {
+                  source: area.id,
+                  target: "other",
+                  value: (outboundFlows as ExportFlow[])
+                    .slice(10)
+                    .reduce((sum, { value }) => sum + value, 0),
+                },
+              ],
             }}
           />
         </PageSection>
@@ -245,10 +255,27 @@ const AreaPage = async ({
             />
           </MetricRow>
           <div className="flex flex-wrap gap-6 justify-around items-end">
-            {meta[IndicatorColumn.PCT_RURAL] !== undefined && <Arc title="Rural" percentage={meta[IndicatorColumn.PCT_RURAL]} />}
-            {meta[IndicatorColumn.PCT_ELDERLY] !== undefined && <Arc title="Elderly" percentage={meta[IndicatorColumn.PCT_ELDERLY]} />}
-            {meta[IndicatorColumn.PCT_F_CHILDBEARING] !== undefined && <Arc title="Women of child-bearing age" percentage={meta[IndicatorColumn.PCT_F_CHILDBEARING]} />}
-            {meta[IndicatorColumn.PCT_UNDER5] !== undefined && <Arc title="Children under 5" percentage={meta[IndicatorColumn.PCT_UNDER5]} />}
+            {meta[IndicatorColumn.PCT_RURAL] !== undefined && (
+              <Arc title="Rural" percentage={meta[IndicatorColumn.PCT_RURAL]} />
+            )}
+            {meta[IndicatorColumn.PCT_ELDERLY] !== undefined && (
+              <Arc
+                title="Elderly"
+                percentage={meta[IndicatorColumn.PCT_ELDERLY]}
+              />
+            )}
+            {meta[IndicatorColumn.PCT_F_CHILDBEARING] !== undefined && (
+              <Arc
+                title="Women of child-bearing age"
+                percentage={meta[IndicatorColumn.PCT_F_CHILDBEARING]}
+              />
+            )}
+            {meta[IndicatorColumn.PCT_UNDER5] !== undefined && (
+              <Arc
+                title="Children under 5"
+                percentage={meta[IndicatorColumn.PCT_UNDER5]}
+              />
+            )}
           </div>
         </PageSection>
       </ScrollTracker>
