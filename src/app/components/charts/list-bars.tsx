@@ -68,7 +68,13 @@ function Bar({
   );
 }
 
-function ListBars({ data, showPercentage, unit, formatType, decimalPlaces = 0 }: IListBars) {
+function ListBars({
+  data,
+  showPercentage,
+  unit,
+  formatType,
+  decimalPlaces = 0,
+}: IListBars) {
   const sum = useMemo(() => {
     return data.reduce((sum, { value }) => sum + value, 0);
   }, [data]);
