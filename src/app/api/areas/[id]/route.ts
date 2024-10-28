@@ -1,37 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export interface FlowDestination {
-  id: string;
-  name: string;
-}
-
 export interface FetchAreaResponse {
   id: string;
   name: string;
   boundingBox: GeoJSON.Feature;
-  flowDestinations: GeoJSON.FeatureCollection<
+  destinationAreas: GeoJSON.FeatureCollection<
     GeoJSON.Geometry,
-    FlowDestination
+    DestinationAreaProps
   >;
   destinationPorts: GeoJSON.FeatureCollection<
     GeoJSON.Geometry,
-    DestinationPort
+    DestinationPortProps
   >;
 }
 
-interface DestinationArea {
+interface DestinationAreaProps {
   id: string;
   name: string;
-  geometry: string;
 }
 
-interface DestinationPort {
+interface DestinationPortProps {
   id: string;
   id_int: string;
   name: string;
-  geometry: string;
 }
+
+type DestinationAreaRow = DestinationAreaProps & {
+  geometry: string;
+};
+
+type DestinationPortRow = DestinationPortProps & {
+  geometry: string;
+};
 
 export async function GET(
   req: NextRequest,
@@ -52,8 +53,8 @@ export async function GET(
       return NextResponse.json({ error: "Area not found" }, { status: 404 });
     }
 
-    const [boundingBox, destinationAreas, destinationPortsFeatures] =
-      await Promise.all([
+    const [boundingBoxRows, destinationAreasRows, destinationPortsRows] =
+      (await Promise.all([
         prisma.$queryRaw`
         SELECT ST_AsGeoJSON(ST_Extent(ST_Transform(limits, 4326))) as geojson FROM "Area" WHERE id = ${id}
       `,
@@ -78,49 +79,47 @@ export async function GET(
           ) ASC
           LIMIT 10;
         `,
-      ]);
+      ])) as [
+        { geojson: string }[],
+        DestinationAreaRow[],
+        DestinationPortRow[],
+      ];
 
-    const flowDestinations: GeoJSON.FeatureCollection<
+    const destinationAreas: GeoJSON.FeatureCollection<
       GeoJSON.Geometry,
-      FlowDestination
+      DestinationAreaProps
     > = {
       type: "FeatureCollection",
-      features: (destinationAreas as DestinationArea[]).map(
-        ({ id, name, geometry }) => ({
-          type: "Feature",
-          properties: {
-            id,
-            name,
-          },
-          geometry: JSON.parse(geometry),
-        })
-      ),
+      features: destinationAreasRows.map(({ id, name, geometry }) => ({
+        type: "Feature",
+        properties: {
+          id,
+          name,
+        },
+        geometry: JSON.parse(geometry),
+      })),
     };
 
     const destinationPorts: GeoJSON.FeatureCollection<
       GeoJSON.Geometry,
-      DestinationPort
+      DestinationPortProps
     > = {
       type: "FeatureCollection",
-      features: (destinationPortsFeatures as DestinationPort[]).map(
-        ({ id, id_int, name, geometry }) => ({
-          type: "Feature",
-          properties: {
-            id,
-            id_int: id_int.toString(),
-            name,
-            geometry: JSON.parse(geometry),
-          },
-          geometry: JSON.parse(geometry),
-        })
-      ),
+      features: destinationPortsRows.map(({ id, id_int, name, geometry }) => ({
+        type: "Feature",
+        properties: {
+          id,
+          id_int: id_int.toString(),
+          name,
+        },
+        geometry: JSON.parse(geometry),
+      })),
     };
 
     const result: FetchAreaResponse = {
       ...area,
-      boundingBox:
-        JSON.parse((boundingBox as { geojson: string }[])[0]?.geojson) || null, // Extract the bounding box as GeoJSON
-      flowDestinations,
+      boundingBox: JSON.parse(boundingBoxRows[0]?.geojson) || null,
+      destinationAreas,
       destinationPorts,
     };
 

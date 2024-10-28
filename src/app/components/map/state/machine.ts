@@ -394,10 +394,10 @@ export const globeViewMachine = createMachine(
         const m = mapRef.getMap();
         m.setLayoutProperty("foodgroups-layer", "visibility", "none");
 
-        const destinationAreaIds = currentArea.flowDestinations.features.map(
+        const destinationAreaIds = currentArea.destinationAreas.features.map(
           ({ properties }) => properties.id
         );
-        const destinationAreaBbox = bbox(currentArea.flowDestinations);
+        const destinationAreaBbox = bbox(currentArea.destinationAreas);
         const destinationPortsBbox = bbox(currentArea.destinationPorts);
         const combinedBboxes = combineBboxes([
           destinationAreaBbox,
@@ -446,7 +446,7 @@ export const globeViewMachine = createMachine(
         const { mapRef, currentArea } = context;
 
         if (mapRef && currentArea) {
-          const destinationAreaIds = currentArea.flowDestinations.features.map(
+          const destinationAreaIds = currentArea.destinationAreas.features.map(
             ({ properties }) => properties.id
           );
 
