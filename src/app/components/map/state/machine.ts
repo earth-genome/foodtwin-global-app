@@ -10,6 +10,7 @@ import { EItemType } from "@/types/components";
 import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 import { worldViewState } from "..";
 import { combineBboxes } from "@/utils/geometries";
+import { Legend } from "../legend";
 
 export enum EViewType {
   world = "world",
@@ -25,6 +26,7 @@ export enum EAreaViewType {
 interface StateContext {
   viewType: EViewType | null;
   mapRef: MapRef | null;
+  legend: Legend | null;
   highlightedArea: GeoJSONFeature | null;
   currentAreaId: string | null;
   currentArea: FetchAreaResponse | null;
@@ -52,6 +54,7 @@ export const globeViewMachine = createMachine(
     context: {
       viewType: EViewType.world,
       mapRef: null,
+      legend: { type: "category" },
       highlightedArea: null,
       currentAreaId: null,
       currentArea: null,
@@ -391,7 +394,9 @@ export const globeViewMachine = createMachine(
           m.setLayoutProperty("selected-area-overlay", "visibility", "visible");
         }
 
-        return {};
+        return {
+          legend: { type: "category" } as Legend,
+        };
       }),
       "action:exitProductionAreaView": assign(({ context }) => {
         const { mapRef } = context;
@@ -469,7 +474,7 @@ export const globeViewMachine = createMachine(
           "visible"
         );
 
-        return { destinationPortsIds };
+        return { destinationPortsIds, legend: null };
       }),
       "action:exitTransportationAreaView": assign(({ context }) => {
         const { mapRef, currentArea } = context;
@@ -580,6 +585,15 @@ export const globeViewMachine = createMachine(
               { destination: true }
             );
           }
+
+          const legend: Legend = {
+            type: "population",
+            range: [minPopulation, maxPopulation],
+          };
+
+          return {
+            legend,
+          };
         }
 
         return {};
@@ -592,7 +606,13 @@ export const globeViewMachine = createMachine(
           m.setLayoutProperty("area-population-fill", "visibility", "none");
         }
 
-        return {};
+        const legend: Legend = {
+          type: "category",
+        };
+
+        return {
+          legend,
+        };
       }),
       "action:fitMapToCurrentAreaBounds": assign(({ context }) => {
         const { mapRef, currentArea } = context;
@@ -630,6 +650,7 @@ export const globeViewMachine = createMachine(
         if (mapRef) {
           const m = mapRef.getMap();
           m.setLayoutProperty("top-ports", "visibility", "visible");
+          m.setLayoutProperty("foodgroups-layer", "visibility", "visible");
 
           if (currentAreaFeature?.id) {
             mapRef.setFeatureState(
@@ -650,6 +671,7 @@ export const globeViewMachine = createMachine(
           currentAreaId: null,
           currentArea: null,
           currentAreaFeature: null,
+          legend: { type: "category" } as Legend,
         };
       }),
       "action:enterAreaView": ({ context }) => {

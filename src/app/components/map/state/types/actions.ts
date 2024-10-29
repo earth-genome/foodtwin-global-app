@@ -2,6 +2,7 @@ import { MapRef } from "react-map-gl";
 import { GeoJSONFeature } from "mapbox-gl";
 import { IMapPopup } from "@/app/components/map-popup";
 import { EViewType } from "../machine";
+import { Legend } from "../../legend";
 
 interface ActionParseUrl {
   type: "action:parseUrl";
@@ -57,10 +58,12 @@ interface ActionExitTransportationAreaView {
 
 interface ActionEnterImpactAreaView {
   type: "action:enterImpactAreaView";
+  legend: Legend;
 }
 
 interface ActionExitImpactAreaView {
   type: "action:exitImpactAreaView";
+  legend: Legend;
 }
 
 interface ActionEnterWorldMapView {
