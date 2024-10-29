@@ -39,29 +39,13 @@ function AreaLayer() {
         paint={{
           "fill-color": [
             "case",
-            ["boolean", ["feature-state", "destination"], false],
+            [
+              "any",
+              ["boolean", ["feature-state", "destination"], false],
+              ["boolean", ["feature-state", "selected"], false],
+            ],
             AREA_POPULATION_COLOR,
             "transparent",
-          ],
-        }}
-        layout={{
-          visibility: "none",
-        }}
-      />
-      <Layer
-        id="area-population-outline"
-        type="line"
-        source-layer="default"
-        paint={{
-          "line-color": AREA_POPULATION_COLOR,
-          "line-width": [
-            "interpolate",
-            ["exponential", 1.99],
-            ["zoom"],
-            3,
-            1,
-            7,
-            3,
           ],
         }}
         layout={{

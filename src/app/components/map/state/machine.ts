@@ -415,7 +415,6 @@ export const globeViewMachine = createMachine(
         // Disable unwanted layers
         m.setLayoutProperty("foodgroups-layer", "visibility", "none");
         m.setLayoutProperty("area-population-fill", "visibility", "none");
-        m.setLayoutProperty("area-population-outline", "visibility", "none");
 
         const destinationAreaIds = currentArea.destinationAreas.features.map(
           ({ properties }) => properties.id
@@ -591,7 +590,6 @@ export const globeViewMachine = createMachine(
         if (mapRef && currentArea) {
           const m = mapRef.getMap();
           m.setLayoutProperty("area-population-fill", "visibility", "none");
-          m.setLayoutProperty("area-population-outline", "visibility", "none");
         }
 
         return {};
