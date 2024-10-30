@@ -25,7 +25,7 @@ export const lineStyle: LineLayerSpecification["paint"] = {
   "line-width": ["interpolate", ["exponential", 1.99], ["zoom"], 3, 1, 7, 3],
 };
 
-function AreaLayer() {
+function AreaLayers() {
   return (
     <Source
       id="area-tiles"
@@ -105,4 +105,4 @@ function AreaLayer() {
   );
 }
 
-export default AreaLayer;
+export default AreaLayers;

@@ -10,7 +10,7 @@ import { MachineContext, MachineProvider } from "./state";
 import EdgeLayer from "./layers/edges";
 import Legend from "./legend";
 import FoodGroupsLayer from "./layers/foodgroups";
-import AreaLayer from "./layers/area";
+import AreaLayers from "./layers/areas";
 import PortsLayer from "./layers/ports";
 
 // Environment variables used in this component
@@ -111,7 +111,7 @@ function GlobeInner() {
         mapStyle={mapboxStyleUrl}
       >
         <FoodGroupsLayer />
-        <AreaLayer />
+        <AreaLayers />
         <EdgeLayer />
         <PortsLayer />
 
