@@ -447,18 +447,6 @@ export const globeViewMachine = createMachine(
           destinationAreasFeatureIds,
         };
       }),
-      "action:displayFoodGroupsLayer": assign(({ context }) => {
-        const { mapRef } = context;
-
-        if (mapRef) {
-          const m = mapRef.getMap();
-          m.setLayoutProperty("foodgroups-layer", "visibility", "visible");
-        }
-
-        return {
-          legend: { type: "category" } as Legend,
-        };
-      }),
       "action:enterProductionAreaView": assign(({ context }) => {
         const { mapRef } = context;
 
@@ -495,9 +483,6 @@ export const globeViewMachine = createMachine(
         m.setLayoutProperty("foodgroups-layer", "visibility", "none");
         m.setLayoutProperty("area-population-fill", "visibility", "none");
 
-        const destinationAreaIds = currentArea.destinationAreas.features.map(
-          ({ properties }) => properties.id
-        );
         const destinationAreaBbox = bbox(currentArea.destinationAreas);
         const destinationPortsBbox = bbox(currentArea.destinationPorts);
         const combinedBboxes = combineBboxes([
