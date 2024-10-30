@@ -70,6 +70,10 @@ interface ActionEnterWorldMapView {
   type: "action:enterWorldMapView";
 }
 
+interface ActionResetAreaViewMap {
+  type: "action:resetAreaViewMap";
+}
+
 interface ActionEnterAreaView {
   type: "action:enterAreaView";
 }
@@ -90,4 +94,5 @@ export type StateActions =
   | ActionExitImpactAreaView
   | ActionSetAreaMapView
   | ActionEnterWorldMapView
+  | ActionResetAreaViewMap
   | ActionEnterAreaView;
