@@ -10,7 +10,7 @@ import { MachineContext, MachineProvider } from "./state";
 import EdgeLayer from "./layers/edges";
 import Legend from "./legend";
 import FoodGroupsLayer from "./layers/foodgroups";
-import AreaLayer from "./layers/area";
+import AreaLayers from "./layers/areas";
 import PortsLayer from "./layers/ports";
 
 // Environment variables used in this component
@@ -46,9 +46,6 @@ function GlobeInner() {
   );
   const mapPopup = MachineContext.useSelector(
     (state) => state.context.mapPopup
-  );
-  const areaSelected = MachineContext.useSelector(
-    (state) => !!state.context.currentArea
   );
 
   const handleMouseMove = useCallback((event: MapMouseEvent) => {
@@ -113,8 +110,8 @@ function GlobeInner() {
         style={{ width: "100%", height: "100%", flex: 1 }}
         mapStyle={mapboxStyleUrl}
       >
-        <AreaLayer areaSelected={areaSelected} />
         <FoodGroupsLayer />
+        <AreaLayers />
         <EdgeLayer />
         <PortsLayer />
 

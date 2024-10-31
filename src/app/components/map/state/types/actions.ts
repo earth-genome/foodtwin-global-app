@@ -2,6 +2,7 @@ import { MapRef } from "react-map-gl";
 import { GeoJSONFeature } from "mapbox-gl";
 import { IMapPopup } from "@/app/components/map-popup";
 import { EViewType } from "../machine";
+import { Legend } from "../../legend";
 
 interface ActionParseUrl {
   type: "action:parseUrl";
@@ -42,7 +43,10 @@ interface ActionSetAreaMapView {
   type: "action:fitMapToCurrentAreaBounds";
 }
 interface ActionEnterProductionAreaView {
-  type: "action:setProductionAreaView";
+  type: "action:enterProductionAreaView";
+}
+interface ActionExitProductionAreaView {
+  type: "action:exitProductionAreaView";
 }
 
 interface ActionEnterTransportationAreaView {
@@ -52,12 +56,22 @@ interface ActionExitTransportationAreaView {
   type: "action:exitTransportationAreaView";
 }
 
-interface ActionSetImpactAreaView {
-  type: "action:setImpactAreaView";
+interface ActionEnterImpactAreaView {
+  type: "action:enterImpactAreaView";
+  legend: Legend;
+}
+
+interface ActionExitImpactAreaView {
+  type: "action:exitImpactAreaView";
+  legend: Legend;
 }
 
 interface ActionEnterWorldMapView {
   type: "action:enterWorldMapView";
+}
+
+interface ActionResetAreaViewMap {
+  type: "action:resetAreaViewMap";
 }
 
 interface ActionEnterAreaView {
@@ -73,9 +87,12 @@ export type StateActions =
   | ActionSetCurrentAreaId
   | ActionSetCurrentArea
   | ActionEnterProductionAreaView
+  | ActionExitProductionAreaView
   | ActionEnterTransportationAreaView
   | ActionExitTransportationAreaView
-  | ActionSetImpactAreaView
+  | ActionEnterImpactAreaView
+  | ActionExitImpactAreaView
   | ActionSetAreaMapView
   | ActionEnterWorldMapView
+  | ActionResetAreaViewMap
   | ActionEnterAreaView;

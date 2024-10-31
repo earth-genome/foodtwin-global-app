@@ -10,6 +10,8 @@ import { FoodGroup } from "@prisma/client";
 import { Arc, ListBars, Sankey } from "@/app/components/charts";
 import { formatKeyIndicator } from "@/utils/numbers";
 import { EAreaViewType } from "@/app/components/map/state/machine";
+import { Button } from "@nextui-org/react";
+import Link from "next/link";
 
 interface IFoodGroupAgg extends FoodGroup {
   sum: number;
@@ -139,146 +141,165 @@ const AreaPage = async ({
       className={`w-[600px] bg-white h-screen grid grid-rows-[max-content_1fr]`}
     >
       <PageHeader title={areaLabel} itemType={EItemType.area} />
-      <ScrollTracker>
-        <PageSection id={EAreaViewType.production}>
-          <SectionHeader label="Food Produced" />
-          <MetricRow>
-            <Metric
-              label="Total production"
-              value={totalFlow ?? undefined}
-              formatType="weight"
-              decimalPlaces={0}
-            />
-            <Metric
-              label="Agriculture sector in GDP"
-              value={meta.aggdp_2010}
-              formatType="metric"
-              decimalPlaces={3}
-              unit="2010 USD$"
-            />
-            <Metric
-              label="GDP per capita"
-              value={meta.gdppc}
-              formatType="metric"
-              decimalPlaces={1}
-              unit="2011 USD$"
-            />
-          </MetricRow>
-          <MetricRow>
-            <Metric
-              label="Total population"
-              value={meta.totalpop}
-              formatType="metric"
-              decimalPlaces={1}
-            />
-            <Metric
-              label="Human Development Index"
-              value={meta.hdi}
-              formatType="metric"
-              decimalPlaces={3}
-            />
-          </MetricRow>
+      {totalFlow === 0 ? (
+        <PageSection
+          id="no-flows"
+          className="p-10 flex flex-grow flex-col items-center justify-center gap-4"
+        >
+          <p>There is no food produced in this area or no data is available.</p>
+          <Button
+            className="w-full rounded text-sm text-white bg-accent-warm-400"
+            href="/"
+            as={Link}
+          >
+            Go to World Map
+          </Button>
+        </PageSection>
+      ) : (
+        <ScrollTracker>
+          <PageSection id={EAreaViewType.production}>
+            <SectionHeader label="Food Produced" />
+            <MetricRow>
+              <Metric
+                label="Total production"
+                value={totalFlow ?? undefined}
+                formatType="weight"
+                decimalPlaces={0}
+              />
+              <Metric
+                label="Agriculture sector in GDP"
+                value={meta.aggdp_2010}
+                formatType="metric"
+                decimalPlaces={3}
+                unit="2010 USD$"
+              />
+              <Metric
+                label="GDP per capita"
+                value={meta.gdppc}
+                formatType="metric"
+                decimalPlaces={1}
+                unit="2011 USD$"
+              />
+            </MetricRow>
+            <MetricRow>
+              <Metric
+                label="Total population"
+                value={meta.totalpop}
+                formatType="metric"
+                decimalPlaces={1}
+              />
+              <Metric
+                label="Human Development Index"
+                value={meta.hdi}
+                formatType="metric"
+                decimalPlaces={3}
+              />
+            </MetricRow>
 
-          <ListBars
-            showPercentage
-            formatType="weight"
-            data={Object.values(foodGroupAgg).map(({ name, sum }) => ({
-              label: name,
-              value: sum,
-            }))}
-          />
-        </PageSection>
-        <PageSection id={EAreaViewType.transportation}>
-          <SectionHeader label="Food Transportation" />
-          <MetricRow>
-            <Metric
-              label="Exported outside the region"
-              value={totalExport}
+            <ListBars
+              showPercentage
               formatType="weight"
-              decimalPlaces={0}
+              data={Object.values(foodGroupAgg).map(({ name, sum }) => ({
+                label: name,
+                value: sum,
+              }))}
             />
-            <Metric
-              label="Suplied to the region"
-              value={(inBoundFlows as ImportSum[])[0].sum}
-              formatType="weight"
-              decimalPlaces={0}
-            />
-          </MetricRow>
-          <Sankey
-            width={400}
-            height={600}
-            data={{
-              nodes: [
-                { id: area.id, label: area.name, type: EItemType["area"] },
-                { id: "other", label: "Other", type: EItemType["node"] },
-                ...(outboundFlows as ExportFlow[]).map(
-                  ({ toAreaId, name }) => ({
-                    id: toAreaId,
-                    label: name,
-                    type: EItemType["node"],
-                  })
-                ),
-              ],
-              links: [
-                ...(outboundFlows as ExportFlow[])
-                  .slice(0, 10)
-                  .map(({ toAreaId, value }) => ({
+          </PageSection>
+          <PageSection id={EAreaViewType.transportation}>
+            <SectionHeader label="Food Transportation" />
+            <MetricRow>
+              <Metric
+                label="Exported outside the region"
+                value={totalExport}
+                formatType="weight"
+                decimalPlaces={0}
+              />
+              <Metric
+                label="Suplied to the region"
+                value={(inBoundFlows as ImportSum[])[0].sum}
+                formatType="weight"
+                decimalPlaces={0}
+              />
+            </MetricRow>
+            <Sankey
+              width={400}
+              height={600}
+              data={{
+                nodes: [
+                  { id: area.id, label: area.name, type: EItemType["area"] },
+                  { id: "other", label: "Other", type: EItemType["node"] },
+                  ...(outboundFlows as ExportFlow[]).map(
+                    ({ toAreaId, name }) => ({
+                      id: toAreaId,
+                      label: name,
+                      type: EItemType["node"],
+                    })
+                  ),
+                ],
+                links: [
+                  ...(outboundFlows as ExportFlow[])
+                    .slice(0, 10)
+                    .map(({ toAreaId, value }) => ({
+                      source: area.id,
+                      target: toAreaId,
+                      value,
+                      popupData: [
+                        {
+                          label: "Volume",
+                          value: formatKeyIndicator(value, "weight", 0),
+                        },
+                      ],
+                    })),
+                  {
                     source: area.id,
-                    target: toAreaId,
-                    value,
-                    popupData: [
-                      {
-                        label: "Volume",
-                        value: formatKeyIndicator(value, "weight", 0),
-                      },
-                    ],
-                  })),
-                {
-                  source: area.id,
-                  target: "other",
-                  value: (outboundFlows as ExportFlow[])
-                    .slice(10)
-                    .reduce((sum, { value }) => sum + value, 0),
-                },
-              ],
-            }}
-          />
-        </PageSection>
-        <PageSection id={EAreaViewType.impact} className="pb-8">
-          <SectionHeader label="Impact on people" />
-          <MetricRow>
-            <Metric
-              label="Number of people"
-              value={meta[IndicatorColumn.TOTALPOP]}
-              formatType="metric"
-              decimalPlaces={0}
+                    target: "other",
+                    value: (outboundFlows as ExportFlow[])
+                      .slice(10)
+                      .reduce((sum, { value }) => sum + value, 0),
+                  },
+                ],
+              }}
             />
-          </MetricRow>
-          <div className="flex flex-wrap gap-6 justify-around items-end">
-            {meta[IndicatorColumn.PCT_RURAL] !== undefined && (
-              <Arc title="Rural" percentage={meta[IndicatorColumn.PCT_RURAL]} />
-            )}
-            {meta[IndicatorColumn.PCT_ELDERLY] !== undefined && (
-              <Arc
-                title="Elderly"
-                percentage={meta[IndicatorColumn.PCT_ELDERLY]}
+          </PageSection>
+          <PageSection id={EAreaViewType.impact} className="pb-8">
+            <SectionHeader label="Impact on people" />
+            <MetricRow>
+              <Metric
+                label="Number of people"
+                value={meta[IndicatorColumn.TOTALPOP]}
+                formatType="metric"
+                decimalPlaces={0}
               />
-            )}
-            {meta[IndicatorColumn.PCT_F_CHILDBEARING] !== undefined && (
-              <Arc
-                title="Women of child-bearing age"
-                percentage={meta[IndicatorColumn.PCT_F_CHILDBEARING]}
-              />
-            )}
-            {meta[IndicatorColumn.PCT_UNDER5] !== undefined && (
-              <Arc
-                title="Children under 5"
-                percentage={meta[IndicatorColumn.PCT_UNDER5]}
-              />
-            )}
-          </div>
-        </PageSection>
-      </ScrollTracker>
+            </MetricRow>
+            <div className="flex flex-wrap gap-6 justify-around items-end">
+              {meta[IndicatorColumn.PCT_RURAL] !== undefined && (
+                <Arc
+                  title="Rural"
+                  percentage={meta[IndicatorColumn.PCT_RURAL]}
+                />
+              )}
+              {meta[IndicatorColumn.PCT_ELDERLY] !== undefined && (
+                <Arc
+                  title="Elderly"
+                  percentage={meta[IndicatorColumn.PCT_ELDERLY]}
+                />
+              )}
+              {meta[IndicatorColumn.PCT_F_CHILDBEARING] !== undefined && (
+                <Arc
+                  title="Women of child-bearing age"
+                  percentage={meta[IndicatorColumn.PCT_F_CHILDBEARING]}
+                />
+              )}
+              {meta[IndicatorColumn.PCT_UNDER5] !== undefined && (
+                <Arc
+                  title="Children under 5"
+                  percentage={meta[IndicatorColumn.PCT_UNDER5]}
+                />
+              )}
+            </div>
+          </PageSection>
+        </ScrollTracker>
+      )}
     </div>
   );
 };
