@@ -24,7 +24,6 @@ interface IFoodGroupAgg extends FoodGroup {
 type IFoodGroupAggObj = Record<string, IFoodGroupAgg>;
 
 interface ImportSum {
-  fromAreaId: string;
   sum: number;
 }
 
