@@ -24,6 +24,7 @@ interface IFoodGroupAgg extends FoodGroup {
 type IFoodGroupAggObj = Record<string, IFoodGroupAgg>;
 
 interface ImportSum {
+  fromAreaId: string;
   sum: number;
 }
 
@@ -33,6 +34,14 @@ interface ExportFlow {
   toAreaId: string;
   name: string;
   type: "MARITIME" | "PORT" | "INLAND_PORT" | "RAIL_STATION" | "ADMIN";
+}
+
+interface Indicators {
+  totalPopulation: number;
+  ruralPopulation: number;
+  elderlyPopulation: number;
+  childBearingPopulation: number;
+  under5Population: number;
 }
 
 function findParent(id: number, foodGroups: FoodGroup[]) {
@@ -90,6 +99,49 @@ const AreaPage = async ({
     `
       ),
     ]);
+
+  const outboundAreas = await prisma.area.findMany({
+    where: {
+      id: {
+        in: (outboundFlows as ExportFlow[]).map(({ toAreaId }) => toAreaId),
+      },
+    },
+  });
+
+  const indicators: Indicators = [area, ...outboundAreas].reduce<Indicators>(
+    (sum, { meta }) => {
+      if (!meta) return sum;
+
+      /*
+       * In the following we are ignoring errors with meta objects. We should
+       * look into making the indicators as area columns to avoid this.
+       * See: https://github.com/earth-genome/foodtwin-global-app/issues/91
+       */
+
+      return {
+        // @ts-expect-error - we should avoid using meta keys directly
+        totalPopulation: sum.totalPopulation + meta[IndicatorColumn.TOTALPOP],
+        // @ts-expect-error - we should avoid using meta keys directly
+        ruralPopulation: sum.ruralPopulation + meta[IndicatorColumn.NUM_RURAL],
+        elderlyPopulation:
+          // @ts-expect-error - we should avoid using meta keys directly
+          sum.elderlyPopulation + meta[IndicatorColumn.NUM_ELDERLY],
+        childBearingPopulation:
+          // @ts-expect-error - we should avoid using meta keys directly
+          sum.childBearingPopulation + meta[IndicatorColumn.NUM_F_CHILDBEARING],
+        under5Population:
+          // @ts-expect-error - we should avoid using meta keys directly
+          sum.under5Population + meta[IndicatorColumn.NUM_UNDER5],
+      };
+    },
+    {
+      totalPopulation: 0,
+      ruralPopulation: 0,
+      elderlyPopulation: 0,
+      childBearingPopulation: 0,
+      under5Population: 0,
+    }
+  );
 
   const foodGroupAgg = foodGroupExports.reduce(
     (agg: IFoodGroupAggObj, group): IFoodGroupAggObj => {
@@ -265,37 +317,43 @@ const AreaPage = async ({
             <SectionHeader label="Impact on people" />
             <MetricRow>
               <Metric
-                label="Number of people"
-                value={meta[IndicatorColumn.TOTALPOP]}
+                label="Number of people in the flow areas"
+                value={indicators.totalPopulation}
                 formatType="metric"
                 decimalPlaces={0}
               />
             </MetricRow>
             <div className="flex flex-wrap gap-6 justify-around items-end">
-              {meta[IndicatorColumn.PCT_RURAL] !== undefined && (
-                <Arc
-                  title="Rural"
-                  percentage={meta[IndicatorColumn.PCT_RURAL]}
-                />
-              )}
-              {meta[IndicatorColumn.PCT_ELDERLY] !== undefined && (
-                <Arc
-                  title="Elderly"
-                  percentage={meta[IndicatorColumn.PCT_ELDERLY]}
-                />
-              )}
-              {meta[IndicatorColumn.PCT_F_CHILDBEARING] !== undefined && (
-                <Arc
-                  title="Women of child-bearing age"
-                  percentage={meta[IndicatorColumn.PCT_F_CHILDBEARING]}
-                />
-              )}
-              {meta[IndicatorColumn.PCT_UNDER5] !== undefined && (
-                <Arc
-                  title="Children under 5"
-                  percentage={meta[IndicatorColumn.PCT_UNDER5]}
-                />
-              )}
+              <Arc
+                title="Rural"
+                percentage={
+                  (indicators.ruralPopulation / indicators.totalPopulation) *
+                  100
+                }
+              />
+              <Arc
+                title="Elderly"
+                percentage={
+                  (indicators.elderlyPopulation / indicators.totalPopulation) *
+                  100
+                }
+              />
+
+              <Arc
+                title="Women of child-bearing age"
+                percentage={
+                  (indicators.childBearingPopulation /
+                    indicators.totalPopulation) *
+                  100
+                }
+              />
+              <Arc
+                title="Children under 5"
+                percentage={
+                  (indicators.under5Population / indicators.totalPopulation) *
+                  100
+                }
+              />
             </div>
           </PageSection>
         </ScrollTracker>
