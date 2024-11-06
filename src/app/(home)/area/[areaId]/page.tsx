@@ -138,7 +138,7 @@ const AreaPage = async ({
 
   return (
     <div
-      className={`w-[600px] bg-white h-screen grid grid-rows-[max-content_1fr]`}
+      className={`w-[480px] bg-white h-screen grid grid-rows-[max-content_1fr]`}
     >
       <PageHeader title={areaLabel} itemType={EItemType.area} />
       {totalFlow === 0 ? (
@@ -222,7 +222,7 @@ const AreaPage = async ({
               />
             </MetricRow>
             <Sankey
-              width={400}
+              width={435}
               height={600}
               data={{
                 nodes: [

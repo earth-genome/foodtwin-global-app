@@ -92,7 +92,7 @@ function GlobeInner() {
   }, []);
 
   return (
-    <div className="flex flex-col w-full h-full relative">
+    <div className="w-full h-full relative flex-1">
       <Legend />
       <Map
         mapboxAccessToken={mapboxAccessToken}
