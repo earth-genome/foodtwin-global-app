@@ -69,26 +69,31 @@ const AreaPage = async ({
     return redirect("/not-found");
   }
 
-  const [foodGroupExports, foodGroups, inBoundFlows, outboundFlows] =
-    await Promise.all([
-      prisma.flow.groupBy({
-        where: {
-          fromAreaId: area.id,
-        },
-        by: ["foodGroupId"],
-        _sum: {
-          value: true,
-        },
-      }),
-      prisma.foodGroup.findMany(),
-      prisma.$queryRawUnsafe(`
+  const [
+    foodGroupExports,
+    foodGroups,
+    inBoundFlows,
+    outboundFlows,
+    outboundAreas,
+  ] = await Promise.all([
+    prisma.flow.groupBy({
+      where: {
+        fromAreaId: area.id,
+      },
+      by: ["foodGroupId"],
+      _sum: {
+        value: true,
+      },
+    }),
+    prisma.foodGroup.findMany(),
+    prisma.$queryRawUnsafe(`
       SELECT sum(value)
         FROM "FlowSegment"
         LEFT JOIN "Flow" ON "FlowSegment"."flowId" = "Flow"."id"
         WHERE "flowId" like '%-${area.id}-%';
     `),
-      prisma.$queryRawUnsafe(
-        `SELECT "mode", sum("value") as value, "toAreaId", "Node"."name", "Node"."type"
+    prisma.$queryRawUnsafe(
+      `SELECT "mode", sum("value") as value, "toAreaId", "Node"."name", "Node"."type"
         FROM "FlowSegment"
         LEFT JOIN "Flow" ON "FlowSegment"."flowId" = "Flow"."id"
         LEFT JOIN "Node" ON "Flow"."toAreaId" = "Node"."id"
@@ -96,16 +101,17 @@ const AreaPage = async ({
         GROUP BY "toAreaId", "mode", "Node"."name", "Node"."type"
         ORDER BY value DESC;
     `
-      ),
-    ]);
-
-  const outboundAreas = await prisma.area.findMany({
-    where: {
-      id: {
-        in: (outboundFlows as ExportFlow[]).map(({ toAreaId }) => toAreaId),
+    ),
+    prisma.area.findMany({
+      where: {
+        flowsTo: {
+          some: {
+            fromAreaId: area.id,
+          },
+        },
       },
-    },
-  });
+    }),
+  ]);
 
   const indicators: Indicators = [area, ...outboundAreas].reduce<Indicators>(
     (sum, { meta }) => {
