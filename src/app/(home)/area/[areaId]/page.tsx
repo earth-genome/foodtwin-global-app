@@ -35,6 +35,14 @@ interface ExportFlow {
   type: "MARITIME" | "PORT" | "INLAND_PORT" | "RAIL_STATION" | "ADMIN";
 }
 
+interface Indicators {
+  totalPopulation: number;
+  ruralPopulation: number;
+  elderlyPopulation: number;
+  childBearingPopulation: number;
+  under5Population: number;
+}
+
 function findParent(id: number, foodGroups: FoodGroup[]) {
   const g = foodGroups.find((group) => id === group.id);
   if (!g?.parentId) {
@@ -61,26 +69,31 @@ const AreaPage = async ({
     return redirect("/not-found");
   }
 
-  const [foodGroupExports, foodGroups, inBoundFlows, outboundFlows] =
-    await Promise.all([
-      prisma.flow.groupBy({
-        where: {
-          fromAreaId: area.id,
-        },
-        by: ["foodGroupId"],
-        _sum: {
-          value: true,
-        },
-      }),
-      prisma.foodGroup.findMany(),
-      prisma.$queryRawUnsafe(`
+  const [
+    foodGroupExports,
+    foodGroups,
+    inBoundFlows,
+    outboundFlows,
+    outboundAreas,
+  ] = await Promise.all([
+    prisma.flow.groupBy({
+      where: {
+        fromAreaId: area.id,
+      },
+      by: ["foodGroupId"],
+      _sum: {
+        value: true,
+      },
+    }),
+    prisma.foodGroup.findMany(),
+    prisma.$queryRawUnsafe(`
       SELECT sum(value)
         FROM "FlowSegment"
         LEFT JOIN "Flow" ON "FlowSegment"."flowId" = "Flow"."id"
         WHERE "flowId" like '%-${area.id}-%';
     `),
-      prisma.$queryRawUnsafe(
-        `SELECT "mode", sum("value") as value, "toAreaId", "Node"."name", "Node"."type"
+    prisma.$queryRawUnsafe(
+      `SELECT "mode", sum("value") as value, "toAreaId", "Node"."name", "Node"."type"
         FROM "FlowSegment"
         LEFT JOIN "Flow" ON "FlowSegment"."flowId" = "Flow"."id"
         LEFT JOIN "Node" ON "Flow"."toAreaId" = "Node"."id"
@@ -88,8 +101,52 @@ const AreaPage = async ({
         GROUP BY "toAreaId", "mode", "Node"."name", "Node"."type"
         ORDER BY value DESC;
     `
-      ),
-    ]);
+    ),
+    prisma.area.findMany({
+      where: {
+        flowsTo: {
+          some: {
+            fromAreaId: area.id,
+          },
+        },
+      },
+    }),
+  ]);
+
+  const indicators: Indicators = [area, ...outboundAreas].reduce<Indicators>(
+    (sum, { meta }) => {
+      if (!meta) return sum;
+
+      /*
+       * In the following we are ignoring errors with meta objects. We should
+       * look into making the indicators as area columns to avoid this.
+       * See: https://github.com/earth-genome/foodtwin-global-app/issues/91
+       */
+
+      return {
+        // @ts-expect-error - we should avoid using meta keys directly
+        totalPopulation: sum.totalPopulation + meta[IndicatorColumn.TOTALPOP],
+        // @ts-expect-error - we should avoid using meta keys directly
+        ruralPopulation: sum.ruralPopulation + meta[IndicatorColumn.NUM_RURAL],
+        elderlyPopulation:
+          // @ts-expect-error - we should avoid using meta keys directly
+          sum.elderlyPopulation + meta[IndicatorColumn.NUM_ELDERLY],
+        childBearingPopulation:
+          // @ts-expect-error - we should avoid using meta keys directly
+          sum.childBearingPopulation + meta[IndicatorColumn.NUM_F_CHILDBEARING],
+        under5Population:
+          // @ts-expect-error - we should avoid using meta keys directly
+          sum.under5Population + meta[IndicatorColumn.NUM_UNDER5],
+      };
+    },
+    {
+      totalPopulation: 0,
+      ruralPopulation: 0,
+      elderlyPopulation: 0,
+      childBearingPopulation: 0,
+      under5Population: 0,
+    }
+  );
 
   const foodGroupAgg = foodGroupExports.reduce(
     (agg: IFoodGroupAggObj, group): IFoodGroupAggObj => {
@@ -265,37 +322,43 @@ const AreaPage = async ({
             <SectionHeader label="Impact on people" />
             <MetricRow>
               <Metric
-                label="Number of people"
-                value={meta[IndicatorColumn.TOTALPOP]}
+                label="Number of people in the flow areas"
+                value={indicators.totalPopulation}
                 formatType="metric"
                 decimalPlaces={0}
               />
             </MetricRow>
             <div className="flex flex-wrap gap-6 justify-around items-end">
-              {meta[IndicatorColumn.PCT_RURAL] !== undefined && (
-                <Arc
-                  title="Rural"
-                  percentage={meta[IndicatorColumn.PCT_RURAL]}
-                />
-              )}
-              {meta[IndicatorColumn.PCT_ELDERLY] !== undefined && (
-                <Arc
-                  title="Elderly"
-                  percentage={meta[IndicatorColumn.PCT_ELDERLY]}
-                />
-              )}
-              {meta[IndicatorColumn.PCT_F_CHILDBEARING] !== undefined && (
-                <Arc
-                  title="Women of child-bearing age"
-                  percentage={meta[IndicatorColumn.PCT_F_CHILDBEARING]}
-                />
-              )}
-              {meta[IndicatorColumn.PCT_UNDER5] !== undefined && (
-                <Arc
-                  title="Children under 5"
-                  percentage={meta[IndicatorColumn.PCT_UNDER5]}
-                />
-              )}
+              <Arc
+                title="Rural"
+                percentage={
+                  (indicators.ruralPopulation / indicators.totalPopulation) *
+                  100
+                }
+              />
+              <Arc
+                title="Elderly"
+                percentage={
+                  (indicators.elderlyPopulation / indicators.totalPopulation) *
+                  100
+                }
+              />
+
+              <Arc
+                title="Women of child-bearing age"
+                percentage={
+                  (indicators.childBearingPopulation /
+                    indicators.totalPopulation) *
+                  100
+                }
+              />
+              <Arc
+                title="Children under 5"
+                percentage={
+                  (indicators.under5Population / indicators.totalPopulation) *
+                  100
+                }
+              />
             </div>
           </PageSection>
         </ScrollTracker>
