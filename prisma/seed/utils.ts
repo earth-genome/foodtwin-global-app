@@ -25,11 +25,16 @@ export function log(message: string) {
   lastTimestamp = currentTimestamp;
 }
 
-export async function runOgr2Ogr(...args: string[]): Promise<void> {
-  // Prisma doesn't like ESM imports, so we have to use CommonJS here
+export async function runOgr2Ogr(
+  filePath: string,
+  ...args: string[]
+): Promise<void> {
   const { execa } = await import("execa");
 
-  const command = `ogr2ogr -f "PostgreSQL" PG:${POSTGRES_CONNECTION_STRING} ${args.join(" ")}`;
+  // Escape the file path by wrapping it in quotes
+  const escapedPath = `"${filePath}"`;
+
+  const command = `ogr2ogr -f "PostgreSQL" PG:${POSTGRES_CONNECTION_STRING} ${escapedPath} ${args.join(" ")}`;
 
   await execa(command, { shell: true });
 }
