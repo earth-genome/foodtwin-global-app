@@ -8,7 +8,7 @@ import {
   INLAND_PORTS_PATH,
   INLAND_PORTS_TABLENAME,
   NODES_MARITIME_TABLENAME,
-  NODES_PATH,
+  NODES_MARITIME_PATH,
   RAIL_STATIONS_PATH,
   RAIL_STATIONS_TABLENAME,
 } from "./config";
@@ -119,7 +119,7 @@ export const ingestNodes = async (prisma: PrismaClient) => {
   log("Ingested rail nodes.");
 
   await runOgr2Ogr(
-    NODES_PATH,
+    NODES_MARITIME_PATH,
     `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT id, name, upper(infra) as type, geom as centroid FROM ${NODES_MARITIME_TABLENAME}"`
   );
   log(`Ingested maritime nodes.`);
