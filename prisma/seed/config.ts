@@ -71,4 +71,4 @@ export const FOOD_GROUPS_LIST_FILE = path.join(
   "fg1_fg2_fg3_lookup.csv"
 );
 
-export const FLOWS_FOLDER = path.join(SEED_DATA_PATH, "Flows/Land_V2");
+export const FLOWS_FOLDER = path.join(SEED_DATA_PATH, "Flows");

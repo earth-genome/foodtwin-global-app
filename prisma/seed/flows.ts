@@ -10,7 +10,6 @@ import sqlite3 from "sqlite3";
 import { open, Database } from "sqlite";
 import {
   EDGE_IDS_SQLITE_DB_PATH,
-  FLOW_FILE_SIZE_LIMIT,
   FLOWS_FOLDER,
   POSTGRES_CONNECTION_STRING,
   SEED_DATA_PATH,
@@ -35,46 +34,68 @@ export const ingestFlows = async (prisma: PrismaClient) => {
 
   await loadEdgeIds();
 
-  const foodGroups = await prisma.foodGroup.findMany({});
+  const foodGroups = await prisma.foodGroup.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+    where: {
+      level: 1,
+      name: "Cloves",
+    },
+    orderBy: {
+      name: "asc",
+    },
+    take: 1,
+  });
 
-  let flowFiles = (await listFilesRecursively(FLOWS_FOLDER))
-    .filter((filePath: string) => {
+  const allFlowFiles = (await listFilesRecursively(FLOWS_FOLDER)).filter(
+    (filePath: string) => {
       const filename = path.basename(filePath);
-      return (
-        filename.startsWith("Flows_") &&
-        (filename.endsWith(".gz") || filename.endsWith(".csv"))
-      );
-    })
-    .map((filePath: string) => {
-      const filename = path.basename(filePath);
-      const foodGroupName = filename.split("_")[1].split(".")[0];
-      const foodGroup = foodGroups.find((fg) =>
-        fg.name.endsWith(foodGroupName)
-      );
-      const fileSize = fs.statSync(filePath).size; // Get file size in bytes
+      return filename.startsWith("Flows_") && filename.endsWith(".csv.gz");
+    }
+  );
 
-      return {
+  // Process each food group
+  for (const foodGroup of foodGroups) {
+    // Find all files for this food group
+    const foodGroupFiles = allFlowFiles.filter((filePath: string) => {
+      const filename = path.basename(filePath);
+
+      // First normalize any special spaces to regular spaces
+      const normalizedFilename = filename.replace(/[\u00A0\s]+/g, " ").trim();
+      const normalizedFoodGroup = foodGroup.name
+        .replace(/[\u00A0\s]+/g, " ")
+        .trim();
+
+      // Then encode
+      const encodedFilename = encodeURIComponent(normalizedFilename);
+      const encodedFoodGroup = encodeURIComponent(normalizedFoodGroup);
+
+      return encodedFilename.includes(encodedFoodGroup);
+    });
+
+    if (foodGroupFiles.length === 0) {
+      log(`No flow files found for ${foodGroup.name}`);
+      continue;
+    }
+
+    // Delete existing flows for this food group
+    await cascadeDeleteFlows(prisma, foodGroup.id, foodGroup.name);
+    log(`Cleared existing flows for ${foodGroup.name}`);
+
+    // Process each file for this food group
+    for (const filePath of foodGroupFiles) {
+      log(`Ingesting flows for ${foodGroup.name} from ${filePath}...`);
+      // try {
+      await ingestFlowFile(prisma, {
         path: filePath,
-        size: fileSize,
+        size: fs.statSync(filePath).size,
         foodGroup,
-      };
-    })
-    .sort(
-      (
-        a: {
-          size: number;
-        },
-        b: {
-          size: number;
-        }
-      ) => a.size - b.size
-    ) as FoodGroupFile[];
+      });
+    }
 
-  flowFiles = flowFiles.filter(({ size }) => size < FLOW_FILE_SIZE_LIMIT);
-
-  for (const flowFile of flowFiles) {
-    log(`Ingesting flows for ${flowFile.foodGroup.name}...`);
-    await ingestFlowFile(prisma, flowFile);
+    log(`Completed ingestion for ${foodGroup.name}`);
   }
 };
 
