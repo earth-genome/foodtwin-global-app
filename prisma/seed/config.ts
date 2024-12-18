@@ -67,7 +67,8 @@ export const EDGES_MARITIME_PATH = path.join(
 
 export const FOOD_GROUPS_LIST_FILE = path.join(
   SEED_DATA_PATH,
-  "Commodity/UniqueFG1_FG2.csv"
+  "Commodity",
+  "fg1_fg2_fg3_lookup.csv"
 );
 
 export const FLOWS_FOLDER = path.join(SEED_DATA_PATH, "Flows/Land_V2");
