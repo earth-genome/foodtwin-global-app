@@ -176,9 +176,13 @@ async function ingestFlowFile(
         try {
           const flowId = `${row.from_id_admin}-${row.to_id_admin}-${foodGroup.id}`;
 
+          const csvRowSegmentOrder = row.path_num || row.segment_order;
+
+          const csvRowMode = row.mode || "default";
+
           const flowSegmentId = crypto
             .createHash("md5")
-            .update(`${flowId}-${row.mode}-${row.segment_order}`)
+            .update(`${flowId}-${csvRowMode}-${csvRowSegmentOrder}`)
             .digest("hex");
 
           const edgeId = `${row.from_id_admin}-${row.to_id_admin}`;
@@ -193,8 +197,8 @@ async function ingestFlowFile(
               row.from_id_admin,
               row.to_id_admin,
               parseFloat(row.flow_value),
-              row.mode,
-              parseInt(row.segment_order),
+              csvRowMode,
+              parseInt(csvRowSegmentOrder),
               row.paths?.replace(/['"[\]\s]/g, ""),
             ]
           );
