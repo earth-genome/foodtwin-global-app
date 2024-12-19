@@ -178,7 +178,7 @@ async function ingestFlowFile(
 
           const csvRowSegmentOrder = row.path_num || row.segment_order;
 
-          const csvRowMode = row.mode || "default";
+          const csvRowMode = row.mode || "unknown";
 
           const flowSegmentId = crypto
             .createHash("md5")
