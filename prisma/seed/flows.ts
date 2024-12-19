@@ -142,9 +142,6 @@ async function ingestFlowFile(
     "Created temporary files for flows, flow segments and flow segments edges..."
   );
 
-  await cascadeDeleteFlows(prisma, foodGroup.id, foodGroup.name);
-  log(`Deleted existing flows for ${foodGroup.name}...`);
-
   // Create a table for the CSV data
   await memoryDb.exec(`
     DROP TABLE IF EXISTS data;
