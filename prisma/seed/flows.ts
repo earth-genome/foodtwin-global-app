@@ -15,6 +15,25 @@ import {
   SEED_DATA_PATH,
 } from "./config";
 
+const filesIngestLog = path.resolve(SEED_DATA_PATH, "file_ingest_log.txt");
+
+export function logFileIngest(message: Error | string) {
+  const currentTimestamp = new Date().toISOString();
+  const logMessage =
+    message instanceof Error
+      ? `${currentTimestamp}: ${message.stack}\n`
+      : `${currentTimestamp}: ${message}\n`;
+  fs.appendFileSync(filesIngestLog, logMessage);
+}
+
+enum FlowType {
+  SEA_DOMESTIC = "SEA_DOMESTIC",
+  SEA_REEXPORT = "SEA_REEXPORT",
+  LAND_DOMESTIC = "LAND_DOMESTIC",
+  LAND_REEXPORT = "LAND_REEXPORT",
+  WITHIN_COUNTRY = "WITHIN_COUNTRY",
+}
+
 interface FoodGroupFile {
   path: string;
   size: number;
@@ -87,12 +106,19 @@ export const ingestFlows = async (prisma: PrismaClient) => {
     // Process each file for this food group
     for (const filePath of foodGroupFiles) {
       log(`Ingesting flows for ${foodGroup.name} from ${filePath}...`);
-      // try {
-      await ingestFlowFile(prisma, {
-        path: filePath,
-        size: fs.statSync(filePath).size,
-        foodGroup,
-      });
+      try {
+        await ingestFlowFile(prisma, {
+          path: filePath,
+          size: fs.statSync(filePath).size,
+          foodGroup,
+        });
+        logFileIngest(`Ingested flows for ${foodGroup.name} from ${filePath}`);
+      } catch (error) {
+        logFileIngest(
+          `Error ingesting flows for ${foodGroup.name} from ${filePath}`
+        );
+        logFileIngest(error as Error);
+      }
     }
 
     log(`Completed ingestion for ${foodGroup.name}`);
@@ -107,6 +133,22 @@ async function ingestFlowFile(
   log(`Ingesting flows for ${foodGroup.id} - ${foodGroup.name}...`);
 
   let filePath = foodGroupFile.path;
+
+  let flowType: FlowType;
+
+  if (filePath.includes("Sea_Domestic")) {
+    flowType = FlowType.SEA_DOMESTIC;
+  } else if (filePath.includes("Sea_ReExports")) {
+    flowType = FlowType.SEA_REEXPORT;
+  } else if (filePath.includes("Land_Domestic")) {
+    flowType = FlowType.LAND_DOMESTIC;
+  } else if (filePath.includes("Land_ReExports")) {
+    flowType = FlowType.LAND_REEXPORT;
+  } else if (filePath.includes("Within_Country")) {
+    flowType = FlowType.WITHIN_COUNTRY;
+  } else {
+    throw new Error(`Unknown flow type for file ${filePath}`);
+  }
 
   if (filePath.endsWith(".gz")) {
     const expandedFilePath = foodGroupFile.path.replace(".gz", "");
@@ -174,7 +216,7 @@ async function ingestFlowFile(
       .pipe(parseStream)
       .on("data", async (row) => {
         try {
-          const flowId = `${row.from_id_admin}-${row.to_id_admin}-${foodGroup.id}`;
+          const flowId = `${row.from_id_admin}-${row.to_id_admin}-${foodGroup.id}-${flowType}`;
 
           const csvRowSegmentOrder = row.path_num || row.segment_order;
 
@@ -227,14 +269,14 @@ async function ingestFlowFile(
     const { flow_id, from_id_admin, to_id_admin, flow_value } = flow;
 
     await flowsTempFileWriteStream.write(
-      `${flow_id},${from_id_admin},${to_id_admin},${flow_value},${foodGroup.id}\n`
+      `${flow_id},${from_id_admin},${to_id_admin},${flow_value},${foodGroup.id},${flowType}\n`
     );
   }
 
   await flowsTempFileWriteStream.end();
   log(`Wrote flows to file ${flowsTempFile}...`);
 
-  const copyFlowsCommand = `COPY \\"Flow\\" ("id", \\"fromAreaId\\", \\"toAreaId\\", "value", \\"foodGroupId\\") FROM '${flowsTempFile}' WITH (FORMAT CSV, DELIMITER ',');`;
+  const copyFlowsCommand = `COPY \\"Flow\\" ("id", \\"fromAreaId\\", \\"toAreaId\\", "value", \\"foodGroupId\\", \\"type\\") FROM '${flowsTempFile}' WITH (FORMAT CSV, DELIMITER ',');`;
   await execa(
     `psql -d ${POSTGRES_CONNECTION_STRING} -c "${copyFlowsCommand}"`,
     {

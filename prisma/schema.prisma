@@ -64,6 +64,14 @@ model Edge {
   @@index([fromNodeId, toNodeId])
 }
 
+enum FlowType {
+  SEA_DOMESTIC
+  SEA_REEXPORT
+  LAND_DOMESTIC
+  LAND_REEXPORT
+  WITHIN_COUNTRY
+}
+
 model Flow {
   id          String        @id
   fromArea    Area          @relation("FromArea", fields: [fromAreaId], references: [id])
@@ -71,7 +79,8 @@ model Flow {
   toArea      Area          @relation("ToArea", fields: [toAreaId], references: [id])
   toAreaId    String
   foodGroupId Int
-  foodGroup   FoodGroup     @relation(fields: [foodGroupId], references: [id])
+  foodGroup   FoodGroup     @relation(fields: [foodGroupId], references: [id], onDelete: Cascade)
+  type        FlowType
   value       Float
   FlowSegment FlowSegment[]
 }
@@ -80,7 +89,7 @@ model FlowSegment {
   id     String             @id
   mode   String
   flowId String
-  flow   Flow               @relation(fields: [flowId], references: [id])
+  flow   Flow               @relation(fields: [flowId], references: [id], onDelete: Cascade)
   edges  FlowSegmentEdges[]
 
   order Int
