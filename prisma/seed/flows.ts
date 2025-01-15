@@ -216,7 +216,7 @@ async function ingestFlowFile(
       .pipe(parseStream)
       .on("data", async (row) => {
         try {
-          const flowId = `${row.from_id_admin}-${row.to_id_admin}-${foodGroup.id}-${flowType}`;
+          const flowId = `${row.from_id_admin}-${row.to_id_admin}-${foodGroup.id}-${flowType}-${row.flow_value}`;
 
           const csvRowSegmentOrder = row.path_num || row.segment_order;
 
