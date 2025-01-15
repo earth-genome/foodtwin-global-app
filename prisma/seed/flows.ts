@@ -23,6 +23,10 @@ export function logFileIngest(message: Error | string) {
     message instanceof Error
       ? `${currentTimestamp}: ${message.stack}\n`
       : `${currentTimestamp}: ${message}\n`;
+  // eslint-disable-next-line no-console
+  console.log(logMessage);
+
+  // Log to file
   fs.appendFileSync(filesIngestLog, logMessage);
 }
 
