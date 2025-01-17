@@ -451,9 +451,10 @@ async function cascadeDeleteFlows(
   foodGroupId: number,
   foodGroupName: string
 ) {
-  await prisma.$transaction(async (tx) => {
-    // Delete FlowSegmentEdges
-    await tx.$executeRaw`
+  await prisma.$transaction(
+    async (tx) => {
+      // Delete FlowSegmentEdges
+      await tx.$executeRaw`
         DELETE FROM "FlowSegmentEdges"
         WHERE "flowSegmentId" IN (
           SELECT "FlowSegment".id
@@ -462,25 +463,29 @@ async function cascadeDeleteFlows(
           WHERE "Flow"."foodGroupId" = ${foodGroupId}
         )
       `;
-    log(`Deleted FlowSegmentEdges for ${foodGroupName}...`);
+      log(`Deleted FlowSegmentEdges for ${foodGroupName}...`);
 
-    // Delete FlowSegments
-    await tx.$executeRaw`
+      // Delete FlowSegments
+      await tx.$executeRaw`
         DELETE FROM "FlowSegment"
         WHERE "flowId" IN (
           SELECT id FROM "Flow"
           WHERE "foodGroupId" = ${foodGroupId}
         )
       `;
-    log(`Deleted FlowSegments for ${foodGroupName}...`);
+      log(`Deleted FlowSegments for ${foodGroupName}...`);
 
-    // Delete Flows
-    await tx.$executeRaw`
+      // Delete Flows
+      await tx.$executeRaw`
         DELETE FROM "Flow"
         WHERE "foodGroupId" = ${foodGroupId}
       `;
-    log(`Deleted Flows for ${foodGroupName}...`);
-  });
+      log(`Deleted Flows for ${foodGroupName}...`);
+    },
+    {
+      timeout: 5 * 60 * 1000,
+    }
+  );
 
   log(`Completed cascading delete for ${foodGroupName}`);
 }
