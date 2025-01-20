@@ -41,7 +41,6 @@ export const ROAD_NODES_CSV_PATH = path.join(
   INFRASTRUCTURE_DATA_PATH,
   `RoadNodes_infrastructure.csv`
 );
-export const ROAD_NODES_TABLENAME = "RoadNodes_infrastructure";
 
 export const RAIL_STATIONS_PATH = path.join(
   INFRASTRUCTURE_DATA_PATH,
