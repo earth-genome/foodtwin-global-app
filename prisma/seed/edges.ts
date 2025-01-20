@@ -6,11 +6,8 @@ import { PrismaClient } from "@prisma/client";
 import { log, runOgr2Ogr } from "./utils";
 import { exec } from "child_process";
 import { promisify } from "util";
-import sqlite3 from "sqlite3";
-import { open, Database } from "sqlite";
 
 import {
-  EDGE_IDS_SQLITE_DB_PATH,
   EDGES_LAND_FILE,
   EDGES_LAND_FILE_TEMP,
   EDGES_MARITIME_PATH,
@@ -23,11 +20,12 @@ const execAsync = promisify(exec);
 
 export const ingestEdges = async (prisma: PrismaClient) => {
   await prisma.$executeRaw`TRUNCATE "Edge" RESTART IDENTITY CASCADE`;
+
   log("Cleared edges table.");
 
   await runOgr2Ogr(
     EDGES_MARITIME_PATH,
-    `-nln Edge -append -nlt MULTILINESTRING -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT from_id || '-' || to_id AS id, from_id AS \\"fromNodeId\\", to_id AS \\"toNodeId\\", distance, 'MARITIME' AS type, geom FROM ${EDGES_MARITIME_TABLENAME}"`
+    `-nln Edge -append -nlt MULTILINESTRING -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT from_id || '-' || to_id AS id_str, from_id AS \\"fromNodeId\\", to_id AS \\"toNodeId\\", distance, 'MARITIME' AS type, geom FROM ${EDGES_MARITIME_TABLENAME}"`
   );
   log("Ingested maritime edges.");
 
@@ -63,14 +61,14 @@ export const ingestEdges = async (prisma: PrismaClient) => {
   await prisma.$executeRaw`DROP TABLE IF EXISTS "land_edges_temp"`;
   await prisma.$executeRaw`
     CREATE UNLOGGED TABLE "land_edges_temp" (
-      id TEXT,
+      id_str TEXT,
       from_node_id TEXT,
       to_node_id TEXT,
       geometry GEOMETRY(MULTILINESTRING, 4326)
     )
   `;
 
-  const copyLandEdgesCommand = `\\COPY "land_edges_temp" ("id", from_node_id, to_node_id, "geometry") FROM '${EDGES_LAND_FILE_TEMP}' WITH (FORMAT CSV, DELIMITER ',');`;
+  const copyLandEdgesCommand = `\\COPY "land_edges_temp" ("id_str", from_node_id, to_node_id, "geometry") FROM '${EDGES_LAND_FILE_TEMP}' WITH (FORMAT CSV, DELIMITER ',');`;
 
   await execa(
     `psql -d ${POSTGRES_CONNECTION_STRING} -c "${copyLandEdgesCommand}"`,
@@ -80,10 +78,18 @@ export const ingestEdges = async (prisma: PrismaClient) => {
   );
   log("Copied land edges to temporary table.");
 
+  await prisma.$executeRaw`
+    CREATE INDEX IF NOT EXISTS idx_land_edges_temp_from_node_id ON "land_edges_temp" ("from_node_id");
+  `;
+  await prisma.$executeRaw`
+    CREATE INDEX IF NOT EXISTS idx_land_edges_temp_to_node_id ON "land_edges_temp" ("to_node_id");
+  `;
+  log("Created indexes on land edges temp table.");
+
   // export edges that don't have corresponding nodes
   const unmatchedLandEdgesQuery = `
     COPY (
-      SELECT le.id
+      SELECT le.id_str
       FROM "land_edges_temp" le
       LEFT JOIN "Node" n1 ON n1.id = le."from_node_id"
       LEFT JOIN "Node" n2 ON n2.id = le."to_node_id"
@@ -103,10 +109,16 @@ export const ingestEdges = async (prisma: PrismaClient) => {
   // Drop land edges that don't have corresponding nodes
   await prisma.$executeRaw`
     DELETE FROM "land_edges_temp"
-      WHERE "from_node_id" IS NULL
-        OR "to_node_id" IS NULL
-        OR "from_node_id" NOT IN (SELECT id FROM "Node")
-        OR "to_node_id" NOT IN (SELECT id FROM "Node");
+    WHERE "from_node_id" IS NULL
+      OR "to_node_id" IS NULL
+      OR NOT EXISTS (
+          SELECT 1 FROM "Node"
+          WHERE "id" = "land_edges_temp"."from_node_id"
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM "Node"
+          WHERE "id" = "land_edges_temp"."to_node_id"
+      );
   `;
   log("Deleted land edges that don't have corresponding nodes.");
 
@@ -117,7 +129,7 @@ export const ingestEdges = async (prisma: PrismaClient) => {
       WHERE ctid NOT IN (
         SELECT min(ctid)
         FROM "land_edges_temp"
-        GROUP BY id
+        GROUP BY id_str
       )
       RETURNING *
     )
@@ -131,9 +143,9 @@ export const ingestEdges = async (prisma: PrismaClient) => {
   `;
 
   await prisma.$executeRaw`
-    INSERT INTO "Edge" ("id", "fromNodeId", "toNodeId", distance, "type", "geom")
+    INSERT INTO "Edge" ("id_str", "fromNodeId", "toNodeId", distance, "type", "geom")
     SELECT
-        id,
+        id_str,
         from_node_id,
         to_node_id,
         0,
@@ -151,56 +163,4 @@ export const ingestEdges = async (prisma: PrismaClient) => {
     ALTER TABLE "Edge" ENABLE TRIGGER ALL;
   `;
   log(`Enabled triggers on Edge table.`);
-
-  await writeEdgeIdsSqliteDB(prisma);
 };
-
-async function writeEdgeIdsSqliteDB(prisma: PrismaClient) {
-  await fs.remove(EDGE_IDS_SQLITE_DB_PATH);
-
-  const diskDb = (await open({
-    filename: EDGE_IDS_SQLITE_DB_PATH as string,
-    driver: sqlite3.Database,
-  })) as Database;
-
-  await diskDb.exec(`CREATE TABLE edges (id TEXT PRIMARY KEY);`);
-  log("Created edges table in disk database...");
-
-  const batchSize = 100000; // Adjust based on your needs and system capabilities
-  let skip = 0;
-
-  await diskDb.exec("BEGIN TRANSACTION");
-
-  try {
-    const stmt = await diskDb.prepare("INSERT INTO edges (id) VALUES (?)");
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const edgesId = await prisma.edge.findMany({
-        select: { id: true },
-        take: batchSize,
-        skip: skip,
-      });
-
-      if (edgesId.length === 0) break;
-
-      for (const { id } of edgesId) {
-        await stmt.run(id);
-      }
-
-      skip += batchSize;
-      log(`Processed ${skip} edge IDs...`);
-    }
-
-    await stmt.finalize();
-    await diskDb.exec("COMMIT");
-    log("Inserted all edge IDs into disk database...");
-  } catch (error) {
-    await diskDb.exec("ROLLBACK");
-    // eslint-disable-next-line no-console
-    console.error("Error inserting edge IDs:", error);
-    throw error;
-  } finally {
-    await diskDb.close();
-  }
-}

@@ -29,6 +29,7 @@ enum NodeType {
   PORT
   RAIL_STATION
   ADMIN
+  ROAD
 }
 
 model Node {
@@ -48,7 +49,8 @@ enum EdgeType {
 }
 
 model Edge {
-  id           String                                         @id
+  id           Int                                            @id @default(autoincrement())
+  id_str       String
   distance     Float
   type         EdgeType
   geom         Unsupported("geometry(MultiLineString, 3857)")
@@ -99,7 +101,7 @@ model FlowSegment {
 
 model FlowSegmentEdges {
   id            Int         @id @default(autoincrement())
-  edgeId        String
+  edgeId        Int
   edge          Edge        @relation(fields: [edgeId], references: [id])
   flowSegmentId String
   flowSegment   FlowSegment @relation(fields: [flowSegmentId], references: [id])
