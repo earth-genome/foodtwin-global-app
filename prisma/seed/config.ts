@@ -36,6 +36,13 @@ export const INLAND_PORTS_PATH = path.join(
   `IWWNodes_infrastructure.gpkg`
 );
 export const INLAND_PORTS_TABLENAME = "IWWNodes_infrastructure";
+
+export const ROAD_NODES_CSV_PATH = path.join(
+  INFRASTRUCTURE_DATA_PATH,
+  `RoadNodes_infrastructure.csv`
+);
+export const ROAD_NODES_TABLENAME = "RoadNodes_infrastructure";
+
 export const RAIL_STATIONS_PATH = path.join(
   INFRASTRUCTURE_DATA_PATH,
   `RailNodes_infrastructure.gpkg`

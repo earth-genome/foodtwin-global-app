@@ -11,7 +11,10 @@ import {
   NODES_MARITIME_PATH,
   RAIL_STATIONS_PATH,
   RAIL_STATIONS_TABLENAME,
+  ROAD_NODES_CSV_PATH,
+  POSTGRES_CONNECTION_STRING,
 } from "./config";
+import { execa } from "execa";
 import fs from "fs-extra";
 import { parse } from "csv-parse";
 
@@ -111,6 +114,22 @@ export const ingestNodes = async (prisma: PrismaClient) => {
     `-nln Node -append -nlt POINT -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT node_id as id, 'INLAND_PORT' as type, geom FROM ${INLAND_PORTS_TABLENAME}" -s_srs EPSG:4326`
   );
   log("Ingested inland ports...");
+
+  // Disable triggers on the Node table
+  await prisma.$executeRaw`ALTER TABLE "Node" DISABLE TRIGGER ALL;`;
+
+  const copyRoadNodesCsvCmd = `COPY \\"Node\\" ("geom", \\"id\\", \\"type\\" ) FROM '${ROAD_NODES_CSV_PATH}' WITH (FORMAT CSV, DELIMITER ',', HEADER);`;
+
+  await execa(
+    `psql -d ${POSTGRES_CONNECTION_STRING} -c "${copyRoadNodesCsvCmd}"`,
+    {
+      shell: true,
+    }
+  );
+  log("Ingested road nodes...");
+
+  // Re-enable triggers on the Node table
+  await prisma.$executeRaw`ALTER TABLE "Node" ENABLE TRIGGER ALL;`;
 
   await runOgr2Ogr(
     RAIL_STATIONS_PATH,
