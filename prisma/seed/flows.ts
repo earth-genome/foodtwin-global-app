@@ -1,15 +1,13 @@
-import crypto from "crypto";
 import fs from "fs-extra";
 import path from "path";
 import { execa } from "execa";
 import { parse } from "csv-parse";
 import { PrismaClient } from "@prisma/client";
-import { listFilesRecursively, log } from "./utils";
+import { generateShortId, listFilesRecursively, log } from "./utils";
 
 import sqlite3 from "sqlite3";
 import { open, Database } from "sqlite";
 import {
-  EDGE_IDS_SQLITE_DB_PATH,
   FLOWS_FOLDER,
   POSTGRES_CONNECTION_STRING,
   SEED_DATA_PATH,
@@ -48,6 +46,7 @@ interface FoodGroupFile {
 }
 
 let memoryDb: Database;
+let edgesId: Record<string, number>;
 
 export const ingestFlows = async (prisma: PrismaClient) => {
   memoryDb = await open({
@@ -55,7 +54,20 @@ export const ingestFlows = async (prisma: PrismaClient) => {
     driver: sqlite3.Database,
   });
 
-  await loadEdgeIds();
+  const edges = await prisma.edge.findMany({
+    select: {
+      id: true,
+      id_str: true,
+    },
+  });
+
+  edgesId = edges.reduce(
+    (acc, { id, id_str }) => {
+      acc[id_str] = id;
+      return acc;
+    },
+    {} as Record<string, number>
+  ) as Record<string, number>;
 
   const foodGroups = await prisma.foodGroup.findMany({
     select: {
@@ -226,26 +238,29 @@ async function ingestFlowFile(
 
           const csvRowMode = row.mode || "unknown";
 
-          const flowSegmentId = crypto
-            .createHash("md5")
-            .update(`${flowId}-${csvRowMode}-${csvRowSegmentOrder}`)
-            .digest("hex");
-
-          const edgeId = `${row.from_id_admin}-${row.to_id_admin}`;
+          const flowSegmentId = generateShortId(
+            `${flowId}-${csvRowMode}-${csvRowSegmentOrder}`
+          );
+          // Discard paths not present in edges table, which should be roads edges not displayed in the map
+          const pathsCsv = row.paths
+            ?.replace(/['"[\]\s]/g, "")
+            .split(",")
+            .map((path: string) => edgesId[path])
+            .filter((edgeId: string | undefined) => edgeId)
+            .join(",");
 
           await memoryDb.run(
-            "INSERT INTO data (food_group_id, flow_id, flow_segment_id, edge_id, from_id_admin, to_id_admin, flow_value, mode, segment_order, paths_string) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO data (food_group_id, flow_id, flow_segment_id, from_id_admin, to_id_admin, flow_value, mode, segment_order, paths_string) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
               foodGroup.id,
               flowId,
               flowSegmentId,
-              edgeId,
               row.from_id_admin,
               row.to_id_admin,
               parseFloat(row.flow_value),
               csvRowMode,
               parseInt(csvRowSegmentOrder),
-              row.paths?.replace(/['"[\]\s]/g, ""),
+              pathsCsv,
             ]
           );
         } catch (error) {
@@ -336,7 +351,12 @@ async function ingestFlowFile(
           `${flow_segment_id},${flow_id},${mode},${segment_order}\n`
         );
 
+        if (paths_string.length === 0) {
+          return;
+        }
+
         const paths = paths_string.split(",");
+
         paths.forEach((edgeId: string, i: number) => {
           const order = i + 1;
 
@@ -361,13 +381,6 @@ async function ingestFlowFile(
     currentBatch += 1;
     log(`Processed ${flowSegmentsEdgesBatch.length} flow segments edges...`);
   }
-
-  // Delete not found edges
-  await memoryDb.exec(`
-    DELETE FROM flow_segments_edges_memory
-    WHERE edge_id NOT IN (SELECT id FROM edges);
-  `);
-  log("Deleted flow segments edges not found in edges...");
 
   // write flow segments edges to file
   const flowSegmentsEdgesFinal = await memoryDb.all(
@@ -410,40 +423,6 @@ async function ingestFlowFile(
   await fs.remove(flowsSegmentsTempFile);
   await fs.remove(flowsSegmentsEdgesTempFile);
   log("Cleaned up temporary csv files...");
-}
-
-async function loadEdgeIds() {
-  const diskDb = await open({
-    filename: EDGE_IDS_SQLITE_DB_PATH,
-    driver: sqlite3.Database,
-  });
-
-  await memoryDb.exec(`CREATE TABLE edges (id TEXT PRIMARY KEY);`);
-
-  log("Created edges table in memory database...");
-
-  // Use ATTACH DATABASE to connect disk and memory databases
-  await memoryDb.exec(
-    `ATTACH DATABASE '${EDGE_IDS_SQLITE_DB_PATH}' AS diskdb;`
-  );
-  log("Attached disk database to memory database...");
-
-  // Bulk insert from disk to memory
-  await memoryDb.exec(`INSERT INTO edges SELECT id FROM diskdb.edges;`);
-
-  log("Bulk inserted edge IDs into memory database...");
-
-  // Detach the disk database
-  await memoryDb.exec(`DETACH DATABASE diskdb;`);
-
-  // Close the disk database connection
-  await diskDb.close();
-
-  // log edges count
-  const edgesCount = await memoryDb.get("SELECT COUNT(*) as count FROM edges;");
-  log(`Loaded ${edgesCount.count} edge IDs into memory database.`);
-
-  log("Completed loading edge IDs into memory database.");
 }
 
 async function cascadeDeleteFlows(

@@ -1,5 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
+import crypto from "crypto";
 import { PrismaClient } from "@prisma/client/extension";
 import { POSTGRES_CONNECTION_STRING } from "./config";
 
@@ -85,4 +86,13 @@ export async function optimizeDb(prisma: PrismaClient) {
   await prisma.$executeRaw`SET max_parallel_workers = 8`;
   await prisma.$executeRaw`SET log_min_duration_statement = 1000`;
   await prisma.$executeRaw`SET random_page_cost = 1.1`;
+}
+
+export function generateShortId(input: string): string {
+  return crypto
+    .createHash("sha1")
+    .update(input)
+    .digest("base64")
+    .replace(/[/+=]/g, "") // Remove characters that are not URL-safe
+    .substring(0, 16); // Truncate to 16 characters
 }
