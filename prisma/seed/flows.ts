@@ -76,7 +76,6 @@ export const ingestFlows = async (prisma: PrismaClient) => {
     },
     where: {
       level: 1,
-      name: "Cloves",
     },
     orderBy: {
       name: "asc",
@@ -332,32 +331,36 @@ async function ingestFlowFile(
 
   log("Created in-memory table for flow segments edges...");
 
+  await prisma.$executeRaw`ALTER TABLE "FlowSegment" DISABLE TRIGGER ALL;`;
+  await prisma.$executeRaw`ALTER TABLE "FlowSegmentEdges" DISABLE TRIGGER ALL;`;
+
   let remainingFlowSegmentsEdges = (
     await memoryDb.get(`SELECT count(*) from data;`)
   )["count(*)"];
-  const batchSize = 100000;
+  const batchSize = 5000;
   let currentBatch = 0;
 
   while (remainingFlowSegmentsEdges > 0) {
-    const flowSegmentsEdgesBatch = await memoryDb.all(
+    const flowSegmentsBatch = await memoryDb.all(
       `SELECT * FROM data LIMIT ${batchSize} OFFSET ${currentBatch * batchSize};`
     );
 
-    const flowSegmentEdges = [] as [string, string, number][];
+    const flowSegments = [] as [string, string, string, number][];
+    const flowSegmentEdges = [] as [string, number, number][];
 
-    flowSegmentsEdgesBatch.forEach(
+    flowSegmentsBatch.forEach(
       ({ flow_segment_id, flow_id, mode, segment_order, paths_string }) => {
-        flowsSegmentsTempFileWriteStream.write(
-          `${flow_segment_id},${flow_id},${mode},${segment_order}\n`
-        );
+        flowSegments.push([flow_segment_id, flow_id, mode, segment_order]);
 
         if (paths_string.length === 0) {
           return;
         }
 
-        const paths = paths_string.split(",");
+        const paths = paths_string
+          .split(",")
+          .map((path: string) => parseInt(path));
 
-        paths.forEach((edgeId: string, i: number) => {
+        paths.forEach((edgeId: number, i: number) => {
           const order = i + 1;
 
           flowSegmentEdges.push([flow_segment_id, edgeId, order]);
@@ -365,55 +368,40 @@ async function ingestFlowFile(
       }
     );
 
-    await memoryDb.exec("BEGIN TRANSACTION;");
-    const insertStatement = await memoryDb.prepare(
-      `INSERT INTO flow_segments_edges_memory (flow_segment_id, edge_id, flow_segment_edge_order) VALUES (?, ?, ?);`
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.flowSegment.createMany({
+          data: flowSegments.map(([id, flowId, mode, order]) => ({
+            id,
+            flowId,
+            mode,
+            order,
+          })),
+        });
+
+        await tx.flowSegmentEdges.createMany({
+          data: flowSegmentEdges.map(([flowSegmentId, edgeId, order]) => ({
+            flowSegmentId,
+            edgeId,
+            order,
+          })),
+        });
+      },
+      {
+        timeout: 5 * 60 * 1000,
+      }
     );
-
-    for (const edge of flowSegmentEdges) {
-      await insertStatement.run(edge);
-    }
-
-    await memoryDb.exec("COMMIT;");
-    await insertStatement.finalize();
 
     remainingFlowSegmentsEdges -= batchSize;
     currentBatch += 1;
-    log(`Processed ${flowSegmentsEdgesBatch.length} flow segments edges...`);
+
+    log(
+      `Processed ${flowSegmentsBatch.length} more ${remainingFlowSegmentsEdges} to go...`
+    );
   }
 
-  // write flow segments edges to file
-  const flowSegmentsEdgesFinal = await memoryDb.all(
-    `SELECT flow_segment_id, edge_id, flow_segment_edge_order FROM flow_segments_edges_memory`
-  );
-
-  flowSegmentsEdgesFinal.forEach(
-    ({ flow_segment_id, edge_id, flow_segment_edge_order }) => {
-      flowsSegmentsEdgesTempFileWriteStream.write(
-        `${flow_segment_id},${edge_id},${flow_segment_edge_order}\n`
-      );
-    }
-  );
-
-  const copyFlowSegmentsCommand = `COPY \\"FlowSegment\\" (id, \\"flowId\\", mode, \\"order\\") FROM '${flowsSegmentsTempFile}' WITH (FORMAT CSV, DELIMITER ',');`;
-
-  await execa(
-    `psql -d ${POSTGRES_CONNECTION_STRING} -c "${copyFlowSegmentsCommand}"`,
-    {
-      shell: true,
-    }
-  );
-  log("Copied flow segments to database...");
-
-  // Copy flow segments edges to final table
-  const copyFlowSegmentsEdgesCommand = `COPY \\"FlowSegmentEdges\\" (\\"flowSegmentId\\", \\"edgeId\\", \\"order\\") FROM '${flowsSegmentsEdgesTempFile}' WITH (FORMAT CSV, DELIMITER ',');`;
-  await execa(
-    `psql -d ${POSTGRES_CONNECTION_STRING}  -c "${copyFlowSegmentsEdgesCommand}"`,
-    {
-      shell: true,
-    }
-  );
-  log("Copied flow segments edges to database...");
+  await prisma.$executeRaw`ALTER TABLE "FlowSegment" ENABLE TRIGGER ALL;`;
+  await prisma.$executeRaw`ALTER TABLE "FlowSegmentEdges" ENABLE TRIGGER ALL;`;
 
   await flowsTempFileWriteStream.close();
   await flowsSegmentsTempFileWriteStream.close();
