@@ -165,39 +165,17 @@ async function ingestFlowFile(
     throw new Error(`Unknown flow type for file ${filePath}`);
   }
 
-  if (filePath.endsWith(".gz")) {
-    const expandedFilePath = foodGroupFile.path.replace(".gz", "");
-    await execa(`gunzip -c "${foodGroupFile.path}" > "${expandedFilePath}"`, {
-      shell: true, // Use shell mode to support shell syntax like redirection
-    });
-    filePath = expandedFilePath;
-    log("Expanded file...");
-  }
+  const expandedFilePath = foodGroupFile.path.replace(".gz", "");
+  await execa(`gunzip -c "${foodGroupFile.path}" > "${expandedFilePath}"`, {
+    shell: true, // Use shell mode to support shell syntax like redirection
+  });
+  filePath = expandedFilePath;
+  log("Expanded file...");
 
   const flowsTempFile = path.join(SEED_DATA_PATH, `flows_${foodGroup.id}.csv`);
   await fs.remove(flowsTempFile);
   const flowsTempFileWriteStream = await fs.createWriteStream(flowsTempFile);
-
-  const flowsSegmentsTempFile = path.join(
-    SEED_DATA_PATH,
-    `flow_segments_${foodGroup.id}.csv`
-  );
-  await fs.remove(flowsSegmentsTempFile);
-  const flowsSegmentsTempFileWriteStream = await fs.createWriteStream(
-    flowsSegmentsTempFile
-  );
-
-  const flowsSegmentsEdgesTempFile = path.join(
-    SEED_DATA_PATH,
-    `flow_segments_edges_${foodGroup.id}.csv`
-  );
-  await fs.remove(flowsSegmentsEdgesTempFile);
-  const flowsSegmentsEdgesTempFileWriteStream = await fs.createWriteStream(
-    flowsSegmentsEdgesTempFile
-  );
-  log(
-    "Created temporary files for flows, flow segments and flow segments edges..."
-  );
+  log("Created temporary files for flows ...");
 
   // Create a table for the CSV data
   await memoryDb.exec(`
@@ -404,12 +382,9 @@ async function ingestFlowFile(
   await prisma.$executeRaw`ALTER TABLE "FlowSegmentEdges" ENABLE TRIGGER ALL;`;
 
   await flowsTempFileWriteStream.close();
-  await flowsSegmentsTempFileWriteStream.close();
-  await flowsSegmentsEdgesTempFileWriteStream.close();
 
+  await fs.remove(expandedFilePath);
   await fs.remove(flowsTempFile);
-  await fs.remove(flowsSegmentsTempFile);
-  await fs.remove(flowsSegmentsEdgesTempFile);
   log("Cleaned up temporary csv files...");
 }
 
