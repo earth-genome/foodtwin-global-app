@@ -14,7 +14,7 @@
     "postinstall": "prisma generate"
   },
   "prisma": {
-    "seed": "node --max-old-space-size=12096 --import tsx prisma/seed"
+    "seed": "node --max-old-space-size=65536 --import tsx prisma/seed"
   },
   "dependencies": {
     "@deck.gl/core": "^9.0.14",
