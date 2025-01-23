@@ -3,7 +3,7 @@ import path from "path";
 import { execa } from "execa";
 import { parse } from "csv-parse";
 import { PrismaClient } from "@prisma/client";
-import { generateShortId, listFilesRecursively, log } from "./utils";
+import { generateNumericId, listFilesRecursively, log } from "./utils";
 
 import sqlite3 from "sqlite3";
 import { open, Database } from "sqlite";
@@ -80,7 +80,6 @@ export const ingestFlows = async (prisma: PrismaClient) => {
     orderBy: {
       name: "asc",
     },
-    take: 1,
   });
 
   const allFlowFiles = (await listFilesRecursively(FLOWS_FOLDER)).filter(
@@ -92,6 +91,18 @@ export const ingestFlows = async (prisma: PrismaClient) => {
 
   // Process each food group
   for (const foodGroup of foodGroups) {
+    // Clear any expanded csv flow files from previous runs before starting
+    const expandedCsvFlowFiles = (
+      await listFilesRecursively(FLOWS_FOLDER)
+    ).filter((filePath: string) => {
+      const filename = path.basename(filePath);
+      return filename.startsWith("Flows_") && filename.endsWith(".csv");
+    });
+
+    for (const expandedCsvFlowFile of expandedCsvFlowFiles) {
+      await fs.remove(expandedCsvFlowFile);
+    }
+
     // Find all files for this food group
     const foodGroupFiles = allFlowFiles.filter((filePath: string) => {
       const filename = path.basename(filePath);
@@ -183,8 +194,8 @@ async function ingestFlowFile(
     CREATE TABLE data (
       id INTEGER PRIMARY KEY,
       food_group_id INTEGER,
-      flow_id TEXT,
-      flow_segment_id TEXT,
+      flow_id INTEGER,
+      flow_segment_id INTEGER,
       edge_id TEXT,
       from_id_admin TEXT,
       to_id_admin TEXT,
@@ -209,14 +220,16 @@ async function ingestFlowFile(
       .pipe(parseStream)
       .on("data", async (row) => {
         try {
-          const flowId = `${row.from_id_admin}-${row.to_id_admin}-${foodGroup.id}-${flowType}-${row.flow_value}`;
+          const flowCompositeId = `${row.from_id_admin}-${row.to_id_admin}-${foodGroup.id}-${flowType}-${row.flow_value}`;
+
+          const flowId = generateNumericId(flowCompositeId);
 
           const csvRowSegmentOrder = row.path_num || row.segment_order;
 
           const csvRowMode = row.mode || "unknown";
 
-          const flowSegmentId = generateShortId(
-            `${flowId}-${csvRowMode}-${csvRowSegmentOrder}`
+          const flowSegmentId = generateNumericId(
+            `${flowCompositeId}-${csvRowMode}-${csvRowSegmentOrder}`
           );
           // Discard paths not present in edges table, which should be roads edges not displayed in the map
           const pathsCsv = row.paths
@@ -230,8 +243,8 @@ async function ingestFlowFile(
             "INSERT INTO data (food_group_id, flow_id, flow_segment_id, from_id_admin, to_id_admin, flow_value, mode, segment_order, paths_string) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
               foodGroup.id,
-              flowId,
-              flowSegmentId,
+              flowId.toString(),
+              flowSegmentId.toString(),
               row.from_id_admin,
               row.to_id_admin,
               parseFloat(row.flow_value),
@@ -281,27 +294,9 @@ async function ingestFlowFile(
   );
   log("Copied flows to database...");
 
-  // Delete duplicate flow segments by keeping only the first occurrence
-  await memoryDb.exec(`
-  WITH ranked_segments AS (
-      SELECT
-        id,
-        flow_segment_id,
-        ROW_NUMBER() OVER (PARTITION BY flow_segment_id ORDER BY id) AS rn
-      FROM data
-    )
-    DELETE FROM data
-    WHERE id IN (
-      SELECT id
-      FROM ranked_segments
-      WHERE rn > 1
-    );
-  `);
-  log("Deleted duplicate flow segments...");
-
   await memoryDb.exec(`
     CREATE TABLE IF NOT EXISTS flow_segments_edges_memory (
-      flow_segment_id TEXT,
+      flow_segment_id INTEGER,
       edge_id TEXT,
       flow_segment_edge_order INTEGER
     );
@@ -323,8 +318,8 @@ async function ingestFlowFile(
       `SELECT * FROM data LIMIT ${batchSize} OFFSET ${currentBatch * batchSize};`
     );
 
-    const flowSegments = [] as [string, string, string, number][];
-    const flowSegmentEdges = [] as [string, number, number][];
+    const flowSegments = [] as [number, number, string, number][];
+    const flowSegmentEdges = [] as [number, number, number][];
 
     flowSegmentsBatch.forEach(
       ({ flow_segment_id, flow_id, mode, segment_order, paths_string }) => {
@@ -355,6 +350,7 @@ async function ingestFlowFile(
             mode,
             order,
           })),
+          skipDuplicates: true,
         });
 
         await tx.flowSegmentEdges.createMany({
@@ -373,9 +369,11 @@ async function ingestFlowFile(
     remainingFlowSegmentsEdges -= batchSize;
     currentBatch += 1;
 
-    log(
-      `Processed ${flowSegmentsBatch.length} more ${remainingFlowSegmentsEdges} to go...`
-    );
+    if (remainingFlowSegmentsEdges > 0) {
+      log(
+        `Processed ${flowSegmentsBatch.length} more ${remainingFlowSegmentsEdges} to go...`
+      );
+    }
   }
 
   await prisma.$executeRaw`ALTER TABLE "FlowSegment" ENABLE TRIGGER ALL;`;

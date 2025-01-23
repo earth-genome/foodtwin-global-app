@@ -88,11 +88,7 @@ export async function optimizeDb(prisma: PrismaClient) {
   await prisma.$executeRaw`SET random_page_cost = 1.1`;
 }
 
-export function generateShortId(input: string): string {
-  return crypto
-    .createHash("sha1")
-    .update(input)
-    .digest("base64")
-    .replace(/[/+=]/g, "") // Remove characters that are not URL-safe
-    .substring(0, 16); // Truncate to 16 characters
+export function generateNumericId(input: string): bigint {
+  const hash = crypto.createHash("sha256").update(input).digest("hex");
+  return BigInt("0x" + hash.slice(0, 15));
 }

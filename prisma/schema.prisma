@@ -75,7 +75,7 @@ enum FlowType {
 }
 
 model Flow {
-  id          String        @id
+  id          BigInt        @id
   fromArea    Area          @relation("FromArea", fields: [fromAreaId], references: [id])
   fromAreaId  String
   toArea      Area          @relation("ToArea", fields: [toAreaId], references: [id])
@@ -88,9 +88,9 @@ model Flow {
 }
 
 model FlowSegment {
-  id     String             @id
+  id     BigInt             @id
   mode   String
-  flowId String
+  flowId BigInt
   flow   Flow               @relation(fields: [flowId], references: [id], onDelete: Cascade)
   edges  FlowSegmentEdges[]
 
@@ -103,7 +103,7 @@ model FlowSegmentEdges {
   id            Int         @id @default(autoincrement())
   edgeId        Int
   edge          Edge        @relation(fields: [edgeId], references: [id])
-  flowSegmentId String
+  flowSegmentId BigInt
   flowSegment   FlowSegment @relation(fields: [flowSegmentId], references: [id])
   order         Int
 
