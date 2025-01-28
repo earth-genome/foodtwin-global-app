@@ -100,7 +100,7 @@ model FlowSegment {
 }
 
 model FlowSegmentEdges {
-  id            Int         @id @default(autoincrement())
+  id            BigInt      @id @default(autoincrement())
   edgeId        Int
   edge          Edge        @relation(fields: [edgeId], references: [id])
   flowSegmentId BigInt
