@@ -1,5 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
+import pLimit from "p-limit";
 import { execa } from "execa";
 import { parse } from "csv-parse";
 import { PrismaClient } from "@prisma/client";
@@ -14,6 +15,11 @@ import {
 } from "./config";
 
 const filesIngestLog = path.resolve(SEED_DATA_PATH, "file_ingest_log.txt");
+
+const BATCH_SIZE = 500;
+const WORKER_COUNT = 10;
+
+const limit = pLimit(WORKER_COUNT);
 
 export function logFileIngest(message: Error | string) {
   const currentTimestamp = new Date().toISOString();
@@ -80,6 +86,7 @@ export const ingestFlows = async (prisma: PrismaClient) => {
     orderBy: {
       name: "asc",
     },
+    skip: 4,
   });
 
   const allFlowFiles = (await listFilesRecursively(FLOWS_FOLDER)).filter(
@@ -307,74 +314,72 @@ async function ingestFlowFile(
   await prisma.$executeRaw`ALTER TABLE "FlowSegment" DISABLE TRIGGER ALL;`;
   await prisma.$executeRaw`ALTER TABLE "FlowSegmentEdges" DISABLE TRIGGER ALL;`;
 
-  let remainingFlowSegmentsEdges = (
+  const flowSegmentsEdgesCount = (
     await memoryDb.get(`SELECT count(*) from data;`)
   )["count(*)"];
-  const batchSize = 5000;
-  let currentBatch = 0;
+  const batchCount = Math.ceil(flowSegmentsEdgesCount / BATCH_SIZE);
+  const batchPromises = [] as Promise<void>[];
+  let batchesToIngest = batchCount;
 
-  while (remainingFlowSegmentsEdges > 0) {
-    const flowSegmentsBatch = await memoryDb.all(
-      `SELECT * FROM data LIMIT ${batchSize} OFFSET ${currentBatch * batchSize};`
+  for (let i = 0; i < batchCount; i += 1) {
+    batchPromises.push(
+      limit(async () => {
+        const flowSegmentsBatch = await memoryDb.all(
+          `SELECT * FROM data LIMIT ${BATCH_SIZE} OFFSET ${BATCH_SIZE * i};`
+        );
+
+        const flowSegments = [] as [number, number, string, number][];
+        const flowSegmentEdges = [] as [number, number, number][];
+        flowSegmentsBatch.forEach(
+          ({ flow_segment_id, flow_id, mode, segment_order, paths_string }) => {
+            flowSegments.push([flow_segment_id, flow_id, mode, segment_order]);
+            if (paths_string.length === 0) {
+              return;
+            }
+            const paths = paths_string
+              .split(",")
+              .map((path: string) => parseInt(path));
+            paths.forEach((edgeId: number, i: number) => {
+              const order = i + 1;
+              flowSegmentEdges.push([flow_segment_id, edgeId, order]);
+            });
+          }
+        );
+
+        await prisma.$transaction(
+          async (tx) => {
+            await tx.flowSegment.createMany({
+              data: flowSegments.map(([id, flowId, mode, order]) => ({
+                id,
+                flowId,
+                mode,
+                order,
+              })),
+              skipDuplicates: true,
+            });
+            await tx.flowSegmentEdges.createMany({
+              data: flowSegmentEdges.map(([flowSegmentId, edgeId, order]) => ({
+                flowSegmentId,
+                edgeId,
+                order,
+              })),
+            });
+          },
+          {
+            timeout: 5 * 60 * 1000,
+          }
+        );
+
+        batchesToIngest -= 1;
+
+        log(`Finished batch ${i + 1}, ${batchesToIngest} to go.`);
+      })
     );
-
-    const flowSegments = [] as [number, number, string, number][];
-    const flowSegmentEdges = [] as [number, number, number][];
-
-    flowSegmentsBatch.forEach(
-      ({ flow_segment_id, flow_id, mode, segment_order, paths_string }) => {
-        flowSegments.push([flow_segment_id, flow_id, mode, segment_order]);
-
-        if (paths_string.length === 0) {
-          return;
-        }
-
-        const paths = paths_string
-          .split(",")
-          .map((path: string) => parseInt(path));
-
-        paths.forEach((edgeId: number, i: number) => {
-          const order = i + 1;
-
-          flowSegmentEdges.push([flow_segment_id, edgeId, order]);
-        });
-      }
-    );
-
-    await prisma.$transaction(
-      async (tx) => {
-        await tx.flowSegment.createMany({
-          data: flowSegments.map(([id, flowId, mode, order]) => ({
-            id,
-            flowId,
-            mode,
-            order,
-          })),
-          skipDuplicates: true,
-        });
-
-        await tx.flowSegmentEdges.createMany({
-          data: flowSegmentEdges.map(([flowSegmentId, edgeId, order]) => ({
-            flowSegmentId,
-            edgeId,
-            order,
-          })),
-        });
-      },
-      {
-        timeout: 5 * 60 * 1000,
-      }
-    );
-
-    remainingFlowSegmentsEdges -= batchSize;
-    currentBatch += 1;
-
-    if (remainingFlowSegmentsEdges > 0) {
-      log(
-        `Processed ${flowSegmentsBatch.length} more ${remainingFlowSegmentsEdges} to go...`
-      );
-    }
   }
+
+  log("Waiting for all batches to complete...");
+
+  await Promise.all(batchPromises);
 
   await prisma.$executeRaw`ALTER TABLE "FlowSegment" ENABLE TRIGGER ALL;`;
   await prisma.$executeRaw`ALTER TABLE "FlowSegmentEdges" ENABLE TRIGGER ALL;`;
