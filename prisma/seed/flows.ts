@@ -14,13 +14,14 @@ import {
   SEED_DATA_PATH,
 } from "./config";
 
-const filesIngestLog = path.resolve(SEED_DATA_PATH, "file_ingest_log.txt");
-
 const BATCH_SIZE = 500;
-const WORKER_COUNT = 10;
+const WORKER_COUNT = 5;
+const TRANSACTION_TIMEOUT = 20 * 60 * 1000;
+const SKIP_FOOD_GROUPS = 0; // Skip food groups that have already been ingested
 
 const limit = pLimit(WORKER_COUNT);
 
+const filesIngestLog = path.resolve(SEED_DATA_PATH, "file_ingest_log.txt");
 export function logFileIngest(message: Error | string) {
   const currentTimestamp = new Date().toISOString();
   const logMessage =
@@ -86,7 +87,7 @@ export const ingestFlows = async (prisma: PrismaClient) => {
     orderBy: {
       name: "asc",
     },
-    skip: 4,
+    skip: SKIP_FOOD_GROUPS,
   });
 
   const allFlowFiles = (await listFilesRecursively(FLOWS_FOLDER)).filter(
@@ -366,7 +367,7 @@ async function ingestFlowFile(
             });
           },
           {
-            timeout: 5 * 60 * 1000,
+            timeout: TRANSACTION_TIMEOUT,
           }
         );
 
@@ -428,7 +429,7 @@ async function cascadeDeleteFlows(
       log(`Deleted Flows for ${foodGroupName}...`);
     },
     {
-      timeout: 5 * 60 * 1000,
+      timeout: TRANSACTION_TIMEOUT,
     }
   );
 
