@@ -97,6 +97,12 @@ export const ingestFlows = async (prisma: PrismaClient) => {
     }
   );
 
+  log("Clearing all flows...");
+  await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
+
+  log(`Dropping indexes for FlowSegmentEdges`);
+  await dropFlowSegmentEdgesIndexes(prisma);
+
   // Process each food group
   for (const foodGroup of foodGroups) {
     // Clear any expanded csv flow files from previous runs before starting
@@ -133,10 +139,6 @@ export const ingestFlows = async (prisma: PrismaClient) => {
       continue;
     }
 
-    // Delete existing flows for this food group
-    await cascadeDeleteFlows(prisma, foodGroup.id, foodGroup.name);
-    log(`Cleared existing flows for ${foodGroup.name}`);
-
     // Process each file for this food group
     for (const filePath of foodGroupFiles) {
       log(`Ingesting flows for ${foodGroup.name} from ${filePath}...`);
@@ -157,6 +159,9 @@ export const ingestFlows = async (prisma: PrismaClient) => {
 
     log(`Completed ingestion for ${foodGroup.name}`);
   }
+
+  log("Recreating indexes for FlowSegmentEdges");
+  await createFlowSegmentEdgesIndexes(prisma);
 };
 
 async function ingestFlowFile(
@@ -392,11 +397,14 @@ async function ingestFlowFile(
   log("Cleaned up temporary csv files...");
 }
 
-async function cascadeDeleteFlows(
+async function cascadeDeleteFoodGroupFlows(
   prisma: PrismaClient,
   foodGroupId: number,
   foodGroupName: string
 ) {
+  // Make sure indexes exists otherwise the delete will be slow
+  await createFlowSegmentEdgesIndexes(prisma);
+
   await prisma.$transaction(
     async (tx) => {
       // Delete FlowSegmentEdges
@@ -434,4 +442,35 @@ async function cascadeDeleteFlows(
   );
 
   log(`Completed cascading delete for ${foodGroupName}`);
+}
+
+async function createFlowSegmentEdgesIndexes(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    CREATE INDEX IF NOT EXISTS "FlowSegmentEdges_edgeId_idx"
+      ON public."FlowSegmentEdges" USING btree
+      ("edgeId" ASC NULLS LAST)
+      TABLESPACE pg_default;
+  `;
+
+  await prisma.$executeRaw`
+    CREATE INDEX IF NOT EXISTS "FlowSegmentEdges_flowSegmentId_idx"
+      ON public."FlowSegmentEdges" USING btree
+      ("flowSegmentId" COLLATE pg_catalog."default" ASC NULLS LAST)
+      TABLESPACE pg_default;
+  `;
+
+  log("Indexes created for FlowSegmentEdges");
+}
+
+// Function to drop indexes
+async function dropFlowSegmentEdgesIndexes(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    DROP INDEX IF EXISTS public."FlowSegmentEdges_edgeId_idx";
+  `;
+
+  await prisma.$executeRaw`
+    DROP INDEX IF EXISTS public."FlowSegmentEdges_flowSegmentId_idx";
+  `;
+
+  log("Indexes dropped for FlowSegmentEdges");
 }
