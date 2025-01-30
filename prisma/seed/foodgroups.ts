@@ -39,10 +39,10 @@ export const ingestFoodGroups = async (prisma: PrismaClient) => {
 
   // Level 1
   await prisma.$executeRaw`
-    INSERT INTO "FoodGroup" (name, level, \"parentId\")
-    SELECT DISTINCT foodgroup1, 1, fg.id
+    INSERT INTO "FoodGroup" (name, level, "parentId")
+    SELECT DISTINCT fgt.foodgroup1, 1, fg.id
     FROM "food_groups_temp" fgt
-    JOIN "FoodGroup"  fg ON fg.name = fgt.foodgroup2
+    JOIN "FoodGroup" fg ON fg.name = fgt.foodgroup2 AND fg.level = 2;
   `;
 
   await prisma.$executeRaw`
