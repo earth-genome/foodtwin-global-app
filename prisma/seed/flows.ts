@@ -455,7 +455,7 @@ async function createFlowSegmentEdgesIndexes(prisma: PrismaClient) {
   await prisma.$executeRaw`
     CREATE INDEX IF NOT EXISTS "FlowSegmentEdges_flowSegmentId_idx"
       ON public."FlowSegmentEdges" USING btree
-      ("flowSegmentId" COLLATE pg_catalog."default" ASC NULLS LAST)
+      ("flowSegmentId" ASC NULLS LAST)
       TABLESPACE pg_default;
   `;
 
