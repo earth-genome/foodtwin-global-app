@@ -122,16 +122,20 @@ export const ingestFlows = async (prisma: PrismaClient) => {
       const filename = path.basename(filePath);
 
       // First normalize any special spaces to regular spaces
-      const normalizedFilename = filename.replace(/[\u00A0\s]+/g, " ").trim();
-      const normalizedFoodGroup = foodGroup.name
+      const normalizedFilename = filename
+        .replace("Flows_", "")
+        .replace(".csv.gz", "")
         .replace(/[\u00A0\s]+/g, " ")
+        .replace(/_/g, " ") // replace underscores with spaces
+        .trim();
+      const normalizedFoodGroup = foodGroup.name
+        .replace(/[\u00A0\s]+/g, " ") // Normalize spaces
         .trim();
 
-      // Then encode
       const encodedFilename = encodeURIComponent(normalizedFilename);
       const encodedFoodGroup = encodeURIComponent(normalizedFoodGroup);
 
-      return encodedFilename.includes(encodedFoodGroup);
+      return encodedFilename === encodedFoodGroup;
     });
 
     if (foodGroupFiles.length === 0) {
