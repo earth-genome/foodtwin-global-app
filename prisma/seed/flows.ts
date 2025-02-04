@@ -474,6 +474,16 @@ async function createFlowSegmentEdgesIndexes(prisma: PrismaClient) {
       TABLESPACE pg_default;
   `;
 
+  await prisma.$executeRaw`
+    CREATE INDEX IF NOT EXISTS "Flow_foodGroupId_idx"
+    ON "Flow" ("foodGroupId");
+  `;
+
+  await prisma.$executeRaw`
+    CREATE INDEX IF NOT EXISTS "FlowSegment_flowId_idx"
+    ON "FlowSegment" ("flowId");
+  `;
+
   log("Indexes created for FlowSegmentEdges");
 }
 
@@ -485,6 +495,14 @@ async function dropFlowSegmentEdgesIndexes(prisma: PrismaClient) {
 
   await prisma.$executeRaw`
     DROP INDEX IF EXISTS public."FlowSegmentEdges_flowSegmentId_idx";
+  `;
+
+  await prisma.$executeRaw`
+    DROP INDEX IF EXISTS "Flow_foodGroupId_idx";
+  `;
+
+  await prisma.$executeRaw`
+    DROP INDEX IF EXISTS "FlowSegment_flowId_idx";
   `;
 
   log("Indexes dropped for FlowSegmentEdges");
