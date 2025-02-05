@@ -97,14 +97,17 @@ export const ingestFlows = async (prisma: PrismaClient) => {
     }
   );
 
-  log("Clearing all flows...");
-  await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
+  // log("Clearing all flows...");
+  // await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
 
-  log(`Dropping indexes for FlowSegmentEdges`);
-  await dropFlowSegmentEdgesIndexes(prisma);
+  // log(`Dropping indexes for FlowSegmentEdges`);
+  // await dropFlowSegmentEdgesIndexes(prisma);
 
   // Process each food group
   for (const foodGroup of foodGroups) {
+    log(`Clearing flows for ${foodGroup.name}`);
+    await cascadeDeleteFoodGroupFlows(prisma, foodGroup.id, foodGroup.name);
+
     // Clear any expanded csv flow files from previous runs before starting
     const expandedCsvFlowFiles = (
       await listFilesRecursively(FLOWS_FOLDER)
