@@ -10,6 +10,7 @@
     "db:seed": "prisma migrate reset",
     "db:dump": "node prisma/db-dump.js",
     "db:restore": "node prisma/db-restore.js",
+    "db:aggregate-edges": "node prisma/tasks/aggregate-edges.js",
     "studio": "prisma studio",
     "postinstall": "prisma generate"
   },
