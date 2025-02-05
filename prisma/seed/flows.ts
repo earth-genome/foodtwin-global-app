@@ -1,20 +1,47 @@
-import crypto from "crypto";
 import fs from "fs-extra";
 import path from "path";
+import pLimit from "p-limit";
 import { execa } from "execa";
 import { parse } from "csv-parse";
 import { PrismaClient } from "@prisma/client";
-import { listFilesRecursively, log } from "./utils";
+import { generateNumericId, listFilesRecursively, log } from "./utils";
 
 import sqlite3 from "sqlite3";
 import { open, Database } from "sqlite";
 import {
-  EDGE_IDS_SQLITE_DB_PATH,
-  FLOW_FILE_SIZE_LIMIT,
   FLOWS_FOLDER,
   POSTGRES_CONNECTION_STRING,
   SEED_DATA_PATH,
 } from "./config";
+
+const BATCH_SIZE = 500;
+const WORKER_COUNT = 5;
+const TRANSACTION_TIMEOUT = 60 * 60 * 1000;
+const SKIP_FOOD_GROUPS = 0; // Skip food groups that have already been ingested
+
+const limit = pLimit(WORKER_COUNT);
+
+const filesIngestLog = path.resolve(SEED_DATA_PATH, "file_ingest_log.txt");
+export function logFileIngest(message: Error | string) {
+  const currentTimestamp = new Date().toISOString();
+  const logMessage =
+    message instanceof Error
+      ? `${currentTimestamp}: ${message.stack}\n`
+      : `${currentTimestamp}: ${message}\n`;
+  // eslint-disable-next-line no-console
+  console.log(logMessage);
+
+  // Log to file
+  fs.appendFileSync(filesIngestLog, logMessage);
+}
+
+enum FlowType {
+  SEA_DOMESTIC = "SEA_DOMESTIC",
+  SEA_REEXPORT = "SEA_REEXPORT",
+  LAND_DOMESTIC = "LAND_DOMESTIC",
+  LAND_REEXPORT = "LAND_REEXPORT",
+  WITHIN_COUNTRY = "WITHIN_COUNTRY",
+}
 
 interface FoodGroupFile {
   path: string;
@@ -26,6 +53,7 @@ interface FoodGroupFile {
 }
 
 let memoryDb: Database;
+let edgesId: Record<string, number>;
 
 export const ingestFlows = async (prisma: PrismaClient) => {
   memoryDb = await open({
@@ -33,49 +61,114 @@ export const ingestFlows = async (prisma: PrismaClient) => {
     driver: sqlite3.Database,
   });
 
-  await loadEdgeIds();
+  const edges = await prisma.edge.findMany({
+    select: {
+      id: true,
+      id_str: true,
+    },
+  });
 
-  const foodGroups = await prisma.foodGroup.findMany({});
+  edgesId = edges.reduce(
+    (acc, { id, id_str }) => {
+      acc[id_str] = id;
+      return acc;
+    },
+    {} as Record<string, number>
+  ) as Record<string, number>;
 
-  let flowFiles = (await listFilesRecursively(FLOWS_FOLDER))
-    .filter((filePath: string) => {
+  const foodGroups = await prisma.foodGroup.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+    where: {
+      level: 1,
+    },
+    orderBy: {
+      name: "asc",
+    },
+    skip: SKIP_FOOD_GROUPS,
+  });
+
+  const allFlowFiles = (await listFilesRecursively(FLOWS_FOLDER)).filter(
+    (filePath: string) => {
       const filename = path.basename(filePath);
-      return (
-        filename.startsWith("Flows_") &&
-        (filename.endsWith(".gz") || filename.endsWith(".csv"))
-      );
-    })
-    .map((filePath: string) => {
+      return filename.startsWith("Flows_") && filename.endsWith(".csv.gz");
+    }
+  );
+
+  // log("Clearing all flows...");
+  // await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
+
+  // log(`Dropping indexes for FlowSegmentEdges`);
+  // await dropFlowSegmentEdgesIndexes(prisma);
+
+  // Process each food group
+  for (const foodGroup of foodGroups) {
+    log(`Clearing flows for ${foodGroup.name}`);
+    await cascadeDeleteFoodGroupFlows(prisma, foodGroup.id, foodGroup.name);
+
+    // Clear any expanded csv flow files from previous runs before starting
+    const expandedCsvFlowFiles = (
+      await listFilesRecursively(FLOWS_FOLDER)
+    ).filter((filePath: string) => {
       const filename = path.basename(filePath);
-      const foodGroupName = filename.split("_")[1].split(".")[0];
-      const foodGroup = foodGroups.find((fg) =>
-        fg.name.endsWith(foodGroupName)
-      );
-      const fileSize = fs.statSync(filePath).size; // Get file size in bytes
+      return filename.startsWith("Flows_") && filename.endsWith(".csv");
+    });
 
-      return {
-        path: filePath,
-        size: fileSize,
-        foodGroup,
-      };
-    })
-    .sort(
-      (
-        a: {
-          size: number;
-        },
-        b: {
-          size: number;
-        }
-      ) => a.size - b.size
-    ) as FoodGroupFile[];
+    for (const expandedCsvFlowFile of expandedCsvFlowFiles) {
+      await fs.remove(expandedCsvFlowFile);
+    }
 
-  flowFiles = flowFiles.filter(({ size }) => size < FLOW_FILE_SIZE_LIMIT);
+    // Find all files for this food group
+    const foodGroupFiles = allFlowFiles.filter((filePath: string) => {
+      const filename = path.basename(filePath);
 
-  for (const flowFile of flowFiles) {
-    log(`Ingesting flows for ${flowFile.foodGroup.name}...`);
-    await ingestFlowFile(prisma, flowFile);
+      // First normalize any special spaces to regular spaces
+      const normalizedFilename = filename
+        .replace("Flows_", "")
+        .replace(".csv.gz", "")
+        .replace(/[\u00A0\s]+/g, " ")
+        .replace(/_/g, " ") // replace underscores with spaces
+        .trim();
+      const normalizedFoodGroup = foodGroup.name
+        .replace(/[\u00A0\s]+/g, " ") // Normalize spaces
+        .trim();
+
+      const encodedFilename = encodeURIComponent(normalizedFilename);
+      const encodedFoodGroup = encodeURIComponent(normalizedFoodGroup);
+
+      return encodedFilename === encodedFoodGroup;
+    });
+
+    if (foodGroupFiles.length === 0) {
+      log(`No flow files found for ${foodGroup.name}`);
+      continue;
+    }
+
+    // Process each file for this food group
+    for (const filePath of foodGroupFiles) {
+      log(`Ingesting flows for ${foodGroup.name} from ${filePath}...`);
+      try {
+        await ingestFlowFile(prisma, {
+          path: filePath,
+          size: fs.statSync(filePath).size,
+          foodGroup,
+        });
+        logFileIngest(`Ingested flows for ${foodGroup.name} from ${filePath}`);
+      } catch (error) {
+        logFileIngest(
+          `Error ingesting flows for ${foodGroup.name} from ${filePath}`
+        );
+        logFileIngest(error as Error);
+      }
+    }
+
+    log(`Completed ingestion for ${foodGroup.name}`);
   }
+
+  log("Recreating indexes for FlowSegmentEdges");
+  await createFlowSegmentEdgesIndexes(prisma);
 };
 
 async function ingestFlowFile(
@@ -87,42 +180,33 @@ async function ingestFlowFile(
 
   let filePath = foodGroupFile.path;
 
-  if (filePath.endsWith(".gz")) {
-    const expandedFilePath = foodGroupFile.path.replace(".gz", "");
-    await execa(`gunzip -c "${foodGroupFile.path}" > "${expandedFilePath}"`, {
-      shell: true, // Use shell mode to support shell syntax like redirection
-    });
-    filePath = expandedFilePath;
-    log("Expanded file...");
+  let flowType: FlowType;
+
+  if (filePath.includes("Sea_Domestic")) {
+    flowType = FlowType.SEA_DOMESTIC;
+  } else if (filePath.includes("Sea_ReExports")) {
+    flowType = FlowType.SEA_REEXPORT;
+  } else if (filePath.includes("Land_Domestic")) {
+    flowType = FlowType.LAND_DOMESTIC;
+  } else if (filePath.includes("Land_ReExports")) {
+    flowType = FlowType.LAND_REEXPORT;
+  } else if (filePath.includes("Within_Country")) {
+    flowType = FlowType.WITHIN_COUNTRY;
+  } else {
+    throw new Error(`Unknown flow type for file ${filePath}`);
   }
+
+  const expandedFilePath = foodGroupFile.path.replace(".gz", "");
+  await execa(`gunzip -c "${foodGroupFile.path}" > "${expandedFilePath}"`, {
+    shell: true, // Use shell mode to support shell syntax like redirection
+  });
+  filePath = expandedFilePath;
+  log("Expanded file...");
 
   const flowsTempFile = path.join(SEED_DATA_PATH, `flows_${foodGroup.id}.csv`);
   await fs.remove(flowsTempFile);
   const flowsTempFileWriteStream = await fs.createWriteStream(flowsTempFile);
-
-  const flowsSegmentsTempFile = path.join(
-    SEED_DATA_PATH,
-    `flow_segments_${foodGroup.id}.csv`
-  );
-  await fs.remove(flowsSegmentsTempFile);
-  const flowsSegmentsTempFileWriteStream = await fs.createWriteStream(
-    flowsSegmentsTempFile
-  );
-
-  const flowsSegmentsEdgesTempFile = path.join(
-    SEED_DATA_PATH,
-    `flow_segments_edges_${foodGroup.id}.csv`
-  );
-  await fs.remove(flowsSegmentsEdgesTempFile);
-  const flowsSegmentsEdgesTempFileWriteStream = await fs.createWriteStream(
-    flowsSegmentsEdgesTempFile
-  );
-  log(
-    "Created temporary files for flows, flow segments and flow segments edges..."
-  );
-
-  await cascadeDeleteFlows(prisma, foodGroup.id, foodGroup.name);
-  log(`Deleted existing flows for ${foodGroup.name}...`);
+  log("Created temporary files for flows ...");
 
   // Create a table for the CSV data
   await memoryDb.exec(`
@@ -130,8 +214,8 @@ async function ingestFlowFile(
     CREATE TABLE data (
       id INTEGER PRIMARY KEY,
       food_group_id INTEGER,
-      flow_id TEXT,
-      flow_segment_id TEXT,
+      flow_id INTEGER,
+      flow_segment_id INTEGER,
       edge_id TEXT,
       from_id_admin TEXT,
       to_id_admin TEXT,
@@ -156,28 +240,37 @@ async function ingestFlowFile(
       .pipe(parseStream)
       .on("data", async (row) => {
         try {
-          const flowId = `${row.from_id_admin}-${row.to_id_admin}-${foodGroup.id}`;
+          const flowCompositeId = `${row.from_id_admin}-${row.to_id_admin}-${foodGroup.id}-${flowType}-${row.flow_value}`;
 
-          const flowSegmentId = crypto
-            .createHash("md5")
-            .update(`${flowId}-${row.mode}-${row.segment_order}`)
-            .digest("hex");
+          const flowId = generateNumericId(flowCompositeId);
 
-          const edgeId = `${row.from_id_admin}-${row.to_id_admin}`;
+          const csvRowSegmentOrder = row.path_num || row.segment_order;
+
+          const csvRowMode = row.mode || "unknown";
+
+          const flowSegmentId = generateNumericId(
+            `${flowCompositeId}-${csvRowMode}-${csvRowSegmentOrder}`
+          );
+          // Discard paths not present in edges table, which should be roads edges not displayed in the map
+          const pathsCsv = row.paths
+            ?.replace(/['"[\]\s]/g, "")
+            .split(",")
+            .map((path: string) => edgesId[path])
+            .filter((edgeId: string | undefined) => edgeId)
+            .join(",");
 
           await memoryDb.run(
-            "INSERT INTO data (food_group_id, flow_id, flow_segment_id, edge_id, from_id_admin, to_id_admin, flow_value, mode, segment_order, paths_string) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO data (food_group_id, flow_id, flow_segment_id, from_id_admin, to_id_admin, flow_value, mode, segment_order, paths_string) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
               foodGroup.id,
-              flowId,
-              flowSegmentId,
-              edgeId,
+              flowId.toString(),
+              flowSegmentId.toString(),
               row.from_id_admin,
               row.to_id_admin,
               parseFloat(row.flow_value),
-              row.mode,
-              parseInt(row.segment_order),
-              row.paths?.replace(/['"[\]\s]/g, ""),
+              csvRowMode,
+              parseInt(csvRowSegmentOrder),
+              pathsCsv,
             ]
           );
         } catch (error) {
@@ -205,14 +298,14 @@ async function ingestFlowFile(
     const { flow_id, from_id_admin, to_id_admin, flow_value } = flow;
 
     await flowsTempFileWriteStream.write(
-      `${flow_id},${from_id_admin},${to_id_admin},${flow_value},${foodGroup.id}\n`
+      `${flow_id},${from_id_admin},${to_id_admin},${flow_value},${foodGroup.id},${flowType}\n`
     );
   }
 
   await flowsTempFileWriteStream.end();
   log(`Wrote flows to file ${flowsTempFile}...`);
 
-  const copyFlowsCommand = `COPY \\"Flow\\" ("id", \\"fromAreaId\\", \\"toAreaId\\", "value", \\"foodGroupId\\") FROM '${flowsTempFile}' WITH (FORMAT CSV, DELIMITER ',');`;
+  const copyFlowsCommand = `COPY \\"Flow\\" ("id", \\"fromAreaId\\", \\"toAreaId\\", "value", \\"foodGroupId\\", \\"type\\") FROM '${flowsTempFile}' WITH (FORMAT CSV, DELIMITER ',');`;
   await execa(
     `psql -d ${POSTGRES_CONNECTION_STRING} -c "${copyFlowsCommand}"`,
     {
@@ -221,27 +314,9 @@ async function ingestFlowFile(
   );
   log("Copied flows to database...");
 
-  // Delete duplicate flow segments by keeping only the first occurrence
-  await memoryDb.exec(`
-  WITH ranked_segments AS (
-      SELECT
-        id,
-        flow_segment_id,
-        ROW_NUMBER() OVER (PARTITION BY flow_segment_id ORDER BY id) AS rn
-      FROM data
-    )
-    DELETE FROM data
-    WHERE id IN (
-      SELECT id
-      FROM ranked_segments
-      WHERE rn > 1
-    );
-  `);
-  log("Deleted duplicate flow segments...");
-
   await memoryDb.exec(`
     CREATE TABLE IF NOT EXISTS flow_segments_edges_memory (
-      flow_segment_id TEXT,
+      flow_segment_id INTEGER,
       edge_id TEXT,
       flow_segment_edge_order INTEGER
     );
@@ -249,143 +324,109 @@ async function ingestFlowFile(
 
   log("Created in-memory table for flow segments edges...");
 
-  let remainingFlowSegmentsEdges = (
+  await prisma.$executeRaw`ALTER TABLE "FlowSegment" DISABLE TRIGGER ALL;`;
+  await prisma.$executeRaw`ALTER TABLE "FlowSegmentEdges" DISABLE TRIGGER ALL;`;
+
+  const flowSegmentsEdgesCount = (
     await memoryDb.get(`SELECT count(*) from data;`)
   )["count(*)"];
-  const batchSize = 100000;
-  let currentBatch = 0;
+  const batchCount = Math.ceil(flowSegmentsEdgesCount / BATCH_SIZE);
+  const batchPromises = [] as Promise<void>[];
+  let batchesToIngest = batchCount;
 
-  while (remainingFlowSegmentsEdges > 0) {
-    const flowSegmentsEdgesBatch = await memoryDb.all(
-      `SELECT * FROM data LIMIT ${batchSize} OFFSET ${currentBatch * batchSize};`
-    );
+  await prisma.$transaction(
+    async (tx) => {
+      for (let i = 0; i < batchCount; i += 1) {
+        batchPromises.push(
+          limit(async () => {
+            const flowSegmentsBatch = await memoryDb.all(
+              `SELECT * FROM data LIMIT ${BATCH_SIZE} OFFSET ${BATCH_SIZE * i};`
+            );
 
-    const flowSegmentEdges = [] as [string, string, number][];
+            const flowSegments = [] as [number, number, string, number][];
+            const flowSegmentEdges = [] as [number, number, number][];
+            flowSegmentsBatch.forEach(
+              ({
+                flow_segment_id,
+                flow_id,
+                mode,
+                segment_order,
+                paths_string,
+              }) => {
+                flowSegments.push([
+                  flow_segment_id,
+                  flow_id,
+                  mode,
+                  segment_order,
+                ]);
+                if (paths_string.length === 0) {
+                  return;
+                }
+                const paths = paths_string
+                  .split(",")
+                  .map((path: string) => parseInt(path));
+                paths.forEach((edgeId: number, i: number) => {
+                  const order = i + 1;
+                  flowSegmentEdges.push([flow_segment_id, edgeId, order]);
+                });
+              }
+            );
 
-    flowSegmentsEdgesBatch.forEach(
-      ({ flow_segment_id, flow_id, mode, segment_order, paths_string }) => {
-        flowsSegmentsTempFileWriteStream.write(
-          `${flow_segment_id},${flow_id},${mode},${segment_order}\n`
+            await tx.flowSegment.createMany({
+              data: flowSegments.map(([id, flowId, mode, order]) => ({
+                id,
+                flowId,
+                mode,
+                order,
+              })),
+              skipDuplicates: true,
+            });
+            await tx.flowSegmentEdges.createMany({
+              data: flowSegmentEdges.map(([flowSegmentId, edgeId, order]) => ({
+                flowSegmentId,
+                edgeId,
+                order,
+              })),
+            });
+
+            batchesToIngest -= 1;
+
+            log(`Finished batch ${i + 1}, ${batchesToIngest} to go.`);
+          })
         );
-
-        const paths = paths_string.split(",");
-        paths.forEach((edgeId: string, i: number) => {
-          const order = i + 1;
-
-          flowSegmentEdges.push([flow_segment_id, edgeId, order]);
-        });
       }
-    );
 
-    await memoryDb.exec("BEGIN TRANSACTION;");
-    const insertStatement = await memoryDb.prepare(
-      `INSERT INTO flow_segments_edges_memory (flow_segment_id, edge_id, flow_segment_edge_order) VALUES (?, ?, ?);`
-    );
+      log("Waiting for all batches to complete...");
 
-    for (const edge of flowSegmentEdges) {
-      await insertStatement.run(edge);
-    }
-
-    await memoryDb.exec("COMMIT;");
-    await insertStatement.finalize();
-
-    remainingFlowSegmentsEdges -= batchSize;
-    currentBatch += 1;
-    log(`Processed ${flowSegmentsEdgesBatch.length} flow segments edges...`);
-  }
-
-  // Delete not found edges
-  await memoryDb.exec(`
-    DELETE FROM flow_segments_edges_memory
-    WHERE edge_id NOT IN (SELECT id FROM edges);
-  `);
-  log("Deleted flow segments edges not found in edges...");
-
-  // write flow segments edges to file
-  const flowSegmentsEdgesFinal = await memoryDb.all(
-    `SELECT flow_segment_id, edge_id, flow_segment_edge_order FROM flow_segments_edges_memory`
-  );
-
-  flowSegmentsEdgesFinal.forEach(
-    ({ flow_segment_id, edge_id, flow_segment_edge_order }) => {
-      flowsSegmentsEdgesTempFileWriteStream.write(
-        `${flow_segment_id},${edge_id},${flow_segment_edge_order}\n`
-      );
-    }
-  );
-
-  const copyFlowSegmentsCommand = `COPY \\"FlowSegment\\" (id, \\"flowId\\", mode, \\"order\\") FROM '${flowsSegmentsTempFile}' WITH (FORMAT CSV, DELIMITER ',');`;
-
-  await execa(
-    `psql -d ${POSTGRES_CONNECTION_STRING} -c "${copyFlowSegmentsCommand}"`,
+      await Promise.all(batchPromises);
+    },
     {
-      shell: true,
+      timeout: TRANSACTION_TIMEOUT,
     }
   );
-  log("Copied flow segments to database...");
 
-  // Copy flow segments edges to final table
-  const copyFlowSegmentsEdgesCommand = `COPY \\"FlowSegmentEdges\\" (\\"flowSegmentId\\", \\"edgeId\\", \\"order\\") FROM '${flowsSegmentsEdgesTempFile}' WITH (FORMAT CSV, DELIMITER ',');`;
-  await execa(
-    `psql -d ${POSTGRES_CONNECTION_STRING}  -c "${copyFlowSegmentsEdgesCommand}"`,
-    {
-      shell: true,
-    }
-  );
-  log("Copied flow segments edges to database...");
+  await prisma.$executeRaw`ALTER TABLE "FlowSegment" ENABLE TRIGGER ALL;`;
+  await prisma.$executeRaw`ALTER TABLE "FlowSegmentEdges" ENABLE TRIGGER ALL;`;
 
   await flowsTempFileWriteStream.close();
-  await flowsSegmentsTempFileWriteStream.close();
-  await flowsSegmentsEdgesTempFileWriteStream.close();
 
+  await fs.remove(expandedFilePath);
   await fs.remove(flowsTempFile);
-  await fs.remove(flowsSegmentsTempFile);
-  await fs.remove(flowsSegmentsEdgesTempFile);
   log("Cleaned up temporary csv files...");
 }
 
-async function loadEdgeIds() {
-  const diskDb = await open({
-    filename: EDGE_IDS_SQLITE_DB_PATH,
-    driver: sqlite3.Database,
-  });
-
-  await memoryDb.exec(`CREATE TABLE edges (id TEXT PRIMARY KEY);`);
-
-  log("Created edges table in memory database...");
-
-  // Use ATTACH DATABASE to connect disk and memory databases
-  await memoryDb.exec(
-    `ATTACH DATABASE '${EDGE_IDS_SQLITE_DB_PATH}' AS diskdb;`
-  );
-  log("Attached disk database to memory database...");
-
-  // Bulk insert from disk to memory
-  await memoryDb.exec(`INSERT INTO edges SELECT id FROM diskdb.edges;`);
-
-  log("Bulk inserted edge IDs into memory database...");
-
-  // Detach the disk database
-  await memoryDb.exec(`DETACH DATABASE diskdb;`);
-
-  // Close the disk database connection
-  await diskDb.close();
-
-  // log edges count
-  const edgesCount = await memoryDb.get("SELECT COUNT(*) as count FROM edges;");
-  log(`Loaded ${edgesCount.count} edge IDs into memory database.`);
-
-  log("Completed loading edge IDs into memory database.");
-}
-
-async function cascadeDeleteFlows(
+async function cascadeDeleteFoodGroupFlows(
   prisma: PrismaClient,
   foodGroupId: number,
   foodGroupName: string
 ) {
-  await prisma.$transaction(async (tx) => {
-    // Delete FlowSegmentEdges
-    await tx.$executeRaw`
+  // Make sure indexes exists otherwise the delete will be slow
+  await createFlowSegmentEdgesIndexes(prisma);
+
+  await prisma.$transaction(
+    async (tx) => {
+      // Delete FlowSegmentEdges
+      await tx.$executeRaw`
         DELETE FROM "FlowSegmentEdges"
         WHERE "flowSegmentId" IN (
           SELECT "FlowSegment".id
@@ -394,25 +435,78 @@ async function cascadeDeleteFlows(
           WHERE "Flow"."foodGroupId" = ${foodGroupId}
         )
       `;
-    log(`Deleted FlowSegmentEdges for ${foodGroupName}...`);
+      log(`Deleted FlowSegmentEdges for ${foodGroupName}...`);
 
-    // Delete FlowSegments
-    await tx.$executeRaw`
+      // Delete FlowSegments
+      await tx.$executeRaw`
         DELETE FROM "FlowSegment"
         WHERE "flowId" IN (
           SELECT id FROM "Flow"
           WHERE "foodGroupId" = ${foodGroupId}
         )
       `;
-    log(`Deleted FlowSegments for ${foodGroupName}...`);
+      log(`Deleted FlowSegments for ${foodGroupName}...`);
 
-    // Delete Flows
-    await tx.$executeRaw`
+      // Delete Flows
+      await tx.$executeRaw`
         DELETE FROM "Flow"
         WHERE "foodGroupId" = ${foodGroupId}
       `;
-    log(`Deleted Flows for ${foodGroupName}...`);
-  });
+      log(`Deleted Flows for ${foodGroupName}...`);
+    },
+    {
+      timeout: TRANSACTION_TIMEOUT,
+    }
+  );
 
   log(`Completed cascading delete for ${foodGroupName}`);
+}
+
+async function createFlowSegmentEdgesIndexes(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    CREATE INDEX IF NOT EXISTS "FlowSegmentEdges_edgeId_idx"
+      ON public."FlowSegmentEdges" USING btree
+      ("edgeId" ASC NULLS LAST)
+      TABLESPACE pg_default;
+  `;
+
+  await prisma.$executeRaw`
+    CREATE INDEX IF NOT EXISTS "FlowSegmentEdges_flowSegmentId_idx"
+      ON public."FlowSegmentEdges" USING btree
+      ("flowSegmentId" ASC NULLS LAST)
+      TABLESPACE pg_default;
+  `;
+
+  await prisma.$executeRaw`
+    CREATE INDEX IF NOT EXISTS "Flow_foodGroupId_idx"
+    ON "Flow" ("foodGroupId");
+  `;
+
+  await prisma.$executeRaw`
+    CREATE INDEX IF NOT EXISTS "FlowSegment_flowId_idx"
+    ON "FlowSegment" ("flowId");
+  `;
+
+  log("Indexes created for FlowSegmentEdges");
+}
+
+// Function to drop indexes
+async function dropFlowSegmentEdgesIndexes(prisma: PrismaClient) {
+  await prisma.$executeRaw`
+    DROP INDEX IF EXISTS public."FlowSegmentEdges_edgeId_idx";
+  `;
+
+  await prisma.$executeRaw`
+    DROP INDEX IF EXISTS public."FlowSegmentEdges_flowSegmentId_idx";
+  `;
+
+  await prisma.$executeRaw`
+    DROP INDEX IF EXISTS "Flow_foodGroupId_idx";
+  `;
+
+  await prisma.$executeRaw`
+    DROP INDEX IF EXISTS "FlowSegment_flowId_idx";
+  `;
+
+  log("Indexes dropped for FlowSegmentEdges");
 }

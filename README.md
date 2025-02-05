@@ -14,6 +14,20 @@ To set up the development environment for this website, you'll need to install t
 - [GDAL](https://gdal.org/)
 - [PostgreSQL](https://www.postgresql.org/)
 
+## Download seed data
+
+The data files are hosted in Google Drive. The recommended approach to download them is:
+
+1. Install the Google Drive desktop app for your operating system
+2. In the Google Drive app, sync the Food Twin 2.0/Version3 folder
+3. Copy the files to your local seed data directory using rsync to resolve symlinks:
+
+```bash
+# Replace SOURCE_PATH with your Google Drive folder path
+# TARGET_PATH should match SEED_DATA_PATH in your .env file
+rsync -av --copy-links "SOURCE_PATH/Food Twin 2.0/Version3/" TARGET_PATH/
+```
+
 ### Initialize `.env.local` File
 
 The project uses environment variables, which are set by default in the [.env](.env) file. To customize these variables (e.g., to use a custom database), create a `.env.local` file at the root of the repository (`cp .env .env.local`) and modify as needed.
@@ -41,8 +55,6 @@ Start database server:
 ```sh
 docker-compose up
 ```
-
-Download seed data and place it into the folder specified by `SEED_DATA_PATH` in the [.env](.env) file.
 
 Apply migrations and ingest seed data:
 

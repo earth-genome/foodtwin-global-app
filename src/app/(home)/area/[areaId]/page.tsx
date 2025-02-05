@@ -88,16 +88,16 @@ const AreaPage = async ({
     prisma.foodGroup.findMany(),
     prisma.$queryRawUnsafe(`
       SELECT sum(value)
-        FROM "FlowSegment"
-        LEFT JOIN "Flow" ON "FlowSegment"."flowId" = "Flow"."id"
-        WHERE "flowId" like '%-${area.id}-%';
+        FROM "Flow"
+        WHERE "toAreaId" = '${area.id}'
+        GROUP BY "toAreaId";
     `),
     prisma.$queryRawUnsafe(
       `SELECT "mode", sum("value") as value, "toAreaId", "Node"."name", "Node"."type"
         FROM "FlowSegment"
         LEFT JOIN "Flow" ON "FlowSegment"."flowId" = "Flow"."id"
         LEFT JOIN "Node" ON "Flow"."toAreaId" = "Node"."id"
-        WHERE "flowId" LIKE '${area.id}-%' AND "order" = 1
+        WHERE "Flow"."fromAreaId" = '${area.id}' AND "order" = 1
         GROUP BY "toAreaId", "mode", "Node"."name", "Node"."type"
         ORDER BY value DESC;
     `
@@ -272,7 +272,7 @@ const AreaPage = async ({
                 decimalPlaces={0}
               />
               <Metric
-                label="Suplied to the region"
+                label="Supplied to the region"
                 value={(inBoundFlows as ImportSum[])[0].sum}
                 formatType="weight"
                 decimalPlaces={0}

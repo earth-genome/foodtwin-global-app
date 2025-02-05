@@ -29,6 +29,7 @@ enum NodeType {
   PORT
   RAIL_STATION
   ADMIN
+  ROAD
 }
 
 model Node {
@@ -48,7 +49,8 @@ enum EdgeType {
 }
 
 model Edge {
-  id           String                                         @id
+  id           Int                                            @id @default(autoincrement())
+  id_str       String
   distance     Float
   type         EdgeType
   geom         Unsupported("geometry(MultiLineString, 3857)")
@@ -64,23 +66,32 @@ model Edge {
   @@index([fromNodeId, toNodeId])
 }
 
+enum FlowType {
+  SEA_DOMESTIC
+  SEA_REEXPORT
+  LAND_DOMESTIC
+  LAND_REEXPORT
+  WITHIN_COUNTRY
+}
+
 model Flow {
-  id          String        @id
+  id          BigInt        @id
   fromArea    Area          @relation("FromArea", fields: [fromAreaId], references: [id])
   fromAreaId  String
   toArea      Area          @relation("ToArea", fields: [toAreaId], references: [id])
   toAreaId    String
   foodGroupId Int
-  foodGroup   FoodGroup     @relation(fields: [foodGroupId], references: [id])
+  foodGroup   FoodGroup     @relation(fields: [foodGroupId], references: [id], onDelete: Cascade)
+  type        FlowType
   value       Float
   FlowSegment FlowSegment[]
 }
 
 model FlowSegment {
-  id     String             @id
+  id     BigInt             @id
   mode   String
-  flowId String
-  flow   Flow               @relation(fields: [flowId], references: [id])
+  flowId BigInt
+  flow   Flow               @relation(fields: [flowId], references: [id], onDelete: Cascade)
   edges  FlowSegmentEdges[]
 
   order Int
@@ -89,10 +100,10 @@ model FlowSegment {
 }
 
 model FlowSegmentEdges {
-  id            Int         @id @default(autoincrement())
-  edgeId        String
+  id            BigInt      @id @default(autoincrement())
+  edgeId        Int
   edge          Edge        @relation(fields: [edgeId], references: [id])
-  flowSegmentId String
+  flowSegmentId BigInt
   flowSegment   FlowSegment @relation(fields: [flowSegmentId], references: [id])
   order         Int
 

@@ -1,5 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
+import crypto from "crypto";
 import { PrismaClient } from "@prisma/client/extension";
 import { POSTGRES_CONNECTION_STRING } from "./config";
 
@@ -25,11 +26,16 @@ export function log(message: string) {
   lastTimestamp = currentTimestamp;
 }
 
-export async function runOgr2Ogr(...args: string[]): Promise<void> {
-  // Prisma doesn't like ESM imports, so we have to use CommonJS here
+export async function runOgr2Ogr(
+  filePath: string,
+  ...args: string[]
+): Promise<void> {
   const { execa } = await import("execa");
 
-  const command = `ogr2ogr -f "PostgreSQL" PG:${POSTGRES_CONNECTION_STRING} ${args.join(" ")}`;
+  // Escape the file path by wrapping it in quotes
+  const escapedPath = `"${filePath}"`;
+
+  const command = `ogr2ogr -f "PostgreSQL" PG:${POSTGRES_CONNECTION_STRING} ${escapedPath} ${args.join(" ")}`;
 
   await execa(command, { shell: true });
 }
@@ -80,4 +86,9 @@ export async function optimizeDb(prisma: PrismaClient) {
   await prisma.$executeRaw`SET max_parallel_workers = 8`;
   await prisma.$executeRaw`SET log_min_duration_statement = 1000`;
   await prisma.$executeRaw`SET random_page_cost = 1.1`;
+}
+
+export function generateNumericId(input: string): bigint {
+  const hash = crypto.createHash("sha256").update(input).digest("hex");
+  return BigInt("0x" + hash.slice(0, 15));
 }
