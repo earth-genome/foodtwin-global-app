@@ -11,6 +11,7 @@
     "db:dump": "node prisma/db-dump.js",
     "db:restore": "node prisma/db-restore.js",
     "db:aggregate-edges": "node prisma/tasks/aggregate-edges.js",
+    "db:export-area-tiles": "node --import tsx prisma/tasks/export-area-tiles.js",
     "studio": "prisma studio",
     "postinstall": "prisma generate"
   },

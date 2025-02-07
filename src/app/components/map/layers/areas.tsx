@@ -1,7 +1,8 @@
 import { FillLayerSpecification, LineLayerSpecification } from "mapbox-gl";
 import { Layer, Source } from "react-map-gl";
+import { AREA_SOURCE_ID, AREA_SOURCE_LAYER_ID } from "../constants";
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+const VECTOR_TILES_URL = process.env.NEXT_PUBLIC_VECTOR_TILES_URL;
 
 // Colors
 const AREA_HIGHLIGHT_OUTLINE_COLOR = "rgba(28, 25, 23, 0.6)";
@@ -28,14 +29,14 @@ export const lineStyle: LineLayerSpecification["paint"] = {
 function AreaLayers() {
   return (
     <Source
-      id="area-tiles"
+      id={AREA_SOURCE_ID}
       type="vector"
-      tiles={[`${appUrl}/api/tiles/areas/{z}/{x}/{y}`]}
+      tiles={[`${VECTOR_TILES_URL}/areas/{z}/{x}/{y}.pbf`]}
     >
       <Layer
         id="area-population-fill"
         type="fill"
-        source-layer="default"
+        source-layer={AREA_SOURCE_LAYER_ID}
         paint={{
           "fill-color": [
             "case",
@@ -56,7 +57,7 @@ function AreaLayers() {
       <Layer
         id="destination-areas-outline"
         type="line"
-        source-layer="default"
+        source-layer={AREA_SOURCE_LAYER_ID}
         paint={{
           "line-opacity": 1,
           "line-color": [
@@ -74,7 +75,7 @@ function AreaLayers() {
       <Layer
         id="selected-area-overlay"
         type="fill"
-        source-layer="default"
+        source-layer={AREA_SOURCE_LAYER_ID}
         paint={{
           "fill-opacity": 1,
           "fill-color": [
@@ -92,13 +93,13 @@ function AreaLayers() {
       <Layer
         id="area-clickable-polygon"
         type="fill"
-        source-layer="default"
+        source-layer={AREA_SOURCE_LAYER_ID}
         paint={{ "fill-color": "transparent" }}
       />
       <Layer
         id="area-outline"
         type="line"
-        source-layer="default"
+        source-layer={AREA_SOURCE_LAYER_ID}
         paint={lineStyle}
       />
     </Source>
