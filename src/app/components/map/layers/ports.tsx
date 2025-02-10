@@ -2,9 +2,10 @@ import React, { useEffect } from "react";
 import { Source, Layer, useMap } from "react-map-gl";
 import { MachineContext } from "../state";
 
+const VECTOR_TILES_URL = process.env.NEXT_PUBLIC_VECTOR_TILES_URL;
+
 const PortsLayer = () => {
   const map = useMap();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
   const destinationPortsIds = MachineContext.useSelector(
     (s) => s.context.destinationPortsIds
@@ -25,7 +26,7 @@ const PortsLayer = () => {
     <Source
       id="ports-tiles"
       type="vector"
-      tiles={[`${appUrl}/api/tiles/ports/{z}/{x}/{y}`]}
+      tiles={[`${VECTOR_TILES_URL}/ports/{z}/{x}/{y}.pbf`]}
     >
       <Layer
         id="top-ports"
