@@ -15,34 +15,23 @@ const EdgeLayer = () => {
         type="line"
         source-layer="default"
         paint={{
-          "line-color": [
+          "line-color": "#ffffff",
+          "line-width": 1,
+          "line-opacity": [
             "interpolate",
             ["linear"],
             ["get", "flowCount"],
             0,
-            "#ffffcc",
+            0.1,
             1000,
-            "#fed976",
+            0.3,
             10000,
-            "#fd8d3c",
+            0.6,
             100000,
-            "#e31a1c",
-          ],
-          "line-width": [
-            "interpolate",
-            ["linear"],
-            ["get", "flowCount"],
-            0,
             1,
-            1000,
-            2,
-            10000,
-            4,
-            100000,
-            8,
           ],
-          "line-opacity": 0.8,
         }}
+        filter={["!=", ["get", "flowCount"], 0]}
       />
     </Source>
   );
