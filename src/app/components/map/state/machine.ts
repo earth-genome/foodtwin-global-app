@@ -11,6 +11,7 @@ import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 import { worldViewState } from "..";
 import { combineBboxes } from "@/utils/geometries";
 import { Legend } from "../legend";
+import { AREA_SOURCE_ID, AREA_SOURCE_LAYER_ID } from "../constants";
 
 export enum EViewType {
   world = "world",
@@ -375,8 +376,8 @@ export const globeViewMachine = createMachine(
         if (currentAreaFeature?.id) {
           mapRef.setFeatureState(
             {
-              source: "area-tiles",
-              sourceLayer: "default",
+              source: AREA_SOURCE_ID,
+              sourceLayer: AREA_SOURCE_LAYER_ID,
               id: currentAreaFeature.id,
             },
             { selected: false }
@@ -387,8 +388,8 @@ export const globeViewMachine = createMachine(
         for (const destinationAreaFeatureId of destinationAreasFeatureIds) {
           m.setFeatureState(
             {
-              source: "area-tiles",
-              sourceLayer: "default",
+              source: AREA_SOURCE_ID,
+              sourceLayer: AREA_SOURCE_LAYER_ID,
               id: destinationAreaFeatureId,
             },
             { destination: false }
@@ -403,16 +404,16 @@ export const globeViewMachine = createMachine(
 
         if (!mapRef) return {};
 
-        const features = mapRef?.querySourceFeatures("area-tiles", {
+        const features = mapRef?.querySourceFeatures(AREA_SOURCE_ID, {
           filter: ["==", "id", event.output.id],
-          sourceLayer: "default",
+          sourceLayer: AREA_SOURCE_LAYER_ID,
         });
         const feature = features && features[0];
         if (feature && feature.id) {
           mapRef?.setFeatureState(
             {
-              source: "area-tiles",
-              sourceLayer: "default",
+              source: AREA_SOURCE_ID,
+              sourceLayer: AREA_SOURCE_LAYER_ID,
               id: feature.id,
             },
             { selected: true }
@@ -424,17 +425,17 @@ export const globeViewMachine = createMachine(
         );
 
         const destinationAreasFeatureIds = mapRef
-          .querySourceFeatures("area-tiles", {
+          .querySourceFeatures(AREA_SOURCE_ID, {
             filter: ["in", "id", ...destinationAreaIds],
-            sourceLayer: "default",
+            sourceLayer: AREA_SOURCE_LAYER_ID,
           })
           .map((feature) => feature.id as number); // we are sure that the id is a number, because we are not using promoteId from MapboxGL
 
         for (const destinationAreaFeatureId of destinationAreasFeatureIds) {
           mapRef.setFeatureState(
             {
-              source: "area-tiles",
-              sourceLayer: "default",
+              source: AREA_SOURCE_ID,
+              sourceLayer: AREA_SOURCE_LAYER_ID,
               id: destinationAreaFeatureId ?? "",
             },
             { destination: true }
@@ -659,8 +660,8 @@ export const globeViewMachine = createMachine(
           if (currentAreaFeature?.id) {
             mapRef.setFeatureState(
               {
-                source: "area-tiles",
-                sourceLayer: "default",
+                source: AREA_SOURCE_ID,
+                sourceLayer: AREA_SOURCE_LAYER_ID,
                 id: currentAreaFeature.id,
               },
               { selected: false }

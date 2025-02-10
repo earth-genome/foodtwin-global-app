@@ -1,48 +1,37 @@
 import React from "react";
 import { Source, Layer } from "react-map-gl";
 
-const EdgeLayer = () => {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+const VECTOR_TILES_URL = process.env.NEXT_PUBLIC_VECTOR_TILES_URL;
 
+const EdgeLayer = () => {
   return (
     <Source
       id="edges-tiles"
       type="vector"
-      tiles={[`${appUrl}/api/tiles/edges/{z}/{x}/{y}`]}
+      tiles={[`${VECTOR_TILES_URL}/edges/{z}/{x}/{y}.pbf`]}
     >
       <Layer
         id="edge-line"
         type="line"
         source-layer="default"
         paint={{
-          "line-color": [
+          "line-color": "#ffffff",
+          "line-width": 1,
+          "line-opacity": [
             "interpolate",
             ["linear"],
             ["get", "flowCount"],
             0,
-            "#ffffcc",
+            0.1,
             1000,
-            "#fed976",
+            0.3,
             10000,
-            "#fd8d3c",
+            0.6,
             100000,
-            "#e31a1c",
-          ],
-          "line-width": [
-            "interpolate",
-            ["linear"],
-            ["get", "flowCount"],
-            0,
             1,
-            1000,
-            2,
-            10000,
-            4,
-            100000,
-            8,
           ],
-          "line-opacity": 0.8,
         }}
+        filter={["!=", ["get", "flowCount"], 0]}
       />
     </Source>
   );
