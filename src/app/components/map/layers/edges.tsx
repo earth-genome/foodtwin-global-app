@@ -1,14 +1,14 @@
 import React from "react";
 import { Source, Layer } from "react-map-gl";
 
-const EdgeLayer = () => {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+const VECTOR_TILES_URL = process.env.NEXT_PUBLIC_VECTOR_TILES_URL;
 
+const EdgeLayer = () => {
   return (
     <Source
       id="edges-tiles"
       type="vector"
-      tiles={[`${appUrl}/api/tiles/edges/{z}/{x}/{y}`]}
+      tiles={[`${VECTOR_TILES_URL}/edges/{z}/{x}/{y}.pbf`]}
     >
       <Layer
         id="edge-line"

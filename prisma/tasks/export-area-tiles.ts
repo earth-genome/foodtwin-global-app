@@ -53,18 +53,21 @@ async function main() {
   }
 
   ndjsonStream.end();
-  console.log("Exported areas to areas.ndjson");
 
-  await execa(
-    `tippecanoe -z10 -e ${AREA_TILES_PATH} -l default --drop-densest-as-needed ${AREA_NDJSON_PATH} --force`,
-    {
-      shell: true,
-      stdio: "inherit",
-    }
-  );
+  ndjsonStream.on("finish", async () => {
+    console.log("Exported areas to areas.ndjson");
 
-  console.log("Exported areas to tiles");
-  await fs.remove(AREA_NDJSON_PATH);
+    await execa(
+      `tippecanoe -z10 -e ${AREA_TILES_PATH} -l default --drop-densest-as-needed ${AREA_NDJSON_PATH} --force`,
+      {
+        shell: true,
+        stdio: "inherit",
+      }
+    );
+
+    console.log("Exported areas to tiles");
+    await fs.remove(AREA_NDJSON_PATH);
+  });
 }
 
 main()
