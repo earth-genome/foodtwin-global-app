@@ -42,6 +42,11 @@ interface ActionSetCurrentArea {
 interface ActionSetAreaMapView {
   type: "action:fitMapToCurrentAreaBounds";
 }
+
+interface ActionApplyDestinationAreaIdsToMap {
+  type: "action:applyDestinationAreaIdsToMap";
+}
+
 interface ActionEnterProductionAreaView {
   type: "action:enterProductionAreaView";
 }
@@ -83,6 +88,7 @@ export type StateActions =
   | ActionParseAreaSection
   | ActionSetMapRef
   | ActionSetHighlightedArea
+  | ActionApplyDestinationAreaIdsToMap
   | ActionClearHighlightedArea
   | ActionSetCurrentAreaId
   | ActionSetCurrentArea
