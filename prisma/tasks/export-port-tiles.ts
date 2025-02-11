@@ -63,8 +63,6 @@ async function main() {
     );
     console.log(`Exported ${ports.length} ports to ${PORT_TILES_PATH}`);
 
-    // remove metadata.json
-
     console.log("Uploading tiles to S3");
     await execa(
       `s5cmd cp --content-encoding=gzip ${PORT_TILES_PATH} "s3://globalfoodtwin-map-tiles/"`,

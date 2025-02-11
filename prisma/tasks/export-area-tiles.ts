@@ -4,9 +4,10 @@ import { PrismaClient } from "@prisma/client";
 import path from "path";
 import { PUBLIC_PATH, TILES_PATH } from "../seed/config";
 import { execa } from "execa";
+import bbox from "@turf/bbox";
 
+const LAYER_ID = "areas";
 const AREA_NDJSON_PATH = path.join(PUBLIC_PATH, "areas.ndjson");
-
 const AREA_TILES_PATH = path.join(TILES_PATH, "areas");
 
 const prisma = new PrismaClient();
@@ -24,7 +25,7 @@ async function main() {
       id, 
       ((ctid::text::point)[0]::bigint << 32) | (ctid::text::point)[1]::bigint AS id_int,
       name, 
-      (meta->>'totalpop')::float as totalpop, 
+      (meta->>'totalpop')::float as totalpop,     
       ST_AsGeoJSON(ST_Transform(limits, 4326)) as geometry 
     FROM "Area"
     ORDER BY id;
@@ -46,6 +47,7 @@ async function main() {
         id: area.id,
         name: area.name,
         totalpop: area.totalpop,
+        bbox: bbox(JSON.parse(area.geometry)),
       },
       geometry: JSON.parse(area.geometry),
     };
@@ -58,7 +60,7 @@ async function main() {
     console.log("Exported areas to areas.ndjson");
 
     await execa(
-      `tippecanoe -z10 -e ${AREA_TILES_PATH} -l default --drop-densest-as-needed ${AREA_NDJSON_PATH} --force`,
+      `tippecanoe -n ${LAYER_ID} -N ${LAYER_ID} -z10 -e ${AREA_TILES_PATH} -l default --drop-densest-as-needed ${AREA_NDJSON_PATH} --force`,
       {
         shell: true,
         stdio: "inherit",
@@ -66,6 +68,18 @@ async function main() {
     );
 
     console.log("Exported areas to tiles");
+
+    console.log("Uploading tiles to S3");
+    await execa(
+      `s5cmd cp --content-encoding=gzip ${AREA_TILES_PATH} "s3://globalfoodtwin-map-tiles/"`,
+      {
+        shell: true,
+        stdio: "inherit",
+      }
+    );
+
+    console.log("Upload completed");
+
     await fs.remove(AREA_NDJSON_PATH);
   });
 }
