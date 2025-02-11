@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+interface AreaProps {
+  id: string;
+  name: string;
+  totalpop: number;
+}
+
 export interface FetchAreaResponse {
   id: string;
   name: string;
   totalpop: number;
   boundingBox: GeoJSON.Feature;
-  destinationAreas: GeoJSON.FeatureCollection<GeoJSON.Geometry, AreaProps>;
+  destinationAreas: AreaProps[];
+  destinationAreasBbox: GeoJSON.Feature;
   destinationPorts: GeoJSON.FeatureCollection<
     GeoJSON.Geometry,
     DestinationPortProps
   >;
-}
-
-interface AreaProps {
-  id: string;
-  name: string;
-  totalpop: number;
 }
 
 interface DestinationPortProps {
@@ -24,10 +25,6 @@ interface DestinationPortProps {
   id_int: string;
   name: string;
 }
-
-type DestinationAreaRow = AreaProps & {
-  geometry: string;
-};
 
 type DestinationPortRow = DestinationPortProps & {
   geometry: string;
@@ -53,16 +50,30 @@ export async function GET(
       return NextResponse.json({ error: "Area not found" }, { status: 404 });
     }
 
-    const [boundingBoxRows, destinationAreasRows, destinationPortsRows] =
-      (await Promise.all([
-        prisma.$queryRaw`
+    const [
+      boundingBoxRows,
+      destinationAreas,
+      destinationAreasBbox,
+      destinationPortsRows,
+    ] = (await Promise.all([
+      prisma.$queryRaw`
         SELECT ST_AsGeoJSON(ST_Extent(ST_Transform(limits, 4326))) as geojson FROM "Area" WHERE id = ${id}
       `,
-        prisma.$queryRaw`
-        select "Area"."id", "Area"."name", (meta->>'totalpop')::float as totalpop, ST_AsGeoJSON(ST_Transform(limits, 4326)) as geometry from "Flow" LEFT JOIN "Area" ON "Flow"."toAreaId" = "Area"."id" where "fromAreaId" = ${id};
+      prisma.$queryRaw`
+        select 
+          "Area"."id", 
+          "Area"."name", 
+          (meta->>'totalpop')::float as totalpop
+        from "Flow" 
+          LEFT JOIN "Area" ON "Flow"."toAreaId" = "Area"."id" where "fromAreaId" = ${id};
       `,
-        // TODO this is a temporary query to get the 10 closest ports to the area until there is maritime data in the database
-        prisma.$queryRaw`
+      prisma.$queryRaw`
+          SELECT ST_AsGeoJSON(ST_Extent(ST_Transform("limits", 4326))) as geojson
+          FROM "Area"
+          WHERE "id" IN (SELECT "toAreaId" FROM "Flow" WHERE "fromAreaId" = ${id});
+        `,
+      // TODO this is a temporary query to get the 10 closest ports to the area until there is maritime data in the database
+      prisma.$queryRaw`
           SELECT 
             "Node"."id", 
             ((ctid::text::point)[0]::bigint << 32) | (ctid::text::point)[1]::bigint AS id_int,
@@ -79,29 +90,12 @@ export async function GET(
           ) ASC
           LIMIT 10;
         `,
-      ])) as [
-        { geojson: string }[],
-        DestinationAreaRow[],
-        DestinationPortRow[],
-      ];
-
-    const destinationAreas: GeoJSON.FeatureCollection<
-      GeoJSON.Geometry,
-      AreaProps
-    > = {
-      type: "FeatureCollection",
-      features: destinationAreasRows.map(
-        ({ id, name, totalpop, geometry }) => ({
-          type: "Feature",
-          properties: {
-            id,
-            name,
-            totalpop,
-          },
-          geometry: JSON.parse(geometry),
-        })
-      ),
-    };
+    ])) as [
+      { geojson: string }[],
+      AreaProps[],
+      { geojson: string }[],
+      DestinationPortRow[],
+    ];
 
     const destinationPorts: GeoJSON.FeatureCollection<
       GeoJSON.Geometry,
@@ -123,6 +117,8 @@ export async function GET(
       ...area,
       boundingBox: JSON.parse(boundingBoxRows[0]?.geojson) || null,
       destinationAreas,
+      destinationAreasBbox:
+        JSON.parse(destinationAreasBbox[0]?.geojson) || null,
       destinationPorts,
     };
 

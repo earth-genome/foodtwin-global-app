@@ -60,6 +60,11 @@ const AreaPage = async ({
   };
 }) => {
   const area = await prisma.area.findUnique({
+    select: {
+      id: true,
+      name: true,
+      meta: true,
+    },
     where: {
       id: params.areaId,
     },
@@ -103,6 +108,11 @@ const AreaPage = async ({
     `
     ),
     prisma.area.findMany({
+      select: {
+        id: true,
+        name: true,
+        meta: true,
+      },
       where: {
         flowsTo: {
           some: {
