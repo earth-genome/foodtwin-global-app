@@ -11,7 +11,11 @@ import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
 import { worldViewState } from "..";
 import { combineBboxes } from "@/utils/geometries";
 import { Legend } from "../legend";
-import { AREA_SOURCE_ID, AREA_SOURCE_LAYER_ID } from "../constants";
+import {
+  AREA_SOURCE_ID,
+  AREA_SOURCE_LAYER_ID,
+  AREA_VIEW_BOUNDS_PADDING,
+} from "../constants";
 
 export enum EViewType {
   world = "world",
@@ -491,13 +495,7 @@ export const globeViewMachine = createMachine(
             [combinedBboxes[2], combinedBboxes[3]],
           ],
           {
-            animate: false,
-            padding: {
-              top: 100,
-              left: 100,
-              bottom: 100,
-              right: 100,
-            },
+            padding: AREA_VIEW_BOUNDS_PADDING,
           }
         );
 
@@ -551,7 +549,6 @@ export const globeViewMachine = createMachine(
               [combinedBboxes[2], combinedBboxes[3]],
             ],
             {
-              animate: false,
               padding: {
                 top: 100,
                 left: 100,
@@ -647,7 +644,6 @@ export const globeViewMachine = createMachine(
             [bounds[2], bounds[3]],
           ],
           {
-            animate: false,
             padding: {
               top: 100,
               left: 100,
@@ -681,9 +677,7 @@ export const globeViewMachine = createMachine(
           }
 
           mapRef.resize();
-          mapRef.fitBounds(worldViewState.bounds, {
-            animate: false,
-          });
+          mapRef.fitBounds(worldViewState.bounds);
         }
 
         return {
