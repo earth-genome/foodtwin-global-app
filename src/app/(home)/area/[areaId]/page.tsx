@@ -7,11 +7,11 @@ import { PageSection, SectionHeader } from "@/app/components/page-section";
 import { Metric, MetricRow } from "@/app/components/metric";
 import { AreaMeta, IndicatorColumn } from "../../../../../prisma/seed/nodes";
 import { FoodGroup } from "@prisma/client";
-import { Arc, ListBars, Sankey } from "@/app/components/charts";
-import { formatKeyIndicator } from "@/utils/numbers";
+import { Arc, ListBars } from "@/app/components/charts";
 import { EAreaViewType } from "@/app/components/map/state/machine";
 import { Button } from "@nextui-org/react";
 import Link from "next/link";
+import Layout from "./layout";
 
 interface IFoodGroupAgg extends FoodGroup {
   sum: number;
@@ -22,18 +22,6 @@ interface IFoodGroupAgg extends FoodGroup {
 }
 
 type IFoodGroupAggObj = Record<string, IFoodGroupAgg>;
-
-interface ImportSum {
-  sum: number;
-}
-
-interface ExportFlow {
-  mode: "road" | "rail" | "IWW";
-  value: number;
-  toAreaId: string;
-  name: string;
-  type: "MARITIME" | "PORT" | "INLAND_PORT" | "RAIL_STATION" | "ADMIN";
-}
 
 interface Indicators {
   totalPopulation: number;
@@ -74,13 +62,7 @@ const AreaPage = async ({
     return redirect("/not-found");
   }
 
-  const [
-    foodGroupExports,
-    foodGroups,
-    inBoundFlows,
-    outboundFlows,
-    outboundAreas,
-  ] = await Promise.all([
+  const [foodGroupExports, foodGroups, outboundAreas] = await Promise.all([
     prisma.flow.groupBy({
       where: {
         fromAreaId: area.id,
@@ -91,22 +73,6 @@ const AreaPage = async ({
       },
     }),
     prisma.foodGroup.findMany(),
-    prisma.$queryRawUnsafe(`
-      SELECT sum(value)
-        FROM "Flow"
-        WHERE "toAreaId" = '${area.id}'
-        GROUP BY "toAreaId";
-    `),
-    prisma.$queryRawUnsafe(
-      `SELECT "mode", sum("value") as value, "toAreaId", "Node"."name", "Node"."type"
-        FROM "FlowSegment"
-        LEFT JOIN "Flow" ON "FlowSegment"."flowId" = "Flow"."id"
-        LEFT JOIN "Node" ON "Flow"."toAreaId" = "Node"."id"
-        WHERE "Flow"."fromAreaId" = '${area.id}' AND "order" = 1
-        GROUP BY "toAreaId", "mode", "Node"."name", "Node"."type"
-        ORDER BY value DESC;
-    `
-    ),
     prisma.area.findMany({
       select: {
         id: true,
@@ -196,17 +162,11 @@ const AreaPage = async ({
       _sum.value ? partialSum + _sum.value : partialSum,
     0
   );
-  const totalExport = (outboundFlows as ExportFlow[]).reduce(
-    (partialSum, { value }) => partialSum + value,
-    0
-  );
   const meta = area.meta as AreaMeta;
   const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
 
   return (
-    <div
-      className={`w-[480px] bg-white h-screen grid grid-rows-[max-content_1fr]`}
-    >
+    <Layout>
       <PageHeader title={areaLabel} itemType={EItemType.area} />
       {totalFlow === 0 ? (
         <PageSection
@@ -272,62 +232,6 @@ const AreaPage = async ({
               }))}
             />
           </PageSection>
-          <PageSection id={EAreaViewType.transportation}>
-            <SectionHeader label="Food Transportation" />
-            <MetricRow>
-              <Metric
-                label="Exported outside the region"
-                value={totalExport}
-                formatType="weight"
-                decimalPlaces={0}
-              />
-              <Metric
-                label="Supplied to the region"
-                value={(inBoundFlows as ImportSum[])[0].sum}
-                formatType="weight"
-                decimalPlaces={0}
-              />
-            </MetricRow>
-            <Sankey
-              width={435}
-              height={600}
-              data={{
-                nodes: [
-                  { id: area.id, label: area.name, type: EItemType["area"] },
-                  { id: "other", label: "Other", type: EItemType["node"] },
-                  ...(outboundFlows as ExportFlow[]).map(
-                    ({ toAreaId, name }) => ({
-                      id: toAreaId,
-                      label: name,
-                      type: EItemType["node"],
-                    })
-                  ),
-                ],
-                links: [
-                  ...(outboundFlows as ExportFlow[])
-                    .slice(0, 10)
-                    .map(({ toAreaId, value }) => ({
-                      source: area.id,
-                      target: toAreaId,
-                      value,
-                      popupData: [
-                        {
-                          label: "Volume",
-                          value: formatKeyIndicator(value, "weight", 0),
-                        },
-                      ],
-                    })),
-                  {
-                    source: area.id,
-                    target: "other",
-                    value: (outboundFlows as ExportFlow[])
-                      .slice(10)
-                      .reduce((sum, { value }) => sum + value, 0),
-                  },
-                ],
-              }}
-            />
-          </PageSection>
           <PageSection id={EAreaViewType.impact} className="pb-8">
             <SectionHeader label="Impact on people" />
             <MetricRow>
@@ -373,7 +277,7 @@ const AreaPage = async ({
           </PageSection>
         </ScrollTracker>
       )}
-    </div>
+    </Layout>
   );
 };
 

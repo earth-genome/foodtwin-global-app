@@ -41,4 +41,12 @@ export const Metric: React.FC<MetricProps> = ({
   );
 };
 
+export const SkeletonMetric: React.FC = () => {
+  return (
+    <div className="flex flex-col text-center text-ink px-4 [&:not(:last-child)]:border-r-1 border-neutral-200">
+      <div className="w-20 h-20 bg-neutral-200 rounded-lg mb-1" />
+    </div>
+  );
+};
+
 export default Metric;

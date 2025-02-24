@@ -26,6 +26,7 @@ const dumpDb = async () => {
       `pg_dump --format=c --no-owner --no-acl -f ${dumpFilePath} ${DATABASE_URL}`,
       {
         shell: true,
+        stdio: "inherit",
       }
     );
     console.log(`Database dump completed: ${dumpFilePath}`);
