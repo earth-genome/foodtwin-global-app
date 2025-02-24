@@ -36,4 +36,19 @@ function PageHeader({ title, itemType }: IPageHeader) {
   );
 }
 
+export function PageHeaderSkeleton() {
+  return (
+    <div className="bg-neutral-900 p-4 flex gap-4 items-start">
+      <div className="flex-grow">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 bg-neutral-800 rounded-full" />
+          <div className="w-16 h-4 bg-neutral-800 rounded-full" />
+        </div>
+        <div className="w-48 h-9 rounded-full bg-neutral-800" />
+      </div>
+      <div className="w-6 h-rounded-full bg-neutral-800" />
+    </div>
+  );
+}
+
 export default PageHeader;
