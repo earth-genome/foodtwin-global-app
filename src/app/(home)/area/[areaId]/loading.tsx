@@ -7,7 +7,7 @@ import { Skeleton } from "@nextui-org/react";
 
 export default function Loading() {
   return (
-    <Layout className="overflow-hidden">
+    <Layout>
       <PageHeaderSkeleton />
       <PageSection id={EAreaViewType.production}>
         <div className="flex items-center text-neutral-700 mb-8">
