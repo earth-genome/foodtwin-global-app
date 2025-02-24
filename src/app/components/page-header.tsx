@@ -46,7 +46,7 @@ export function PageHeaderSkeleton() {
         </div>
         <div className="w-48 h-9 rounded-full bg-neutral-800" />
       </div>
-      <div className="w-6 h-rounded-full bg-neutral-800" />
+      <div className="w-7 h-7 rounded-full bg-neutral-800" />
     </div>
   );
 }
