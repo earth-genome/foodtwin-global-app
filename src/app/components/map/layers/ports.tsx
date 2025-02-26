@@ -4,6 +4,10 @@ import { MachineContext } from "../state";
 
 const VECTOR_TILES_URL = process.env.NEXT_PUBLIC_VECTOR_TILES_URL;
 
+// This is a toggle to disable without removing the layer
+// We should review the logic of the ports layer to reinstate it
+const IS_VISIBLE = false;
+
 const PortsLayer = () => {
   const map = useMap();
 
@@ -37,8 +41,8 @@ const PortsLayer = () => {
             "shipping_container-icon",
             "",
           ],
-
           "icon-size": 0.3,
+          visibility: IS_VISIBLE ? "visible" : "none",
         }}
       />
       <Layer
@@ -48,6 +52,7 @@ const PortsLayer = () => {
         layout={{
           "icon-image": "port-icon",
           "icon-size": 0.4,
+          visibility: IS_VISIBLE ? "visible" : "none",
         }}
         filter={["in", "$id", ...destinationPortsIds]}
       />

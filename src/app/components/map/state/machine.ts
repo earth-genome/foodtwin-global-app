@@ -668,8 +668,6 @@ export const globeViewMachine = createMachine(
 
         if (mapRef) {
           const m = mapRef.getMap();
-          m.setLayoutProperty("top-ports", "visibility", "visible");
-          m.setLayoutProperty("foodgroups-layer", "visibility", "visible");
 
           if (currentAreaFeature?.id) {
             mapRef.setFeatureState(
