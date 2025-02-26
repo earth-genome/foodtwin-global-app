@@ -14,6 +14,8 @@ import { Button } from "@nextui-org/react";
 import Link from "next/link";
 
 const SANKEY_LINKS_COUNT = 5;
+const SANKEY_HEIGHT = 600;
+const SANKEY_WIDTH = 435;
 
 interface IFoodGroupAgg extends FoodGroup {
   sum: number;
@@ -34,6 +36,7 @@ interface ExportFlow {
   value: number;
   toAreaId: string;
   name: string;
+  iso3: string;
   type: "MARITIME" | "PORT" | "INLAND_PORT" | "RAIL_STATION" | "ADMIN";
 }
 
@@ -53,6 +56,96 @@ function findParent(id: number, foodGroups: FoodGroup[]) {
     return findParent(g?.parentId, foodGroups);
   }
 }
+
+function getAreaLabel(area: {
+  name: string;
+  iso3?: string;
+  meta?: {
+    iso3?: string;
+  };
+}) {
+  if (area.iso3) {
+    return `${area.name}, ${area.iso3}`;
+  } else if (area.meta?.iso3) {
+    return `${area.name}, ${area.meta.iso3}`;
+  } else {
+    return area.name;
+  }
+}
+
+const OutboundSankey = ({
+  area,
+  outboundFlows,
+}: {
+  area: { id: string; name: string };
+  outboundFlows: ExportFlow[];
+}) => {
+  const visibleFlows = outboundFlows.slice(0, SANKEY_LINKS_COUNT);
+  const otherFlows = outboundFlows.slice(SANKEY_LINKS_COUNT);
+
+  const otherFlowsSum = otherFlows.reduce((sum, { value }) => sum + value, 0);
+
+  const mainNode = {
+    id: area.id,
+    label: getAreaLabel(area),
+    type: EItemType.area,
+  };
+
+  const visibleNodes = visibleFlows.map((flow) => ({
+    id: flow.toAreaId,
+    label: getAreaLabel(flow),
+    type: EItemType.area,
+  }));
+
+  const visibleLinks = visibleFlows.map(({ toAreaId, value }) => ({
+    source: area.id,
+    target: toAreaId,
+    value,
+    popupData: [
+      {
+        label: "Volume",
+        value: formatKeyIndicator(value, "weight", 0),
+      },
+    ],
+  }));
+
+  let allNodes = [mainNode, ...visibleNodes];
+  let allLinks = [...visibleLinks];
+
+  if (otherFlowsSum > 0) {
+    const otherNode = {
+      id: "other",
+      label: "Other Areas",
+      type: EItemType.area,
+    };
+
+    const otherLink = {
+      source: area.id,
+      target: "other",
+      value: otherFlowsSum,
+      popupData: [
+        {
+          label: "Volume",
+          value: formatKeyIndicator(otherFlowsSum, "weight", 0),
+        },
+      ],
+    };
+
+    allNodes.push(otherNode);
+    allLinks.push(otherLink);
+  }
+
+  return (
+    <Sankey
+      width={SANKEY_WIDTH}
+      height={SANKEY_HEIGHT}
+      data={{
+        nodes: allNodes,
+        links: allLinks,
+      }}
+    />
+  );
+};
 
 const AreaPage = async ({
   params,
@@ -100,14 +193,12 @@ const AreaPage = async ({
         GROUP BY "toAreaId";
     `),
     prisma.$queryRawUnsafe(
-      `SELECT "mode", sum("value") as value, "toAreaId", "Node"."name", "Node"."type"
-        FROM "FlowSegment"
-        LEFT JOIN "Flow" ON "FlowSegment"."flowId" = "Flow"."id"
-        LEFT JOIN "Node" ON "Flow"."toAreaId" = "Node"."id"
-        WHERE "Flow"."fromAreaId" = '${area.id}' AND "order" = 1
-        GROUP BY "toAreaId", "mode", "Node"."name", "Node"."type"
-        ORDER BY value DESC
-        LIMIT ${SANKEY_LINKS_COUNT};
+      `SELECT "toAreaId", "Area".name, ST_AsText(ST_Transform("Area".centroid, 4326)), sum(value) as value, "Area".meta->>'iso3' as iso3
+        FROM "Flow"
+        JOIN "Area" ON "Flow"."toAreaId" = "Area"."id"
+        WHERE "Flow"."fromAreaId" = '${area.id}'
+        GROUP BY "toAreaId", "Area".name, "Area".centroid, "Area".meta
+        ORDER BY value DESC;
     `
     ),
     prisma.area.findMany({
@@ -206,6 +297,8 @@ const AreaPage = async ({
   const meta = area.meta as AreaMeta;
   const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
 
+  console.log({ outboundFlows });
+
   return (
     <>
       <PageHeader title={areaLabel} itemType={EItemType.area} />
@@ -289,44 +382,9 @@ const AreaPage = async ({
                 decimalPlaces={0}
               />
             </MetricRow>
-            <Sankey
-              width={435}
-              height={400}
-              data={{
-                nodes: [
-                  { id: area.id, label: area.name, type: EItemType["area"] },
-                  { id: "other", label: "Other", type: EItemType["node"] },
-                  ...(outboundFlows as ExportFlow[]).map(
-                    ({ toAreaId, name }) => ({
-                      id: toAreaId,
-                      label: name,
-                      type: EItemType["node"],
-                    })
-                  ),
-                ],
-                links: [
-                  ...(outboundFlows as ExportFlow[])
-                    .slice(0, SANKEY_LINKS_COUNT)
-                    .map(({ toAreaId, value }) => ({
-                      source: area.id,
-                      target: toAreaId,
-                      value,
-                      popupData: [
-                        {
-                          label: "Volume",
-                          value: formatKeyIndicator(value, "weight", 0),
-                        },
-                      ],
-                    })),
-                  {
-                    source: area.id,
-                    target: "other",
-                    value: (outboundFlows as ExportFlow[])
-                      .slice(SANKEY_LINKS_COUNT)
-                      .reduce((sum, { value }) => sum + value, 0),
-                  },
-                ],
-              }}
+            <OutboundSankey
+              area={area}
+              outboundFlows={outboundFlows as ExportFlow[]}
             />
           </PageSection>
           <PageSection id={EAreaViewType.impact} className="pb-8">
