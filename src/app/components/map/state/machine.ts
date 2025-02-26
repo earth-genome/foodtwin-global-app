@@ -7,7 +7,10 @@ import { MapRef } from "react-map-gl";
 import { GeoJSONFeature } from "mapbox-gl";
 import { IMapPopup } from "../../map-popup";
 import { EItemType } from "@/types/components";
-import { FetchAreaResponse } from "@/app/api/areas/[id]/route";
+import {
+  AreaWithCentroidProps,
+  FetchAreaResponse,
+} from "@/app/api/areas/[id]/route";
 import { worldViewState } from "..";
 import { combineBboxes } from "@/utils/geometries";
 import { Legend } from "../legend";
@@ -38,6 +41,7 @@ interface StateContext {
   currentAreaFeature: GeoJSONFeature | null;
   currentAreaViewType: EAreaViewType | null;
   destinationPortsIds: number[];
+  destinationAreas: AreaWithCentroidProps[];
   destinationAreasFeatureIds: number[];
   mapPopup: IMapPopup | null;
   mapBounds: BBox | null;
@@ -66,6 +70,7 @@ export const globeViewMachine = createMachine(
       currentArea: null,
       currentAreaFeature: null,
       currentAreaViewType: null,
+      destinationAreas: [],
       destinationAreasFeatureIds: [],
       destinationPortsIds: [],
       mapPopup: null,
@@ -442,6 +447,7 @@ export const globeViewMachine = createMachine(
         return {
           currentArea: event.output,
           currentAreaFeature: feature,
+          destinationAreas: event.output.destinationAreas,
           destinationAreasFeatureIds,
         };
       }),

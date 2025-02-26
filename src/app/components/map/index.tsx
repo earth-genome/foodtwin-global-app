@@ -13,6 +13,7 @@ import FoodGroupsLayer from "./layers/foodgroups";
 import AreaLayers from "./layers/areas";
 import PortsLayer from "./layers/ports";
 import { AREA_VIEW_BOUNDS_PADDING } from "./constants";
+import DestinationAreasLayer from "./layers/destination-areas";
 
 // Environment variables used in this component
 
@@ -152,6 +153,7 @@ function GlobeInner() {
       >
         <FoodGroupsLayer />
         <AreaLayers />
+        <DestinationAreasLayer />
         <EdgeLayer />
         <PortsLayer />
 
