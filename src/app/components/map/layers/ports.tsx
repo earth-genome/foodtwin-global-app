@@ -1,5 +1,5 @@
 import React from "react";
-import { Source, Layer, useMap } from "react-map-gl";
+import { Source, Layer } from "react-map-gl";
 import { MachineContext } from "../state";
 
 const VECTOR_TILES_URL = process.env.NEXT_PUBLIC_VECTOR_TILES_URL;
@@ -9,8 +9,6 @@ const VECTOR_TILES_URL = process.env.NEXT_PUBLIC_VECTOR_TILES_URL;
 const IS_VISIBLE = false;
 
 const PortsLayer = () => {
-  const map = useMap();
-
   const destinationPortsIds = MachineContext.useSelector(
     (s) => s.context.destinationPortsIds
   );

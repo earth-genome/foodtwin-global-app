@@ -1,10 +1,8 @@
 import React from "react";
-import { Source, Layer, useMap } from "react-map-gl";
+import { Source, Layer } from "react-map-gl";
 import { MachineContext } from "../state";
 
 const DestinationAreasLayer = () => {
-  const map = useMap();
-
   const destinationAreasGeoJSON = MachineContext.useSelector((s) => ({
     type: "FeatureCollection",
     features: s.context.destinationAreas.map((area) => ({

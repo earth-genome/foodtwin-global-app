@@ -109,8 +109,8 @@ const OutboundSankey = ({
     ],
   }));
 
-  let allNodes = [mainNode, ...visibleNodes];
-  let allLinks = [...visibleLinks];
+  const allNodes = [mainNode, ...visibleNodes];
+  const allLinks = [...visibleLinks];
 
   if (otherFlowsSum > 0) {
     const otherNode = {
@@ -296,8 +296,6 @@ const AreaPage = async ({
   );
   const meta = area.meta as AreaMeta;
   const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
-
-  console.log({ outboundFlows });
 
   return (
     <>

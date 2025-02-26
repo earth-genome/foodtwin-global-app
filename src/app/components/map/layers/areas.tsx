@@ -1,5 +1,5 @@
 import { FillLayerSpecification, LineLayerSpecification } from "mapbox-gl";
-import { Layer, Source } from "react-map-gl";
+import { Layer } from "react-map-gl";
 import { AREA_SOURCE_ID, AREA_SOURCE_LAYER_ID } from "../constants";
 
 // Colors

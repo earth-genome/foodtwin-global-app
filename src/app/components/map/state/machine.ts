@@ -667,8 +667,6 @@ export const globeViewMachine = createMachine(
         const { mapRef, currentAreaFeature } = context;
 
         if (mapRef) {
-          const m = mapRef.getMap();
-
           if (currentAreaFeature?.id) {
             mapRef.setFeatureState(
               {
