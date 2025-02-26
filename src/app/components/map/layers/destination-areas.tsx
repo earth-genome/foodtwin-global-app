@@ -36,7 +36,6 @@ const DestinationAreasLayer = () => {
         layout={{
           "icon-image": "producing_area-icon",
           "icon-size": 0.2,
-          "icon-allow-overlap": true,
           visibility: isVisible ? "visible" : "none",
         }}
       />
