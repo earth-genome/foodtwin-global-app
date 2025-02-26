@@ -1,7 +1,12 @@
 "use client";
 import React, { useEffect, useCallback, useRef } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import Map, { MapMouseEvent, MapRef, LngLatBoundsLike } from "react-map-gl";
+import Map, {
+  MapMouseEvent,
+  MapRef,
+  LngLatBoundsLike,
+  Source,
+} from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import MapPopup from "@/app/components/map-popup";
@@ -12,12 +17,14 @@ import Legend from "./legend";
 import FoodGroupsLayer from "./layers/foodgroups";
 import AreaLayers from "./layers/areas";
 import PortsLayer from "./layers/ports";
-import { AREA_VIEW_BOUNDS_PADDING } from "./constants";
+import { AREA_SOURCE_ID, AREA_VIEW_BOUNDS_PADDING } from "./constants";
+import DestinationAreasLayer from "./layers/destination-areas";
 
 // Environment variables used in this component
 
 const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 const mapboxStyleUrl = process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL;
+const VECTOR_TILES_URL = process.env.NEXT_PUBLIC_VECTOR_TILES_URL;
 
 export const worldViewState = {
   bounds: [
@@ -27,6 +34,23 @@ export const worldViewState = {
 } as {
   bounds: LngLatBoundsLike;
 };
+
+function loadIcons(map: mapboxgl.Map) {
+  const icons = [
+    { name: "port-icon", url: "/icons/port.png" },
+    { name: "shipping_container-icon", url: "/icons/shipping_container.png" },
+    { name: "producing_area-icon", url: "/icons/producing_area.png" },
+  ];
+
+  icons.forEach((icon) => {
+    map.loadImage(icon.url, (error, image) => {
+      if (error) throw error;
+      if (map && image) {
+        map.addImage(icon.name, image);
+      }
+    });
+  });
+}
 
 function GlobeInner() {
   const params = useParams();
@@ -121,14 +145,27 @@ function GlobeInner() {
             type: "event:map:mount",
             mapRef: mapRef.current as MapRef,
           });
+
+          const map = mapRef.current?.getMap();
+
+          if (!map) return;
+
+          loadIcons(map);
         }}
         onMouseMove={eventHandlers.mousemove ? handleMouseMove : undefined}
         onMouseOut={eventHandlers.mousemove ? handleMouseOut : undefined}
         style={{ width: "100%", height: "100%", flex: 1 }}
         mapStyle={mapboxStyleUrl}
       >
+        <Source
+          id={AREA_SOURCE_ID}
+          type="vector"
+          tiles={[`${VECTOR_TILES_URL}/areas/{z}/{x}/{y}.pbf`]}
+        ></Source>
+
         <FoodGroupsLayer />
         <AreaLayers />
+        <DestinationAreasLayer />
         <EdgeLayer />
         <PortsLayer />
 

@@ -7,12 +7,16 @@ interface AreaProps {
   totalpop: number;
 }
 
+export interface AreaWithCentroidProps extends AreaProps {
+  centroid: GeoJSON.Point;
+}
+
 export interface FetchAreaResponse {
   id: string;
   name: string;
   totalpop: number;
   boundingBox: GeoJSON.Feature;
-  destinationAreas: AreaProps[];
+  destinationAreas: AreaWithCentroidProps[];
   destinationAreasBbox: GeoJSON.Feature;
   destinationPorts: GeoJSON.FeatureCollection<
     GeoJSON.Geometry,
@@ -63,9 +67,11 @@ export async function GET(
         select 
           "Area"."id", 
           "Area"."name", 
+          ST_AsGeoJSON(ST_Transform("Area"."centroid", 4326)) as centroid,
           (meta->>'totalpop')::float as totalpop
         from "Flow" 
-          LEFT JOIN "Area" ON "Flow"."toAreaId" = "Area"."id" where "fromAreaId" = ${id};
+          LEFT JOIN "Area" ON "Flow"."toAreaId" = "Area"."id" where "fromAreaId" = ${id}
+        GROUP BY "Area"."id", "Area"."name", "Area"."centroid", "Area"."meta";
       `,
       prisma.$queryRaw`
           SELECT ST_AsGeoJSON(ST_Extent(ST_Transform("limits", 4326))) as geojson
@@ -92,7 +98,7 @@ export async function GET(
         `,
     ])) as [
       { geojson: string }[],
-      AreaProps[],
+      (AreaProps & { centroid: string })[],
       { geojson: string }[],
       DestinationPortRow[],
     ];
@@ -116,7 +122,10 @@ export async function GET(
     const result: FetchAreaResponse = {
       ...area,
       boundingBox: JSON.parse(boundingBoxRows[0]?.geojson) || null,
-      destinationAreas,
+      destinationAreas: destinationAreas.map((area) => ({
+        ...area,
+        centroid: JSON.parse(area.centroid) as GeoJSON.Point,
+      })),
       destinationAreasBbox:
         JSON.parse(destinationAreasBbox[0]?.geojson) || null,
       destinationPorts,

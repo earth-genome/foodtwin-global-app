@@ -7,11 +7,15 @@ import { PageSection, SectionHeader } from "@/app/components/page-section";
 import { Metric, MetricRow } from "@/app/components/metric";
 import { AreaMeta, IndicatorColumn } from "../../../../../prisma/seed/nodes";
 import { FoodGroup } from "@prisma/client";
-import { Arc, ListBars } from "@/app/components/charts";
+import { Arc, ListBars, Sankey } from "@/app/components/charts";
+import { formatKeyIndicator } from "@/utils/numbers";
 import { EAreaViewType } from "@/app/components/map/state/machine";
 import { Button } from "@nextui-org/react";
 import Link from "next/link";
-import Layout from "./layout";
+
+const SANKEY_LINKS_COUNT = 5;
+const SANKEY_HEIGHT = 600;
+const SANKEY_WIDTH = 435;
 
 interface IFoodGroupAgg extends FoodGroup {
   sum: number;
@@ -22,6 +26,19 @@ interface IFoodGroupAgg extends FoodGroup {
 }
 
 type IFoodGroupAggObj = Record<string, IFoodGroupAgg>;
+
+interface ImportSum {
+  sum: number;
+}
+
+interface ExportFlow {
+  mode: "road" | "rail" | "IWW";
+  value: number;
+  toAreaId: string;
+  name: string;
+  iso3: string;
+  type: "MARITIME" | "PORT" | "INLAND_PORT" | "RAIL_STATION" | "ADMIN";
+}
 
 interface Indicators {
   totalPopulation: number;
@@ -39,6 +56,96 @@ function findParent(id: number, foodGroups: FoodGroup[]) {
     return findParent(g?.parentId, foodGroups);
   }
 }
+
+function getAreaLabel(area: {
+  name: string;
+  iso3?: string;
+  meta?: {
+    iso3?: string;
+  };
+}) {
+  if (area.iso3) {
+    return `${area.name}, ${area.iso3}`;
+  } else if (area.meta?.iso3) {
+    return `${area.name}, ${area.meta.iso3}`;
+  } else {
+    return area.name;
+  }
+}
+
+const OutboundSankey = ({
+  area,
+  outboundFlows,
+}: {
+  area: { id: string; name: string };
+  outboundFlows: ExportFlow[];
+}) => {
+  const visibleFlows = outboundFlows.slice(0, SANKEY_LINKS_COUNT);
+  const otherFlows = outboundFlows.slice(SANKEY_LINKS_COUNT);
+
+  const otherFlowsSum = otherFlows.reduce((sum, { value }) => sum + value, 0);
+
+  const mainNode = {
+    id: area.id,
+    label: getAreaLabel(area),
+    type: EItemType.area,
+  };
+
+  const visibleNodes = visibleFlows.map((flow) => ({
+    id: flow.toAreaId,
+    label: getAreaLabel(flow),
+    type: EItemType.area,
+  }));
+
+  const visibleLinks = visibleFlows.map(({ toAreaId, value }) => ({
+    source: area.id,
+    target: toAreaId,
+    value,
+    popupData: [
+      {
+        label: "Volume",
+        value: formatKeyIndicator(value, "weight", 0),
+      },
+    ],
+  }));
+
+  const allNodes = [mainNode, ...visibleNodes];
+  const allLinks = [...visibleLinks];
+
+  if (otherFlowsSum > 0) {
+    const otherNode = {
+      id: "other",
+      label: "Other Areas",
+      type: EItemType.area,
+    };
+
+    const otherLink = {
+      source: area.id,
+      target: "other",
+      value: otherFlowsSum,
+      popupData: [
+        {
+          label: "Volume",
+          value: formatKeyIndicator(otherFlowsSum, "weight", 0),
+        },
+      ],
+    };
+
+    allNodes.push(otherNode);
+    allLinks.push(otherLink);
+  }
+
+  return (
+    <Sankey
+      width={SANKEY_WIDTH}
+      height={SANKEY_HEIGHT}
+      data={{
+        nodes: allNodes,
+        links: allLinks,
+      }}
+    />
+  );
+};
 
 const AreaPage = async ({
   params,
@@ -62,7 +169,13 @@ const AreaPage = async ({
     return redirect("/not-found");
   }
 
-  const [foodGroupExports, foodGroups, outboundAreas] = await Promise.all([
+  const [
+    foodGroupExports,
+    foodGroups,
+    inBoundFlows,
+    outboundFlows,
+    outboundAreas,
+  ] = await Promise.all([
     prisma.flow.groupBy({
       where: {
         fromAreaId: area.id,
@@ -73,6 +186,21 @@ const AreaPage = async ({
       },
     }),
     prisma.foodGroup.findMany(),
+    prisma.$queryRawUnsafe(`
+      SELECT sum(value)
+        FROM "Flow"
+        WHERE "toAreaId" = '${area.id}'
+        GROUP BY "toAreaId";
+    `),
+    prisma.$queryRawUnsafe(
+      `SELECT "toAreaId", "Area".name, ST_AsText(ST_Transform("Area".centroid, 4326)), sum(value) as value, "Area".meta->>'iso3' as iso3
+        FROM "Flow"
+        JOIN "Area" ON "Flow"."toAreaId" = "Area"."id"
+        WHERE "Flow"."fromAreaId" = '${area.id}'
+        GROUP BY "toAreaId", "Area".name, "Area".centroid, "Area".meta
+        ORDER BY value DESC;
+    `
+    ),
     prisma.area.findMany({
       select: {
         id: true,
@@ -162,11 +290,15 @@ const AreaPage = async ({
       _sum.value ? partialSum + _sum.value : partialSum,
     0
   );
+  const totalExport = (outboundFlows as ExportFlow[]).reduce(
+    (partialSum, { value }) => partialSum + value,
+    0
+  );
   const meta = area.meta as AreaMeta;
   const areaLabel = meta.iso3 ? `${area.name}, ${meta.iso3}` : area.name;
 
   return (
-    <Layout>
+    <>
       <PageHeader title={areaLabel} itemType={EItemType.area} />
       {totalFlow === 0 ? (
         <PageSection
@@ -232,6 +364,27 @@ const AreaPage = async ({
               }))}
             />
           </PageSection>
+          <PageSection id={EAreaViewType.transportation}>
+            <SectionHeader label="Food Transportation" />
+            <MetricRow>
+              <Metric
+                label="Exported outside the region"
+                value={totalExport}
+                formatType="weight"
+                decimalPlaces={0}
+              />
+              <Metric
+                label="Supplied to the region"
+                value={(inBoundFlows as ImportSum[])[0]?.sum ?? 0}
+                formatType="weight"
+                decimalPlaces={0}
+              />
+            </MetricRow>
+            <OutboundSankey
+              area={area}
+              outboundFlows={outboundFlows as ExportFlow[]}
+            />
+          </PageSection>
           <PageSection id={EAreaViewType.impact} className="pb-8">
             <SectionHeader label="Impact on people" />
             <MetricRow>
@@ -277,7 +430,7 @@ const AreaPage = async ({
           </PageSection>
         </ScrollTracker>
       )}
-    </Layout>
+    </>
   );
 };
 
