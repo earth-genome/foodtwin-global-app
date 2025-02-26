@@ -28,6 +28,23 @@ export const worldViewState = {
   bounds: LngLatBoundsLike;
 };
 
+function loadIcons(map: mapboxgl.Map) {
+  const icons = [
+    { name: "port-icon", url: "/icons/port.png" },
+    { name: "shipping_container-icon", url: "/icons/shipping_container.png" },
+    { name: "producing_area-icon", url: "/icons/producing_area.png" },
+  ];
+
+  icons.forEach((icon) => {
+    map.loadImage(icon.url, (error, image) => {
+      if (error) throw error;
+      if (map && image) {
+        map.addImage(icon.name, image);
+      }
+    });
+  });
+}
+
 function GlobeInner() {
   const params = useParams();
   const router = useRouter();
@@ -121,6 +138,12 @@ function GlobeInner() {
             type: "event:map:mount",
             mapRef: mapRef.current as MapRef,
           });
+
+          const map = mapRef.current?.getMap();
+
+          if (!map) return;
+
+          loadIcons(map);
         }}
         onMouseMove={eventHandlers.mousemove ? handleMouseMove : undefined}
         onMouseOut={eventHandlers.mousemove ? handleMouseOut : undefined}

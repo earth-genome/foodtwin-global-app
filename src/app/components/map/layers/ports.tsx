@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Source, Layer, useMap } from "react-map-gl";
 import { MachineContext } from "../state";
 
@@ -11,29 +11,33 @@ const PortsLayer = () => {
     (s) => s.context.destinationPortsIds
   );
 
-  useEffect(() => {
-    if (!map.current) return;
-
-    map.current.loadImage("/icons/port.png", (error, image) => {
-      if (error) throw error;
-      if (map.current && image) {
-        map.current.addImage("port-icon", image);
-      }
-    });
-  }, [map]);
-
   return (
     <Source
       id="ports-tiles"
       type="vector"
-      tiles={[`${VECTOR_TILES_URL}/ports/{z}/{x}/{y}.pbf`]}
+      tiles={[`${VECTOR_TILES_URL}/nodes/{z}/{x}/{y}.pbf`]}
     >
       <Layer
         id="top-ports"
         type="symbol"
         source-layer="default"
         layout={{
-          "icon-image": "port-icon",
+          "icon-image": [
+            "match",
+            ["get", "type"],
+            "ADMIN",
+            "producing_area-icon",
+            "PORT",
+            "port-icon",
+            "INLAND_PORT",
+            "port-icon",
+            "MARITIME",
+            "port-icon",
+            "RAIL_STATION",
+            "shipping_container-icon",
+            "",
+          ],
+
           "icon-size": 0.3,
         }}
       />

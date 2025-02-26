@@ -13,7 +13,7 @@
     "db:aggregate-edges": "node prisma/tasks/aggregate-edges.js",
     "db:export-area-tiles": "node --import tsx prisma/tasks/export-area-tiles.ts",
     "db:export-edge-tiles": "node --import tsx prisma/tasks/export-edge-tiles.ts",
-    "db:export-port-tiles": "node --import tsx prisma/tasks/export-port-tiles.ts",
+    "db:export-node-tiles": "node --import tsx prisma/tasks/export-node-tiles.ts",
     "studio": "prisma studio",
     "postinstall": "prisma generate"
   },
