@@ -320,7 +320,7 @@ const AreaPage = async ({
             <SectionHeader label="Food Produced" />
             <MetricRow>
               <Metric
-                label="Total production"
+                label="Food exported outside the region"
                 value={totalFlow ?? undefined}
                 formatType="weight"
                 decimalPlaces={0}
