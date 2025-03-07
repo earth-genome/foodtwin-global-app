@@ -26,7 +26,7 @@ export default function CategoriesLegend() {
           <LegendItem color="food-pulses" label="Pulses" />
           <LegendItem color="food-vegetables" label="Vegetables" />
           <LegendItem color="food-treenuts" label="Treenuts" />
-          <LegendItem color="food-meat-and-fish" label="Meet and Fish" />
+          <LegendItem color="food-meat-and-fish" label="Meat and Fish" />
           <LegendItem color="food-other" label="Other" />
         </div>
       </div>
