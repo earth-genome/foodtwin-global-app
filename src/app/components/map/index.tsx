@@ -171,9 +171,9 @@ function GlobeInner() {
         ></Source>
 
         <FoodGroupsLayer />
+        <EdgeLayer />
         <AreaLayers />
         <DestinationAreasLayer />
-        <EdgeLayer />
         <PortsLayer />
 
         {mapPopup && <MapPopup {...mapPopup} />}
