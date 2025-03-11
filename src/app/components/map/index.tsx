@@ -86,6 +86,12 @@ function GlobeInner() {
     });
   }, [actorRef]);
 
+  const handleZoomEnd = useCallback(() => {
+    actorRef.send({
+      type: "event:map:zoomend",
+    });
+  }, [actorRef]);
+
   useEffect(() => {
     actorRef.send({
       type: "event:page:mount",
@@ -154,6 +160,7 @@ function GlobeInner() {
         }}
         onMouseMove={eventHandlers.mousemove ? handleMouseMove : undefined}
         onMouseOut={eventHandlers.mousemove ? handleMouseOut : undefined}
+        onZoomEnd={eventHandlers.zoomEnd ? handleZoomEnd : undefined}
         style={{ width: "100%", height: "100%", flex: 1 }}
         mapStyle={mapboxStyleUrl}
       >

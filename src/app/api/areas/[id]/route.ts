@@ -64,14 +64,16 @@ export async function GET(
         SELECT ST_AsGeoJSON(ST_Extent(ST_Transform(limits, 4326))) as geojson FROM "Area" WHERE id = ${id}
       `,
       prisma.$queryRaw`
-        select 
-          "Area"."id", 
-          "Area"."name", 
+        select
+          "Area"."id",
+          "Area"."name",
           ST_AsGeoJSON(ST_Transform("Area"."centroid", 4326)) as centroid,
-          (meta->>'totalpop')::float as totalpop
-        from "Flow" 
+          (meta->>'totalpop')::float as totalpop,
+          "Flow".value
+        from "Flow"
           LEFT JOIN "Area" ON "Flow"."toAreaId" = "Area"."id" where "fromAreaId" = ${id}
-        GROUP BY "Area"."id", "Area"."name", "Area"."centroid", "Area"."meta";
+        GROUP BY "Area"."id", "Area"."name", "Area"."centroid", "Area"."meta", "Flow".value
+        ORDER BY value DESC;
       `,
       prisma.$queryRaw`
           SELECT ST_AsGeoJSON(ST_Extent(ST_Transform("limits", 4326))) as geojson
@@ -80,10 +82,10 @@ export async function GET(
         `,
       // TODO this is a temporary query to get the 10 closest ports to the area until there is maritime data in the database
       prisma.$queryRaw`
-          SELECT 
-            "Node"."id", 
+          SELECT
+            "Node"."id",
             ((ctid::text::point)[0]::bigint << 32) | (ctid::text::point)[1]::bigint AS id_int,
-            "Node"."name", 
+            "Node"."name",
             ST_AsGeoJSON(ST_Transform("Node"."geom", 4326)) as geometry
           FROM "Node"
           WHERE "Node"."type" = 'PORT'
