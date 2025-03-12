@@ -14,6 +14,7 @@
     "db:export-area-tiles": "node --import tsx prisma/tasks/export-area-tiles.ts",
     "db:export-edge-tiles": "node --import tsx prisma/tasks/export-edge-tiles.ts",
     "db:export-node-tiles": "node --import tsx prisma/tasks/export-node-tiles.ts",
+    "db:create-area-flow-geometries": "node --import tsx prisma/tasks/create-view-area-flows-geometries.ts",
     "studio": "prisma studio",
     "postinstall": "prisma generate"
   },
