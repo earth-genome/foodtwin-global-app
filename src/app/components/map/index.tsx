@@ -19,8 +19,7 @@ import AreaLayers from "./layers/areas";
 import PortsLayer from "./layers/ports";
 import { AREA_SOURCE_ID, AREA_VIEW_BOUNDS_PADDING } from "./constants";
 import DestinationAreasLayer from "./layers/destination-areas";
-
-// Environment variables used in this component
+import AreaFlowsLayer from "./layers/area-flows";
 
 const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 const mapboxStyleUrl = process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL;
@@ -168,6 +167,7 @@ function GlobeInner() {
         <DestinationAreasLayer />
         <EdgeLayer />
         <PortsLayer />
+        <AreaFlowsLayer />
 
         {mapPopup && <MapPopup {...mapPopup} />}
       </Map>

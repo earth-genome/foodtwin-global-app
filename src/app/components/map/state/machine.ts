@@ -39,6 +39,7 @@ interface StateContext {
   currentAreaId: string | null;
   currentArea: FetchAreaResponse | null;
   currentAreaFeature: GeoJSONFeature | null;
+  currentAreaFlows: FetchAreaResponse["areaFlows"];
   currentAreaViewType: EAreaViewType | null;
   destinationPortsIds: number[];
   destinationAreas: AreaWithCentroidProps[];
@@ -68,6 +69,7 @@ export const globeViewMachine = createMachine(
       highlightedArea: null,
       currentAreaId: null,
       currentArea: null,
+      currentAreaFlows: [],
       currentAreaFeature: null,
       currentAreaViewType: null,
       destinationAreas: [],
@@ -447,6 +449,10 @@ export const globeViewMachine = createMachine(
         return {
           currentArea: event.output,
           currentAreaFeature: feature,
+          currentAreaFlows: event.output.areaFlows.map((flow) => ({
+            ...flow,
+            geojson: JSON.parse(flow.geojson),
+          })),
           destinationAreas: event.output.destinationAreas,
           destinationAreasFeatureIds,
         };

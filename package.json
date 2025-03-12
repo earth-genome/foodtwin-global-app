@@ -22,9 +22,10 @@
     "seed": "node --max-old-space-size=65536 --import tsx prisma/seed"
   },
   "dependencies": {
-    "@deck.gl/core": "^9.0.14",
+    "@deck.gl/core": "^9.0.32",
     "@deck.gl/geo-layers": "^9.0.14",
-    "@deck.gl/layers": "^9.0.14",
+    "@deck.gl/layers": "^9.0.32",
+    "@deck.gl/mapbox": "^9.1.4",
     "@deck.gl/mesh-layers": "^9.0.14",
     "@deck.gl/react": "^9.0.14",
     "@luma.gl/engine": "^9.0.14",

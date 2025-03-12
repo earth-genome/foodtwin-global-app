@@ -7,6 +7,7 @@ WITH
       MIN("id") as "id",
       COUNT("id") as "count",
       "foodGroupId",
+      "fromAreaId",
       "toAreaId",
       "type",
       SUM("value") as "sumValue"
@@ -16,10 +17,9 @@ WITH
       "Flow"."fromAreaId" = 'ESP.8_1'
     GROUP BY
       "foodGroupId",
+      "fromAreaId",
       "toAreaId",
       "type"
-    LIMIT
-      17
   ),
   "orderedEdges" AS (
     SELECT
@@ -52,6 +52,7 @@ WITH
 SELECT
   "aggregatedFlows"."id" AS "flowId",
   "aggregatedFlows"."foodGroupId",
+  "aggregatedFlows"."fromAreaId",
   "aggregatedFlows"."toAreaId",
   "aggregatedFlows"."type",
   "aggregatedFlows"."sumValue",
@@ -63,6 +64,7 @@ FROM
 GROUP BY
   "aggregatedFlows"."id",
   "aggregatedFlows"."foodGroupId",
+  "aggregatedFlows"."fromAreaId",
   "aggregatedFlows"."toAreaId",
   "aggregatedFlows"."type",
   "aggregatedFlows"."sumValue",

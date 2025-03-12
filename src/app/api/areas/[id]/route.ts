@@ -11,6 +11,14 @@ export interface AreaWithCentroidProps extends AreaProps {
   centroid: GeoJSON.Point;
 }
 
+interface AreaFlow {
+  foodGroupId: string;
+  toAreaId: string;
+  type: string;
+  sumValue: number;
+  geojson: string;
+}
+
 export interface FetchAreaResponse {
   id: string;
   name: string;
@@ -22,6 +30,7 @@ export interface FetchAreaResponse {
     GeoJSON.Geometry,
     DestinationPortProps
   >;
+  areaFlows: AreaFlow[];
 }
 
 interface DestinationPortProps {
@@ -59,6 +68,7 @@ export async function GET(
       destinationAreas,
       destinationAreasBbox,
       destinationPortsRows,
+      areaFlows,
     ] = (await Promise.all([
       prisma.$queryRaw`
         SELECT ST_AsGeoJSON(ST_Extent(ST_Transform(limits, 4326))) as geojson FROM "Area" WHERE id = ${id}
@@ -96,11 +106,24 @@ export async function GET(
           ) ASC
           LIMIT 10;
         `,
+      prisma.$queryRaw`
+        SELECT
+          "foodGroupId",
+          "toAreaId",
+          "type",
+          "sumValue",
+          ST_AsGeoJSON(ST_Transform("multiLineStringGeom", 4326)) as "geojson"
+        FROM
+          "AreaFlowsGeometries"
+        WHERE
+          "fromAreaId" = ${id}
+      `,
     ])) as [
       { geojson: string }[],
       (AreaProps & { centroid: string })[],
       { geojson: string }[],
       DestinationPortRow[],
+      AreaFlow[],
     ];
 
     const destinationPorts: GeoJSON.FeatureCollection<
@@ -129,6 +152,7 @@ export async function GET(
       destinationAreasBbox:
         JSON.parse(destinationAreasBbox[0]?.geojson) || null,
       destinationPorts,
+      areaFlows,
     };
 
     return NextResponse.json(result);
