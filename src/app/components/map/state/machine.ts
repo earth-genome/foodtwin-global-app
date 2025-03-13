@@ -47,6 +47,7 @@ interface StateContext {
   mapBounds: BBox | null;
   eventHandlers: {
     mousemove: boolean;
+    zoomEnd: boolean;
   };
 }
 
@@ -77,6 +78,7 @@ export const globeViewMachine = createMachine(
       mapBounds: null,
       eventHandlers: {
         mousemove: true,
+        zoomEnd: true,
       },
     },
 
@@ -222,6 +224,11 @@ export const globeViewMachine = createMachine(
           "event:map:mouseout": {
             target: "area:view:transportation",
             actions: "action:clearHighlightedArea",
+          },
+
+          "event:map:zoomend": {
+            target: "area:view:transportation",
+            actions: "action:applyDestinationAreaIdsToMap",
           },
         },
 
@@ -433,22 +440,10 @@ export const globeViewMachine = createMachine(
           );
         }
 
-        const destinationAreaIds = event.output.destinationAreas.map(
-          ({ id }) => id
-        );
-
-        const destinationAreasFeatureIds = mapRef
-          .querySourceFeatures(AREA_SOURCE_ID, {
-            filter: ["in", "id", ...destinationAreaIds],
-            sourceLayer: AREA_SOURCE_LAYER_ID,
-          })
-          .map((feature) => feature.id as number); // we are sure that the id is a number, because we are not using promoteId from MapboxGL
-
         return {
           currentArea: event.output,
           currentAreaFeature: feature,
           destinationAreas: event.output.destinationAreas,
-          destinationAreasFeatureIds,
         };
       }),
       "action:enterProductionAreaView": assign(({ context }) => {
@@ -614,11 +609,20 @@ export const globeViewMachine = createMachine(
         };
       }),
       "action:applyDestinationAreaIdsToMap": assign(({ context }) => {
-        const { mapRef, destinationAreasFeatureIds } = context;
+        const { mapRef, destinationAreas } = context;
 
         if (!mapRef) {
           return {};
         }
+
+        const destinationAreaIds = destinationAreas.map(({ id }) => id);
+
+        const destinationAreasFeatureIds = mapRef
+          .querySourceFeatures(AREA_SOURCE_ID, {
+            filter: ["in", "id", ...destinationAreaIds],
+            sourceLayer: AREA_SOURCE_LAYER_ID,
+          })
+          .map((feature) => feature.id as number); // we are sure that the id is a number, because we are not using promoteId from MapboxGL
 
         for (const destinationAreaFeatureId of destinationAreasFeatureIds) {
           mapRef.setFeatureState(
@@ -631,7 +635,9 @@ export const globeViewMachine = createMachine(
           );
         }
 
-        return {};
+        return {
+          destinationAreasFeatureIds,
+        };
       }),
       "action:fitMapToCurrentAreaBounds": assign(({ context }) => {
         const { mapRef, currentArea } = context;

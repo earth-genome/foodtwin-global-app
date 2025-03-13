@@ -24,6 +24,10 @@ interface EventMapMouseOut {
   type: "event:map:mouseout";
 }
 
+interface EventMapZoomEnd {
+  type: "event:map:zoomend";
+}
+
 interface EventFetchAreaDone {
   type: "xstate.done.actor.0.globeView.area:fetching";
   input: {
@@ -51,6 +55,7 @@ export type StateEvents =
   | EventMapMouseMove
   | EventFetchAreaDone
   | EventMapMouseOut
+  | EventMapZoomEnd
   | EventAreaSelectFoodTransportation
   | EventAreaSelectImpact
   | EventAreaSelectFoodProduced;

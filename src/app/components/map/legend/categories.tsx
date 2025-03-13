@@ -19,8 +19,8 @@ export default function CategoriesLegend() {
         <h3 className="mb-2 font-bold">Categories</h3>
         <div className="grid grid-cols-2 gap-x-8 gap-y-2">
           <LegendItem color="food-dairy-and-eggs" label="Dairy and Eggs" />
-          <LegendItem color="food-oils-and-oilseeds" label="Oils and Oilseed" />
-          <LegendItem color="food-starches" label="Starches" />
+          <LegendItem color="food-oils-and-oilseed" label="Oils and Oilseed" />
+          <LegendItem color="food-starchy-roots" label="Starchy Roots" />
           <LegendItem color="food-fruits" label="Fruits" />
           <LegendItem color="food-grains" label="Grains" />
           <LegendItem color="food-pulses" label="Pulses" />
