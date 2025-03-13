@@ -615,9 +615,7 @@ export const globeViewMachine = createMachine(
           return {};
         }
 
-        const destinationAreaIds = destinationAreas
-          .slice(0, 6) // Only get the top 5 of destination area
-          .map(({ id }) => id);
+        const destinationAreaIds = destinationAreas.map(({ id }) => id);
 
         const destinationAreasFeatureIds = mapRef
           .querySourceFeatures(AREA_SOURCE_ID, {
