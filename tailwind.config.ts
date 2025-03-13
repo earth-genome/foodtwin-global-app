@@ -1,6 +1,19 @@
 import type { Config } from "tailwindcss";
 import { nextui } from "@nextui-org/react";
 
+export const FoodGroupColors = {
+  "dairy-and-eggs": "#76B7B2",
+  "oils-and-oilseed": "#EDC948",
+  "starchy-roots": "#4E79A7",
+  fruits: "#FF9DA7",
+  grains: "#F28E2B",
+  pulses: "#B07AA1",
+  vegetables: "#59A14F",
+  treenuts: "#9C755F",
+  "meat-and-fish": "#E15759",
+  other: "#BAB0AC",
+};
+
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -12,8 +25,9 @@ const config: Config = {
     "text-category-area",
     "text-category-route",
     "text-category-node",
-    "bg-food-oils-and-oilseeds",
-    "bg-food-starches",
+    "bg-food-oils-and-oilseed",
+    "bg-food-dairy-and-eggs",
+    "bg-food-starchy-roots",
     "bg-food-fruits",
     "bg-food-grains",
     "bg-food-pulses",
@@ -43,18 +57,7 @@ const config: Config = {
         route: "#99E2EE",
         node: "#FFD27A",
       },
-      food: {
-        "dairy-and-eggs": "#76B7B2",
-        "oils-and-oilseeds": "#EDC948",
-        starches: "#4E79A7",
-        fruits: "#FF9DA7",
-        grains: "#F28E2B",
-        pulses: "#B07AA1",
-        vegetables: "#59A14F",
-        treenuts: "#9C755F",
-        "meat-and-fish": "#E15759",
-        other: "#BAB0AC",
-      },
+      food: FoodGroupColors,
       neutral: {
         50: "#FAFAF9",
         100: "#F5F5F4",

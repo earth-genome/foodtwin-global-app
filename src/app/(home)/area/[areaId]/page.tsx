@@ -13,6 +13,8 @@ import { EAreaViewType } from "@/app/components/map/state/machine";
 import { Button } from "@nextui-org/react";
 import Link from "next/link";
 
+import { FoodGroupColors } from "../../../../../tailwind.config";
+
 const SANKEY_LINKS_COUNT = 5;
 const SANKEY_HEIGHT = 600;
 const SANKEY_WIDTH = 435;
@@ -358,9 +360,12 @@ const AreaPage = async ({
             <ListBars
               showPercentage
               formatType="weight"
-              data={Object.values(foodGroupAgg).map(({ name, sum }) => ({
+              data={Object.values(foodGroupAgg).map(({ name, sum, slug }) => ({
                 label: name,
                 value: sum,
+                color: slug
+                  ? FoodGroupColors[slug as keyof typeof FoodGroupColors]
+                  : undefined,
               }))}
             />
           </PageSection>
