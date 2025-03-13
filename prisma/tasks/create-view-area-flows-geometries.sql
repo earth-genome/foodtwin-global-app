@@ -57,7 +57,10 @@ SELECT
   "aggregatedFlows"."type",
   "aggregatedFlows"."sumValue",
   "aggregatedFlows"."count",
-  ST_LineMerge (ST_Union ("orderedEdges"."geom")) AS "multiLineStringGeom"
+  ST_SimplifyPreserveTopology (
+    ST_LineMerge (ST_Union ("orderedEdges"."geom")),
+    1000
+  ) AS "multiLineStringGeom"
 FROM
   "orderedEdges"
   JOIN "aggregatedFlows" ON "orderedEdges"."flowId" = "aggregatedFlows"."id"
