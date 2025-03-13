@@ -15,6 +15,7 @@ export interface FetchAreaResponse {
   id: string;
   name: string;
   totalpop: number;
+  centroid: GeoJSON.Point;
   boundingBox: GeoJSON.Feature;
   destinationAreas: AreaWithCentroidProps[];
   destinationAreasBbox: GeoJSON.Feature;
@@ -41,8 +42,14 @@ export async function GET(
   const { id } = params;
 
   try {
-    const areaRows = await prisma.$queryRaw<AreaProps[]>`
-      SELECT id, name, (meta->>'totalpop')::float as totalpop
+    const areaRows = await prisma.$queryRaw<
+      (AreaProps & { centroid: string })[]
+    >`
+      SELECT
+        id,
+        name,
+        (meta->>'totalpop')::float as totalpop,
+        ST_AsGeoJSON(ST_Transform("Area"."centroid", 4326)) as centroid
       FROM "Area"
       WHERE id = ${id}
       LIMIT 1;
@@ -124,6 +131,7 @@ export async function GET(
     const result: FetchAreaResponse = {
       ...area,
       boundingBox: JSON.parse(boundingBoxRows[0]?.geojson) || null,
+      centroid: JSON.parse(area.centroid),
       destinationAreas: destinationAreas.map((area) => ({
         ...area,
         centroid: JSON.parse(area.centroid) as GeoJSON.Point,

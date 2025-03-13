@@ -19,6 +19,7 @@ import AreaLayers from "./layers/areas";
 import PortsLayer from "./layers/ports";
 import { AREA_SOURCE_ID, AREA_VIEW_BOUNDS_PADDING } from "./constants";
 import DestinationAreasLayer from "./layers/destination-areas";
+import { EItemType } from "@/types/components";
 
 // Environment variables used in this component
 
@@ -71,6 +72,9 @@ function GlobeInner() {
   );
   const mapPopup = MachineContext.useSelector(
     (state) => state.context.mapPopup
+  );
+  const currentArea = MachineContext.useSelector(
+    (state) => state.context.currentArea
   );
 
   const handleMouseMove = useCallback((event: MapMouseEvent) => {
@@ -177,6 +181,16 @@ function GlobeInner() {
         <PortsLayer />
 
         {mapPopup && <MapPopup {...mapPopup} />}
+        {currentArea && (
+          <MapPopup
+            id={currentArea.id}
+            longitude={currentArea.centroid.coordinates[0]}
+            latitude={currentArea.centroid.coordinates[1]}
+            label={currentArea.name}
+            itemType={EItemType.area}
+            colorScheme="dark"
+          />
+        )}
       </Map>
     </div>
   );

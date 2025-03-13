@@ -10,9 +10,22 @@ export interface IMapPopup {
   itemType: EItemType;
   longitude: number;
   latitude: number;
+  colorScheme?: "light" | "dark";
 }
 
-function MapPopup({ id, label, itemType, longitude, latitude }: IMapPopup) {
+function MapPopup({
+  id,
+  label,
+  itemType,
+  longitude,
+  latitude,
+  colorScheme = "light",
+}: IMapPopup) {
+  const colorClasses =
+    colorScheme === "light"
+      ? "bg-white text-neutral-800"
+      : "bg-neutral-800 text-white";
+
   return (
     <Popup
       key={id}
@@ -23,7 +36,9 @@ function MapPopup({ id, label, itemType, longitude, latitude }: IMapPopup) {
       closeButton={false}
       offset={12}
     >
-      <div className="flex gap-2 items-center font-header tracking-tighter text-white bg-neutral-800 p-2 rounded">
+      <div
+        className={`flex gap-2 items-center font-header tracking-tighter ${colorClasses} p-2 rounded`}
+      >
         <TypeIcon itemType={itemType} />
         <span>{label}</span>
       </div>
