@@ -13,11 +13,17 @@ import { EAreaViewType } from "@/app/components/map/state/machine";
 import { Button } from "@nextui-org/react";
 import Link from "next/link";
 
+import foodgroupNutrition from "./foodgroup-nutrition";
 import { FoodGroupColors } from "../../../../../tailwind.config";
 
 const SANKEY_LINKS_COUNT = 5;
 const SANKEY_HEIGHT = 600;
 const SANKEY_WIDTH = 435;
+
+const PERSON_CALORIES_PER_DAY = 2500;
+const PERSON_PROTEIN_PER_DAY = 52;
+const PERSON_IRON_PER_DAY = 10;
+const PERSON_VITAMINA_PER_DAY = 600;
 
 interface IFoodGroupAgg extends FoodGroup {
   sum: number;
@@ -287,6 +293,39 @@ const AreaPage = async ({
     {}
   );
 
+  interface NutritionAgg {
+    calories: number;
+    protein: number;
+    iron: number;
+    vitaminA: number;
+  }
+
+  const nutritionPerPerson = foodGroupExports.reduce(
+    (sum: NutritionAgg, { foodGroupId, _sum }) => {
+      const group =
+        foodgroupNutrition[
+          foodGroupId.toString() as keyof typeof foodgroupNutrition
+        ];
+
+      if (!group) {
+        return sum;
+      }
+
+      return {
+        calories: sum.calories + ((_sum.value || 0) / 1000) * group.calories,
+        protein: sum.protein + ((_sum.value || 0) / 1000) * group.protein,
+        iron: sum.iron + ((_sum.value || 0) / 1000) * group.iron,
+        vitaminA: sum.vitaminA + ((_sum.value || 0) / 1000) * group.vitaminA,
+      };
+    },
+    {
+      calories: 0,
+      protein: 0,
+      iron: 0,
+      vitaminA: 0,
+    }
+  );
+
   const totalFlow = foodGroupExports.reduce(
     (partialSum, { _sum }) =>
       _sum.value ? partialSum + _sum.value : partialSum,
@@ -400,38 +439,42 @@ const AreaPage = async ({
                 decimalPlaces={0}
               />
             </MetricRow>
-            <div className="flex flex-wrap gap-6 justify-around items-end">
-              <Arc
-                title="Rural"
-                percentage={
-                  (indicators.ruralPopulation / indicators.totalPopulation) *
-                  100
+            <MetricRow>
+              <Metric
+                label="People Calories"
+                value={
+                  nutritionPerPerson.calories / (PERSON_CALORIES_PER_DAY * 365)
                 }
+                formatType="metric"
+                decimalPlaces={0}
               />
-              <Arc
-                title="Elderly"
-                percentage={
-                  (indicators.elderlyPopulation / indicators.totalPopulation) *
-                  100
+              <Metric
+                label="People Protein"
+                value={
+                  (nutritionPerPerson.protein * 1000) / // Protein is given in kg per t, need is in g
+                  (PERSON_PROTEIN_PER_DAY * 365)
                 }
+                formatType="metric"
+                decimalPlaces={0}
               />
-
-              <Arc
-                title="Women of child-bearing age"
-                percentage={
-                  (indicators.childBearingPopulation /
-                    indicators.totalPopulation) *
-                  100
+              <Metric
+                label="People Iron"
+                value={
+                  (nutritionPerPerson.iron * 1000) / // Iron is given in g per t, need is in mg
+                  (PERSON_IRON_PER_DAY * 365)
                 }
+                formatType="metric"
+                decimalPlaces={0}
               />
-              <Arc
-                title="Children under 5"
-                percentage={
-                  (indicators.under5Population / indicators.totalPopulation) *
-                  100
+              <Metric
+                label="People Vitamin A"
+                value={
+                  nutritionPerPerson.vitaminA / (PERSON_VITAMINA_PER_DAY * 365)
                 }
+                formatType="metric"
+                decimalPlaces={0}
               />
-            </div>
+            </MetricRow>
           </PageSection>
         </ScrollTracker>
       )}
