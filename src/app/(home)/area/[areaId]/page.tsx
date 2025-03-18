@@ -300,6 +300,7 @@ const AreaPage = async ({
     vitaminA: number;
   }
 
+  console.log("foodGroupId,foodGroup,value,calories,protein,iron,vitaminA");
   const nutritionPerPerson = foodGroupExports.reduce(
     (sum: NutritionAgg, { foodGroupId, _sum }) => {
       const group =
@@ -311,12 +312,21 @@ const AreaPage = async ({
         return sum;
       }
 
-      return {
+      const result = {
         calories: sum.calories + ((_sum.value || 0) / 1000) * group.calories,
         protein: sum.protein + ((_sum.value || 0) / 1000) * group.protein,
         iron: sum.iron + ((_sum.value || 0) / 1000) * group.iron,
         vitaminA: sum.vitaminA + ((_sum.value || 0) / 1000) * group.vitaminA,
       };
+
+      // print results as csv for debugging
+      console.log(
+        `${foodGroupId},${
+          foodGroups.find((g) => g.id === foodGroupId)?.name
+        },${_sum.value},${group.calories},${group.protein},${group.iron},${group.vitaminA}`
+      );
+
+      return result;
     },
     {
       calories: 0,
