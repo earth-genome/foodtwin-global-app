@@ -60,10 +60,10 @@ function AreaLayers() {
         paint={{
           "fill-color": [
             "case",
-            ["boolean", ["feature-state", "destination"], false],
-            AREA_DESTINATION_FILL_COLOR,
             ["boolean", ["feature-state", "selected"], false],
             AREA_ORIGIN_FILL_COLOR,
+            ["boolean", ["feature-state", "destination"], false],
+            AREA_DESTINATION_FILL_COLOR,
             "transparent",
           ],
         }}
