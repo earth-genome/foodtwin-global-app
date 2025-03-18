@@ -20,6 +20,9 @@ import PortsLayer from "./layers/ports";
 import { AREA_SOURCE_ID, AREA_VIEW_BOUNDS_PADDING } from "./constants";
 import DestinationAreasLayer from "./layers/destination-areas";
 import AreaFlowsLayer from "./layers/area-flows";
+import { EItemType } from "@/types/components";
+
+// Environment variables used in this component
 
 const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 const mapboxStyleUrl = process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL;
@@ -71,6 +74,9 @@ function GlobeInner() {
   const mapPopup = MachineContext.useSelector(
     (state) => state.context.mapPopup
   );
+  const currentArea = MachineContext.useSelector(
+    (state) => state.context.currentArea
+  );
 
   const handleMouseMove = useCallback((event: MapMouseEvent) => {
     actorRef.send({
@@ -82,6 +88,12 @@ function GlobeInner() {
   const handleMouseOut = useCallback(() => {
     actorRef.send({
       type: "event:map:mouseout",
+    });
+  }, [actorRef]);
+
+  const handleZoomEnd = useCallback(() => {
+    actorRef.send({
+      type: "event:map:zoomend",
     });
   }, [actorRef]);
 
@@ -153,6 +165,7 @@ function GlobeInner() {
         }}
         onMouseMove={eventHandlers.mousemove ? handleMouseMove : undefined}
         onMouseOut={eventHandlers.mousemove ? handleMouseOut : undefined}
+        onZoomEnd={eventHandlers.zoomEnd ? handleZoomEnd : undefined}
         style={{ width: "100%", height: "100%", flex: 1 }}
         mapStyle={mapboxStyleUrl}
       >
@@ -163,13 +176,23 @@ function GlobeInner() {
         ></Source>
 
         <FoodGroupsLayer />
+        <EdgeLayer />
         <AreaLayers />
         <DestinationAreasLayer />
-        <EdgeLayer />
         <PortsLayer />
         <AreaFlowsLayer />
 
         {mapPopup && <MapPopup {...mapPopup} />}
+        {currentArea && (
+          <MapPopup
+            id={currentArea.id}
+            longitude={currentArea.centroid.coordinates[0]}
+            latitude={currentArea.centroid.coordinates[1]}
+            label={currentArea.name}
+            itemType={EItemType.area}
+            colorScheme="dark"
+          />
+        )}
       </Map>
     </div>
   );
