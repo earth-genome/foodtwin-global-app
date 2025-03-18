@@ -4,7 +4,6 @@ import { TripsLayer } from "@deck.gl/geo-layers";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { useControl } from "react-map-gl";
 import { MachineContext } from "../state";
-import { GeoJSONFeature } from "mapbox-gl";
 
 const SPEED_FACTOR = 10;
 
@@ -14,6 +13,8 @@ interface Waypoint {
 }
 
 interface DataType {
+  fromAreaId: string;
+  toAreaId: string;
   waypoints: Waypoint[];
 }
 
@@ -26,53 +27,48 @@ function DeckGLOverlay(props: DeckProps) {
 const AreaFlowsLayer = () => {
   const [currentTime, setCurrentTime] = useState(0);
 
-  // Selector to extract and transform the flow data
-  const waypoints = MachineContext.useSelector((s) => {
-    const oneFlow: GeoJSONFeature | undefined = s.context.currentAreaFlows?.[0];
-    if (!oneFlow) return null;
+  const trips = MachineContext.useSelector((s) => {
+    const { currentAreaFlows } = s.context;
+    if (!currentAreaFlows) return null;
 
-    return oneFlow.geojson.coordinates
-      .flat()
-      .reverse()
-      .map((coords, i) => ({
+    return currentAreaFlows.map(({ fromAreaId, toAreaId, geojson }) => ({
+      fromAreaId,
+      toAreaId,
+      waypoints: geojson.coordinates.flat().map((coords, i) => ({
         coordinates: coords,
         timestamp: i,
-      }));
+      })),
+    }));
   });
 
   useEffect(() => {
-    if (!waypoints) return;
+    if (!trips) return;
 
     const interval = setInterval(() => {
       setCurrentTime((prevTime) => prevTime + SPEED_FACTOR);
-    }, 50);
+    }, 500);
 
     return () => clearInterval(interval);
-  }, [waypoints]);
+  }, [trips]);
 
-  if (!waypoints) {
+  if (!trips) {
     return null;
   }
 
-  const tripsData: DataType[] = [{ waypoints }];
+  const tripsLayer = new TripsLayer<DataType>({
+    id: `trips`,
+    data: trips,
+    getPath: (d: DataType) => d.waypoints.map((p) => p.coordinates),
+    getTimestamps: (d: DataType) => d.waypoints.map((p) => p.timestamp),
+    getColor: [0, 0, 0],
+    currentTime,
+    trailLength: 6,
+    capRounded: true,
+    jointRounded: true,
+    widthMinPixels: 8,
+  });
 
-  const layers = [
-    new TripsLayer<DataType>({
-      id: "TripsLayer",
-      data: tripsData,
-
-      getPath: (d: DataType) => d.waypoints.map((p) => p.coordinates),
-      getTimestamps: (d: DataType) => d.waypoints.map((p) => p.timestamp),
-      getColor: [0, 0, 0],
-      currentTime,
-      trailLength: 600,
-      capRounded: true,
-      jointRounded: true,
-      widthMinPixels: 8,
-    }),
-  ];
-
-  return <DeckGLOverlay layers={layers} />;
+  return <DeckGLOverlay layers={[tripsLayer]} />;
 };
 
 export default AreaFlowsLayer;

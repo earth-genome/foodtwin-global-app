@@ -12,11 +12,9 @@ export interface AreaWithCentroidProps extends AreaProps {
 }
 
 interface AreaFlow {
-  foodGroupId: string;
   toAreaId: string;
-  type: string;
-  sumValue: number;
-  geojson: string;
+  fromAreaId: string;
+  geojson: GeoJSON.MultiLineString;
 }
 
 export interface FetchAreaResponse {
@@ -108,13 +106,11 @@ export async function GET(
         `,
       prisma.$queryRaw`
         SELECT
-          "foodGroupId",
+          "fromAreaId",
           "toAreaId",
-          "type",
-          "sumValue",
-          ST_AsGeoJSON(ST_Transform("multiLineStringGeom", 4326)) as "geojson"
+          ST_AsGeoJSON(ST_Transform("geom", 4326)) as "geojson"
         FROM
-          "AreaFlowsGeometries"
+          "AreaFlowGeometries"
         WHERE
           "fromAreaId" = ${id}
       `,
@@ -123,7 +119,11 @@ export async function GET(
       (AreaProps & { centroid: string })[],
       { geojson: string }[],
       DestinationPortRow[],
-      AreaFlow[],
+      {
+        fromAreaId: string;
+        toAreaId: string;
+        geojson: string;
+      }[],
     ];
 
     const destinationPorts: GeoJSON.FeatureCollection<
@@ -152,7 +152,10 @@ export async function GET(
       destinationAreasBbox:
         JSON.parse(destinationAreasBbox[0]?.geojson) || null,
       destinationPorts,
-      areaFlows,
+      areaFlows: areaFlows.map((flow) => ({
+        ...flow,
+        geojson: JSON.parse(flow.geojson) as GeoJSON.MultiLineString,
+      })),
     };
 
     return NextResponse.json(result);

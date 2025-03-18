@@ -449,10 +449,7 @@ export const globeViewMachine = createMachine(
         return {
           currentArea: event.output,
           currentAreaFeature: feature,
-          currentAreaFlows: event.output.areaFlows.map((flow) => ({
-            ...flow,
-            geojson: JSON.parse(flow.geojson),
-          })),
+          currentAreaFlows: event.output.areaFlows,
           destinationAreas: event.output.destinationAreas,
           destinationAreasFeatureIds,
         };
