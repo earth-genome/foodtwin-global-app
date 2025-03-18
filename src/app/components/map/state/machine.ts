@@ -510,6 +510,7 @@ export const globeViewMachine = createMachine(
           "visibility",
           "visible"
         );
+        m.setLayoutProperty("destination-areas-fill", "visibility", "visible");
 
         return { destinationPortsIds, legend: null };
       }),
@@ -525,6 +526,7 @@ export const globeViewMachine = createMachine(
             "visibility",
             "none"
           );
+          m.setLayoutProperty("destination-areas-fill", "visibility", "none");
         }
 
         return {

@@ -7,6 +7,9 @@ const AREA_HIGHLIGHT_OUTLINE_COLOR = "rgba(28, 25, 23, 0.6)";
 const AREA_DEFAULT_OUTLINE_COLOR = "rgba(28, 25, 23, 0.02)";
 const AREA_POPULATION_COLOR = "#C60E08";
 const AREA_OVERLAY_COLOR = "rgba(255,255,255,0.6)";
+const AREA_DESTINATION_OUTLINE_COLOR = "rgba(171, 165, 160, 1)";
+const AREA_ORIGIN_FILL_COLOR = "rgba(193, 237, 150, 0.3)";
+const AREA_DESTINATION_FILL_COLOR = "rgba(199, 187, 168, 0.5)";
 
 export const areaDefaultStyle: FillLayerSpecification["paint"] = {
   "fill-color": "transparent",
@@ -50,6 +53,26 @@ function AreaLayers() {
       />
 
       <Layer
+        id="destination-areas-fill"
+        type="fill"
+        source={AREA_SOURCE_ID}
+        source-layer={AREA_SOURCE_LAYER_ID}
+        paint={{
+          "fill-color": [
+            "case",
+            ["boolean", ["feature-state", "destination"], false],
+            AREA_DESTINATION_FILL_COLOR,
+            ["boolean", ["feature-state", "selected"], false],
+            AREA_ORIGIN_FILL_COLOR,
+            "transparent",
+          ],
+        }}
+        layout={{
+          visibility: "none",
+        }}
+      />
+
+      <Layer
         id="destination-areas-outline"
         type="line"
         source={AREA_SOURCE_ID}
@@ -59,6 +82,8 @@ function AreaLayers() {
           "line-color": [
             "case",
             ["boolean", ["feature-state", "destination"], false],
+            AREA_DESTINATION_OUTLINE_COLOR,
+            ["boolean", ["feature-state", "selected"], false],
             AREA_HIGHLIGHT_OUTLINE_COLOR,
             "transparent",
           ],
