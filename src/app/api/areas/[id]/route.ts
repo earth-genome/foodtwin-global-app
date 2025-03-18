@@ -108,11 +108,12 @@ export async function GET(
         SELECT
           "fromAreaId",
           "toAreaId",
-          ST_AsGeoJSON(ST_Transform("geom", 4326)) as "geojson"
+          ST_AsGeoJSON("geom", 4326) as "geojson"
         FROM
-          "AreaFlowGeometries"
+          "FlowPairsGeometries"
         WHERE
           "fromAreaId" = ${id}
+        LIMIT 5;
       `,
     ])) as [
       { geojson: string }[],

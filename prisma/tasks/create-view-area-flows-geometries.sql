@@ -1,52 +1,44 @@
 SET
   max_parallel_workers_per_gather = 8;
 
-DROP MATERIALIZED VIEW IF EXISTS "AreaFlowGeometries";
+-- Create a view with one flow per area pair
+DROP MATERIALIZED VIEW IF EXISTS "FlowPairs" CASCADE;
 
-CREATE MATERIALIZED VIEW "AreaFlowGeometries" AS
+CREATE MATERIALIZED VIEW "FlowPairs" AS
 SELECT
-  "Flow".id as "flowId",
-  "Flow"."fromAreaId",
-  "Flow"."toAreaId",
-  ST_SimplifyPreserveTopology (ST_LineMerge (ST_Union (("Edge"."geom"))), 1000) as "geom"
+  ANY_VALUE ("id") as "id",
+  "fromAreaId",
+  "toAreaId"
 FROM
   "Flow"
-  JOIN "FlowSegment" ON "Flow"."id" = "FlowSegment"."flowId"
-  JOIN "FlowSegmentEdges" ON "FlowSegment"."id" = "FlowSegmentEdges"."flowSegmentId"
-  JOIN "Edge" ON "FlowSegmentEdges"."edgeId" = "Edge"."id"
 WHERE
-  "Flow"."id" in (
-    SELECT
-      ANY_VALUE ("id") as "id"
-    FROM
-      "Flow"
-    GROUP BY
-      "fromAreaId",
-      "toAreaId"
-  )
+  "fromAreaId" LIKE 'ESP%'
 GROUP BY
-  "Flow".id,
-  "Flow"."fromAreaId",
-  "Flow"."toAreaId"
-ORDER BY
-  "Flow".id ASC,
-  "Flow"."fromAreaId",
-  "Flow"."toAreaId";
+  "fromAreaId",
+  "toAreaId";
 
-DROP MATERIALIZED VIEW IF EXISTS "AreaFlowsPerFoodGroup";
+-- Create index to match FlowSegmentEdges
+CREATE INDEX "FlowPairs_id" ON "FlowPairs" ("id");
 
-CREATE MATERIALIZED VIEW "AreaFlowsPerFoodGroup" AS
+DROP TABLE IF EXISTS "FlowPairsGeometries" CASCADE;
+
+CREATE TABLE
+  "FlowPairsGeometries" AS
 SELECT
-  "Flow"."fromAreaId",
-  "Flow"."toAreaId",
-  "Flow"."foodGroupId",
-  SUM("Flow"."value") as "value"
+  "FlowPairs".id as id,
+  "FlowPairs"."fromAreaId" as "fromAreaId",
+  "FlowPairs"."toAreaId" as "toAreaId",
+  ST_SimplifyPreserveTopology (ST_Transform (ST_Union ("Edge".geom), 4326), 1000) AS geom
 FROM
-  "Flow"
+  "FlowPairs"
+  JOIN "FlowSegment" ON "FlowSegment"."flowId" = "FlowPairs"."id"
+  JOIN "FlowSegmentEdges" ON "FlowSegmentEdges"."flowSegmentId" = "FlowSegment"."id"
+  JOIN "Edge" ON "FlowSegmentEdges"."edgeId" = "Edge"."id"
 GROUP BY
-  "Flow"."fromAreaId",
-  "Flow"."toAreaId",
-  "Flow"."foodGroupId"
-ORDER BY
-  "Flow"."fromAreaId",
-  "Flow"."toAreaId";
+  "FlowPairs".id,
+  "FlowPairs"."fromAreaId",
+  "FlowPairs"."toAreaId";
+
+CREATE INDEX "FlowPairsGeometries_id" ON "FlowPairsGeometries" (id);
+
+CREATE INDEX "FlowPairsGeometries_geom" ON "FlowPairsGeometries" USING GIST (geom);
