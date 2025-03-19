@@ -574,9 +574,9 @@ export const globeViewMachine = createMachine(
             ["linear"],
             ["get", "totalpop"],
             minPopulation,
-            0.3,
+            0.05,
             maxPopulation,
-            0.9,
+            0.8,
           ]);
           m.setLayoutProperty("area-population-fill", "visibility", "visible");
 
