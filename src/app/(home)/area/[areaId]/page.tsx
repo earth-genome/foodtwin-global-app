@@ -433,14 +433,6 @@ const AreaPage = async ({
             <SectionHeader label="Impact on people" />
             <MetricRow>
               <Metric
-                label="Number of people in the flow areas"
-                value={indicators.totalPopulation}
-                formatType="metric"
-                decimalPlaces={0}
-              />
-            </MetricRow>
-            <MetricRow>
-              <Metric
                 label="People Calories"
                 value={
                   nutritionPerPerson.calories / (PERSON_CALORIES_PER_DAY * 365)
