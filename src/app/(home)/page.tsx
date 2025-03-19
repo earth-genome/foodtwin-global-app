@@ -4,7 +4,7 @@ import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 
 const Home = () => {
   return (
-    <div className="absolute right-4 top-4 z-40">
+    <div className="absolute right-4 top-4 z-20">
       <Button
         href="/search"
         as={Link}

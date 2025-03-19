@@ -23,7 +23,7 @@ function Legend() {
 
   return (
     <div
-      className={`absolute left-1/2 translate-x-[-50%] bottom-4 z-50 bg-neutral-100/60 rounded text-xs backdrop-blur w-[530px]`}
+      className={`absolute left-1/2 translate-x-[-50%] bottom-4 z-20 bg-neutral-100/60 rounded text-xs backdrop-blur w-[530px]`}
     >
       <button
         className={`flex gap-4 items-center px-4 py-2 w-[100%] bg-neutral-200/80 font-header text-xxs uppercase ${isExpanded ? "rounded-t" : "rounded"}`}
