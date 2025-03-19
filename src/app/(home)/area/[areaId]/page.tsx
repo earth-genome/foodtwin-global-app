@@ -7,7 +7,7 @@ import { PageSection, SectionHeader } from "@/app/components/page-section";
 import { Metric, MetricRow } from "@/app/components/metric";
 import { AreaMeta, IndicatorColumn } from "../../../../../prisma/seed/nodes";
 import { FoodGroup } from "@prisma/client";
-import { Arc, ListBars, Sankey } from "@/app/components/charts";
+import { ListBars, Sankey } from "@/app/components/charts";
 import { formatKeyIndicator } from "@/utils/numbers";
 import { EAreaViewType } from "@/app/components/map/state/machine";
 import { Button } from "@nextui-org/react";
@@ -21,8 +21,8 @@ const SANKEY_HEIGHT = 600;
 const SANKEY_WIDTH = 435;
 
 const PERSON_CALORIES_PER_DAY = 2500;
-const PERSON_PROTEIN_PER_DAY = 52;
-const PERSON_IRON_PER_DAY = 10;
+const PERSON_PROTEIN_PER_DAY = 0.052;
+const PERSON_IRON_PER_DAY = 0.01;
 const PERSON_VITAMINA_PER_DAY = 600;
 
 interface IFoodGroupAgg extends FoodGroup {
@@ -451,18 +451,14 @@ const AreaPage = async ({
               <Metric
                 label="People Protein"
                 value={
-                  (nutritionPerPerson.protein * 1000) / // Protein is given in kg per t, need is in g
-                  (PERSON_PROTEIN_PER_DAY * 365)
+                  nutritionPerPerson.protein / (PERSON_PROTEIN_PER_DAY * 365)
                 }
                 formatType="metric"
                 decimalPlaces={0}
               />
               <Metric
                 label="People Iron"
-                value={
-                  (nutritionPerPerson.iron * 1000) / // Iron is given in g per t, need is in mg
-                  (PERSON_IRON_PER_DAY * 365)
-                }
+                value={nutritionPerPerson.iron / (PERSON_IRON_PER_DAY * 365)}
                 formatType="metric"
                 decimalPlaces={0}
               />
