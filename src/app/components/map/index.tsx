@@ -178,7 +178,7 @@ function GlobeInner() {
         <EdgeLayer />
         <AreaLayers />
         <PortsLayer />
-        <AreaFlowsLayer />
+        {currentArea && <AreaFlowsLayer areaId={currentArea.id} />}
 
         {mapPopup && <MapPopup {...mapPopup} />}
         {currentArea && (

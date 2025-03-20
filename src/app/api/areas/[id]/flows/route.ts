@@ -1,24 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+interface FlowPairRow {
+  fromAreaId: string;
+  toAreaId: string;
+  geojson: string;
+}
+
+interface FlowPair {
+  fromAreaId: string;
+  toAreaId: string;
+  geojson: GeoJSON.MultiLineString;
+}
+
+export interface AreaFlowsResponse {
+  flows: FlowPair[];
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   const { id } = params;
 
-  const flows = await prisma.$queryRaw`
+  const flows = await prisma.$queryRaw<FlowPairRow[]>`
     SELECT
-      "foodGroupId",
+      "fromAreaId",
       "toAreaId",
-      "type",
-      "sumValue",
-      ST_AsGeoJSON("multiLineStringGeom") as geomWkb
+      ST_AsGeoJSON("geom", 4326) as "geojson"
     FROM
-      "AreaFlowsGeometries"
+      "FlowPairsGeometries"
     WHERE
       "fromAreaId" = ${id}
+    LIMIT 5;
   `;
 
-  return NextResponse.json({ flows });
+  const result: AreaFlowsResponse = {
+    flows: flows.map((flow) => ({
+      ...flow,
+      geojson: JSON.parse(flow.geojson) as GeoJSON.MultiLineString,
+    })),
+  };
+
+  return NextResponse.json(result);
 }
