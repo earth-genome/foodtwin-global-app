@@ -18,7 +18,6 @@ import FoodGroupsLayer from "./layers/foodgroups";
 import AreaLayers from "./layers/areas";
 import PortsLayer from "./layers/ports";
 import { AREA_SOURCE_ID, AREA_VIEW_BOUNDS_PADDING } from "./constants";
-import DestinationAreasLayer from "./layers/destination-areas";
 import AreaFlowsLayer from "./layers/area-flows";
 import { EItemType } from "@/types/components";
 
@@ -144,7 +143,7 @@ function GlobeInner() {
   }, []);
 
   return (
-    <div className="w-full h-full relative flex-1">
+    <div className="w-full h-full relative flex-1 z-10">
       <Legend />
       <Map
         mapboxAccessToken={mapboxAccessToken}
@@ -178,7 +177,6 @@ function GlobeInner() {
         <FoodGroupsLayer />
         <EdgeLayer />
         <AreaLayers />
-        <DestinationAreasLayer />
         <PortsLayer />
         <AreaFlowsLayer />
 

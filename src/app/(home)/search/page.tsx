@@ -1,15 +1,30 @@
 "use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
-import { useState } from "react";
 import useSearch from "./useSearch";
 import Results from "./results";
 
 function SearchPage() {
+  const router = useRouter();
   const [value, setValue] = useState<string>("");
   const [hasFocus, setHasFocus] = useState<boolean>(false);
 
   const toggleFocus = () => setHasFocus((prev) => !prev);
   const { results, error, isPending } = useSearch(value);
+
+  useEffect(() => {
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Escape" || e.code === "Esc") {
+        router.push("/");
+      }
+    };
+    document.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      document.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [router]);
 
   return (
     <div className="absolute top-0 left-0 z-40 h-screen w-screen bg-neutral-100/50 backdrop-blur">
