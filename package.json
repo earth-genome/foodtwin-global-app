@@ -35,6 +35,7 @@
     "@nextui-org/react": "^2.3.6",
     "@phosphor-icons/react": "^2.1.7",
     "@prisma/client": "5.20.0",
+    "@turf/along": "^7.2.0",
     "@turf/bbox": "^7.1.0",
     "@turf/length": "^7.2.0",
     "@xstate/react": "^4.1.1",

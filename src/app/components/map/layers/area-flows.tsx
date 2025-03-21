@@ -4,12 +4,14 @@ import useSWR from "swr";
 import { useEffect, useState } from "react";
 import { DeckProps } from "@deck.gl/core";
 import turfLength from "@turf/length";
+import turfAlong from "@turf/along";
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { Layer, Source, useControl } from "react-map-gl";
 import { AreaFlowsResponse } from "@/app/api/areas/[id]/flows/route";
 
 const SPEED_FACTOR = 1;
+const DISTANCE_BETWEEN_PARTICLES_IN_KM = 10;
 const TRAIL_LENGTH = 3;
 const WIDTH_MIN_PIXELS = 8;
 
@@ -30,29 +32,120 @@ function DeckGLOverlay(props: DeckProps) {
   return null;
 }
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = (url: string) =>
+  fetch(url)
+    .then((res) => res.json())
+    .then(({ flows }) => {
+      const exampleFlow = flows[0];
+
+      const multiLinestring = exampleFlow.geojson.coordinates;
+
+      const baseTrips = [];
+      let maxLineStringLength = 0;
+      for (const lineString of multiLinestring) {
+        const lineStringLength = turfLength(
+          {
+            type: "Feature",
+            geometry: { type: "LineString", coordinates: lineString },
+            properties: {},
+          },
+          {
+            units: "kilometers",
+          }
+        );
+
+        console.log("lineStringLength", lineStringLength);
+
+        if (lineStringLength > maxLineStringLength) {
+          maxLineStringLength = lineStringLength;
+        }
+
+        const numberOfParticles = Math.ceil(
+          lineStringLength / DISTANCE_BETWEEN_PARTICLES_IN_KM
+        );
+
+        console.log("numberOfParticles", numberOfParticles);
+
+        const waypoints = [];
+        for (let i = 0; i < numberOfParticles; i++) {
+          const particleInitialPosition = turfAlong(
+            {
+              type: "Feature",
+              geometry: { type: "LineString", coordinates: lineString },
+              properties: {},
+            },
+            i * DISTANCE_BETWEEN_PARTICLES_IN_KM,
+            { units: "kilometers" }
+          );
+          waypoints.push({
+            coordinates: particleInitialPosition.geometry.coordinates,
+            timestamp: i * DISTANCE_BETWEEN_PARTICLES_IN_KM,
+          });
+        }
+
+        console.log("waypoints", waypoints);
+
+        baseTrips.push({
+          fromAreaId: exampleFlow.fromAreaId,
+          toAreaId: exampleFlow.toAreaId,
+          length: lineStringLength,
+          numberOfParticles,
+          waypoints,
+        });
+      }
+
+      console.log("maxLineStringLength", maxLineStringLength);
+
+      const offsetTrips = [];
+      for (const baseTrip of baseTrips) {
+        const distanceFactor = maxLineStringLength / baseTrip.length;
+        const offsetTripCount = Math.ceil(
+          baseTrip.numberOfParticles * distanceFactor
+        );
+        for (let i = 1; i <= offsetTripCount; i++) {
+          offsetTrips.push({
+            ...baseTrip,
+            waypoints: baseTrip.waypoints.map((waypoint) => ({
+              ...waypoint,
+              timestamp:
+                waypoint.timestamp + i * DISTANCE_BETWEEN_PARTICLES_IN_KM,
+            })),
+          });
+        }
+      }
+
+      return {
+        exampleFlow,
+        trips: baseTrips.concat(offsetTrips),
+      };
+    });
 
 const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
   const [currentTime, setCurrentTime] = useState(0);
 
-  const {
-    data: trips,
-    error,
-    isLoading,
-  } = useSWR<AreaFlowsResponse>(`/api/areas/${areaId}/flows`, fetcher);
+  const { data, error, isLoading } = useSWR<AreaFlowsResponse>(
+    `/api/areas/${areaId}/flows`,
+    fetcher
+  );
 
   // Basic animation loop
   useEffect(() => {
-    if (!trips) return;
+    if (!data?.trips) return;
 
     const interval = setInterval(() => {
-      setCurrentTime((prevTime) => prevTime + SPEED_FACTOR);
-    }, 500);
+      setCurrentTime((prevTime) => {
+        const nextTime = prevTime + SPEED_FACTOR;
+        if (nextTime > data.maxLineStringLength) {
+          return 0;
+        }
+        return nextTime;
+      });
+    }, 50);
 
     return () => clearInterval(interval);
-  }, [trips]);
+  }, [data?.trips]);
 
-  if (!trips) {
+  if (!data?.trips) {
     return null;
   }
 
@@ -60,38 +153,9 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
     return null;
   }
 
-  const exampleFlow = trips.flows[0];
-
-  const multiLinestring = exampleFlow.geojson.coordinates;
-
-  const baseTrips = [];
-  let maxLength = 0;
-  for (const lineString of multiLinestring) {
-    const length = turfLength({
-      type: "Feature",
-      geometry: { type: "LineString", coordinates: lineString },
-      properties: {},
-    });
-
-    if (length > maxLength) {
-      maxLength = length;
-    }
-    const waypoints = lineString.map((coordinates, i) => ({
-      coordinates: coordinates as [number, number],
-      timestamp: i * (length / lineString.length) * SPEED_FACTOR,
-    }));
-
-    baseTrips.push({
-      fromAreaId: exampleFlow.fromAreaId,
-      toAreaId: exampleFlow.toAreaId,
-      length,
-      waypoints,
-    });
-  }
-
   const tripsLayer = new TripsLayer<DataType>({
     id: `trips`,
-    data: baseTrips,
+    data: data.trips,
     getPath: (d: DataType) => d.waypoints.map((p) => p.coordinates),
     getTimestamps: (d: DataType) => d.waypoints.map((p) => p.timestamp),
     getColor: [0, 0, 0],
@@ -104,7 +168,7 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
 
   return (
     <>
-      <Source id="source_id" type="geojson" data={exampleFlow.geojson}>
+      <Source id="source_id" type="geojson" data={data.exampleFlow.geojson}>
         <Layer
           id="layer_id"
           type="line"
