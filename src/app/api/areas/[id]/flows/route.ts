@@ -27,7 +27,7 @@ export async function GET(
     SELECT
       "fromAreaId",
       "toAreaId",
-      ST_AsGeoJSON("geom", 4326) as "geojson"
+      ST_AsGeoJSON(ST_LineMerge("geom"), 4326) as "geojson"
     FROM
       "FlowPairsGeometries"
     WHERE
