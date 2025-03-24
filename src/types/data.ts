@@ -1,4 +1,4 @@
-import { Geometry, LineString, Position } from "geojson";
+import { LineString, Position } from "geojson";
 import { EItemType } from "./components";
 
 export interface ProductionArea {
@@ -30,10 +30,6 @@ export interface Trip {
 }
 
 export interface Flow {
-  // source: Position;
-  // target: Position;
-  // sourceId: string;
-  // targetId: string;
   value: number;
   valuesRatiosByFoodGroup: number[];
   routeGeometry?: LineString;

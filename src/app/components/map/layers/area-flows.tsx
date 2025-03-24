@@ -177,8 +177,8 @@ const getPathTrips = (
 const fetcher = (url: string) =>
   fetch(url)
     .then((res) => res.json())
-    .then(({ flows }) => {
-      const exampleFlow = flows[0];
+    .then(({ flows, flowGeometries }) => {
+      const exampleFlow = flowGeometries[0];
 
       const multiLinestring = exampleFlow.geojson.coordinates;
 
