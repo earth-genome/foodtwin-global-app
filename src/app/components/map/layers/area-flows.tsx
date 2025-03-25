@@ -12,6 +12,7 @@ import { distance, point } from "@turf/turf";
 import { Flow, Path, Trip, Waypoint } from "@/types/data";
 import { hexToRgb } from "@/utils/general";
 import useAnimationFrame from "@/hooks/useAnimationFrame";
+import { FoodGroupColors } from "../../../../../tailwind.config";
 
 const TRAIL_LENGTH = 0.15;
 const WIDTH_MIN_PIXELS = 2.5;
@@ -20,47 +21,8 @@ interface DataType {
   fromAreaId: string;
   toAreaId: string;
   waypoints: Waypoint[];
+  color: number[];
 }
-
-export type Category = "Vegetables" | "Nuts" | "Grain" | "Fruits" | "Potatoes";
-
-const CATEGORIES: Category[] = [
-  "Grain",
-  "Nuts",
-  "Vegetables",
-  "Fruits",
-  "Potatoes",
-];
-
-export const CATEGORIES_PROPS: Record<
-  Category,
-  { name: string; color: string }
-> = {
-  Vegetables: {
-    name: "Vegetables",
-    color: "#1C9440",
-  },
-  Nuts: {
-    name: "Nuts",
-    color: "#414EC8",
-  },
-  Grain: {
-    name: "Grain",
-    color: "#F67300",
-  },
-  Fruits: {
-    name: "Fruits",
-    color: "#EC59A8",
-  },
-  Potatoes: {
-    name: "Tubers",
-    color: "#873912",
-  },
-};
-
-export const CATEGORIES_COLORS = Object.fromEntries(
-  Object.entries(CATEGORIES_PROPS).map(([cat, { color }]) => [cat, color])
-);
 
 function DeckGLOverlay(props: DeckProps) {
   const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay(props));
@@ -88,20 +50,17 @@ const getDistances = (coordinates: Position[]) => {
   };
 };
 
+const numParticlesMultiplicator = 0.000001;
+const fromTimestamp = 0;
+const toTimeStamp = 100;
+const intervalHumanize = 0.5; // Randomize particle start time (0: emitted at regular intervals; 1: emitted at "fully" random intervals)
+const speedKps = 100; // Speed in km per second
+const speedKpsHumanize = 0.5; // Randomize particles trajectory speed (0: stable duration; 1: can be 0 or 2x the speed)
+const maxParticles = 500;
+
 const getPathTrips = (
   path: Path,
   flow: Flow,
-  {
-    numParticlesMultiplicator = 1,
-    // numParticlesPer1000K = 100,
-    fromTimestamp = 0,
-    toTimeStamp = 100,
-    intervalHumanize = 0.5, // Randomize particle start time (0: emitted at regular intervals, 1: emitted at "fully" random intervals)
-    speedKps = 100, // Speed in km per second
-    speedKpsHumanize = 0.5, // Randomize particles trajectory speed (0: stable duration, 1: can be 0 or 2x the speed)
-    maxParticles = 500,
-    colors = CATEGORIES_COLORS,
-  } = {},
   zoomMultiplier: number
 ): Trip[] => {
   const numParticles = Math.min(
@@ -150,25 +109,13 @@ const getPathTrips = (
       { waypoints: [] as Waypoint[], accDistance: 0 }
     );
 
-    if (!flow.valuesRatiosByFoodGroup) continue;
-    const randomCategoryRatio = Math.random();
-    const categoryIndex =
-      flow.valuesRatiosByFoodGroup.reduce(
-        (acc, ratio, i) => {
-          if (acc !== null) return acc;
-          if (randomCategoryRatio < ratio) return i;
-          return acc;
-        },
-        null as number | null
-      ) || 0;
-    const category = CATEGORIES[categoryIndex];
-    const categoryColor = colors[category];
-    const color = hexToRgb(categoryColor);
-    // console.log(waypoints)
+    const colorHex =
+      FoodGroupColors[flow.foodGroupSlug as keyof typeof FoodGroupColors];
+    const color = hexToRgb(colorHex.slice(1));
     trips.push({
       waypoints: waypointsAccumulator.waypoints,
       color: [...color, 255],
-      foodGroup: category,
+      foodGroup: "Grain",
     });
   }
   return trips;
@@ -178,38 +125,35 @@ const fetcher = (url: string) =>
   fetch(url)
     .then((res) => res.json())
     .then(({ flows, flowGeometries }) => {
+      const trips = flows.flatMap((flow) => {
+        const flowGeometry = flowGeometries.find(({ fromAreaId, toAreaId }) => {
+          return fromAreaId === flow.fromAreaId && toAreaId === flow.toAreaId;
+        });
+        const multiLinestring = flowGeometry.geojson.coordinates;
+        const flowPaths: Path[] = multiLinestring.map((lineString) => ({
+          coordinates: lineString,
+          ...getDistances(lineString),
+        }));
+
+        return flowPaths.map((flowPath) => {
+          return getPathTrips(
+            flowPath,
+            {
+              value: flow.value,
+              valuesRatiosByFoodGroup: [0.2, 0.2, 0.2, 0.2, 0.2],
+              routeGeometry: flowGeometry.geojson,
+              foodGroupSlug: flow.level3FoodGroupSlug,
+            },
+            1
+          );
+        });
+      });
+
       const exampleFlow = flowGeometries[0];
-
-      const multiLinestring = exampleFlow.geojson.coordinates;
-
-      const exampleFlowPaths: Path[] = multiLinestring.map((lineString) => ({
-        coordinates: lineString,
-        ...getDistances(lineString),
-      }));
-
-      const theTrips = getPathTrips(
-        exampleFlowPaths[0],
-        {
-          value: 100,
-          valuesRatiosByFoodGroup: [0.2, 0.2, 0.2, 0.2, 0.2],
-          routeGeometry: exampleFlow.geojson,
-        },
-        {
-          numParticlesMultiplicator: 1,
-          fromTimestamp: 0,
-          toTimeStamp: 100,
-          intervalHumanize: 0.5,
-          speedKps: 100,
-          speedKpsHumanize: 0.5,
-          maxParticles: 500,
-          colors: CATEGORIES_COLORS,
-        },
-        1
-      );
 
       return {
         exampleFlow,
-        trips: theTrips,
+        trips: trips.flat(),
       };
     })
     .catch((error) => {
@@ -246,7 +190,7 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
     data: data.trips,
     getPath: (d: DataType) => d.waypoints.map((p) => p.coordinates),
     getTimestamps: (d: DataType) => d.waypoints.map((p) => p.timestamp),
-    getColor: [0, 0, 0],
+    getColor: (d: DataType) => d.color,
     currentTime: currentFrame,
     trailLength: TRAIL_LENGTH,
     capRounded: true,
@@ -257,7 +201,7 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
 
   return (
     <>
-      <Source id="source_id" type="geojson" data={data.exampleFlow.geojson}>
+      {/* <Source id="source_id" type="geojson" data={data.exampleFlow.geojson}>
         <Layer
           id="layer_id"
           type="line"
@@ -266,7 +210,7 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
             "line-color": "red",
           }}
         />
-      </Source>
+      </Source> */}
       <DeckGLOverlay layers={[tripsLayer]} />
     </>
   );

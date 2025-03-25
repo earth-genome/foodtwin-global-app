@@ -33,4 +33,5 @@ export interface Flow {
   value: number;
   valuesRatiosByFoodGroup: number[];
   routeGeometry?: LineString;
+  foodGroupSlug: string;
 }
