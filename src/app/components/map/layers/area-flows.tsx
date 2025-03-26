@@ -2,17 +2,16 @@
 
 import useSWR from "swr";
 import { useMemo, useState } from "react";
-import { DeckProps } from "@deck.gl/core";
+import { Color, DeckProps } from "@deck.gl/core";
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { MapboxOverlay } from "@deck.gl/mapbox";
-import { Layer, Source, useControl } from "react-map-gl";
-import { AreaFlowsResponse } from "@/app/api/areas/[id]/flows/route";
-import { Position } from "geojson";
+import { useControl } from "react-map-gl";
 import { distance, point } from "@turf/turf";
-import { Flow, Path, Trip, Waypoint } from "@/types/data";
+import { Flow, FlowGeometry, Path, Trip, Waypoint } from "@/types/data";
 import { hexToRgb } from "@/utils/general";
 import useAnimationFrame from "@/hooks/useAnimationFrame";
 import { FoodGroupColors } from "../../../../../tailwind.config";
+import { Position } from "geojson";
 
 const TRAIL_LENGTH = 0.15;
 const WIDTH_MIN_PIXELS = 2.5;
@@ -21,7 +20,7 @@ interface DataType {
   fromAreaId: string;
   toAreaId: string;
   waypoints: Waypoint[];
-  color: number[];
+  color: Color;
 }
 
 function DeckGLOverlay(props: DeckProps) {
@@ -113,21 +112,31 @@ const getPathTrips = (
     const color = hexToRgb(colorHex.slice(1));
     trips.push({
       waypoints: waypointsAccumulator.waypoints,
-      color: [...color, 255],
+      color: [...color, 255] as Color,
       foodGroup: "Grain",
     });
   }
   return trips;
 };
 
+interface FlowResponse {
+  flows: Flow[];
+  flowGeometries: FlowGeometry[];
+}
+
 const fetcher = (url: string) =>
   fetch(url)
     .then((res) => res.json())
-    .then(({ flows, flowGeometries }) => {
+    .then(({ flows, flowGeometries }: FlowResponse) => {
       const trips = flows.flatMap((flow) => {
         const flowGeometry = flowGeometries.find(({ fromAreaId, toAreaId }) => {
           return fromAreaId === flow.fromAreaId && toAreaId === flow.toAreaId;
         });
+
+        if (!flowGeometry) {
+          return [];
+        }
+
         const multiLinestring = flowGeometry.geojson.coordinates;
         const flowPaths: Path[] = multiLinestring.map((lineString) => ({
           coordinates: lineString,
@@ -137,20 +146,16 @@ const fetcher = (url: string) =>
           return getPathTrips(
             flowPath,
             {
-              value: flow.value,
+              ...flow,
               valuesRatiosByFoodGroup: [0.2, 0.2, 0.2, 0.2, 0.2],
               routeGeometry: flowGeometry.geojson,
-              foodGroupSlug: flow.level3FoodGroupSlug,
             },
             1
           );
         });
       });
-      const exampleFlow = flowGeometries[0];
-      return {
-        exampleFlow,
-        trips: trips.flat(),
-      };
+
+      return trips.flat();
     })
     .catch((error) => {
       console.error("Error fetching area flows", error);
@@ -158,7 +163,7 @@ const fetcher = (url: string) =>
     });
 
 const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
-  const { data, error, isLoading } = useSWR<AreaFlowsResponse>(
+  const { data, error, isLoading } = useSWR<Trip[]>(
     `/api/areas/${areaId}/flows`,
     fetcher,
     {
@@ -176,7 +181,7 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
     return (currentTime * speed) % loopLength;
   }, [currentTime]);
 
-  if (!data?.trips) {
+  if (!data) {
     return null;
   }
 
@@ -186,8 +191,9 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
 
   const tripsLayer = new TripsLayer<DataType>({
     id: `trips`,
-    data: data.trips,
-    getPath: (d: DataType) => d.waypoints.map((p) => p.coordinates),
+    data,
+    getPath: (d: DataType) =>
+      d.waypoints.map((p) => p.coordinates as [number, number]),
     getTimestamps: (d: DataType) => d.waypoints.map((p) => p.timestamp),
     getColor: (d: DataType) => d.color,
     currentTime: currentFrame,
@@ -198,21 +204,7 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
     widthMinPixels: WIDTH_MIN_PIXELS,
   });
 
-  return (
-    <>
-      {/* <Source id="source_id" type="geojson" data={data.exampleFlow.geojson}>
-        <Layer
-          id="layer_id"
-          type="line"
-          source="source_id"
-          paint={{
-            "line-color": "red",
-          }}
-        />
-      </Source> */}
-      <DeckGLOverlay layers={[tripsLayer]} />
-    </>
-  );
+  return <DeckGLOverlay layers={[tripsLayer]} />;
 };
 
 export default AreaFlowsLayer;

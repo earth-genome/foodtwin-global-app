@@ -1,5 +1,6 @@
-import { LineString, Position } from "geojson";
+import { MultiLineString, Position } from "geojson";
 import { EItemType } from "./components";
+import { Color } from "@deck.gl/core";
 
 export interface ProductionArea {
   id: string;
@@ -18,20 +19,33 @@ export interface Waypoint {
 }
 
 export interface Path {
-  coordinates: number[][];
+  coordinates: Position[];
   distances: number[];
   totalDistance: number;
 }
 export interface Trip {
   waypoints: Waypoint[];
-  color: number[];
+  color: Color;
   sourceId?: string;
   targetId?: string;
 }
 
 export interface Flow {
+  foodGroupId: number;
+  foodGroupSlug: string;
+  fromAreaId: string;
+  level2FoodGroupId: number;
+  level2FoodGroupSlug: string;
+  level3FoodGroupId: number;
+  level3FoodGroupSlug: string;
+  toAreaId: string;
   value: number;
   valuesRatiosByFoodGroup: number[];
-  routeGeometry?: LineString;
-  foodGroupSlug: string;
+  routeGeometry?: MultiLineString;
+}
+
+export interface FlowGeometry {
+  fromAreaId: string;
+  toAreaId: string;
+  geojson: MultiLineString;
 }
