@@ -17,28 +17,54 @@ GROUP BY
   "fromAreaId",
   "toAreaId";
 
--- Create index to match FlowSegmentEdges
-CREATE INDEX "FlowPairs_id" ON "FlowPairs" ("id");
+DROP MATERIALIZED VIEW IF EXISTS "FlowPairsSegments" CASCADE;
 
-DROP TABLE IF EXISTS "FlowPairsGeometries" CASCADE;
-
-CREATE TABLE
-  "FlowPairsGeometries" AS
+CREATE MATERIALIZED VIEW "FlowPairsSegments" AS
 SELECT
-  "FlowPairs".id as id,
-  "FlowPairs"."fromAreaId" as "fromAreaId",
-  "FlowPairs"."toAreaId" as "toAreaId",
-  ST_SimplifyPreserveTopology (ST_Transform (ST_Union ("Edge".geom), 4326), 1000) AS geom
+  "FlowPairs".id as "flowId",
+  "FlowSegment".id as "flowSegmentId",
+  "FlowSegment"."order" as "order"
 FROM
   "FlowPairs"
-  JOIN "FlowSegment" ON "FlowSegment"."flowId" = "FlowPairs"."id"
-  JOIN "FlowSegmentEdges" ON "FlowSegmentEdges"."flowSegmentId" = "FlowSegment"."id"
-  JOIN "Edge" ON "FlowSegmentEdges"."edgeId" = "Edge"."id"
-GROUP BY
-  "FlowPairs".id,
-  "FlowPairs"."fromAreaId",
-  "FlowPairs"."toAreaId";
+  JOIN "Flow" ON "Flow"."fromAreaId" = "FlowPairs"."fromAreaId"
+  AND "Flow"."toAreaId" = "FlowPairs"."toAreaId"
+  JOIN "FlowSegment" ON "FlowSegment"."flowId" = "Flow"."id";
 
-CREATE INDEX "FlowPairsGeometries_id" ON "FlowPairsGeometries" (id);
-
-CREATE INDEX "FlowPairsGeometries_geom" ON "FlowPairsGeometries" USING GIST (geom);
+CREATE MATERIALIZED VIEW "FlowPairsSegmentsGeometries" AS
+WITH
+  ordered_edges AS (
+    SELECT
+      "FlowSegment".id AS segment_id,
+      "Edge".geom
+    FROM
+      "FlowSegment"
+      JOIN "FlowSegmentEdges" ON "FlowSegmentEdges"."flowSegmentId" = "FlowSegment"."id"
+      JOIN "Edge" ON "FlowSegmentEdges"."edgeId" = "Edge"."id"
+    WHERE
+      "FlowSegment".id IN (
+        SELECT
+          "flowSegmentId"
+        FROM
+          "FlowPairsSegments"
+      )
+    ORDER BY
+      "FlowSegment".id,
+      "FlowSegment"."order",
+      "FlowSegmentEdges"."order"
+  ),
+  merged_per_segment AS (
+    SELECT
+      segment_id,
+      ST_LineMerge (ST_Collect (geom)) AS merged_line
+    FROM
+      ordered_edges
+    GROUP BY
+      segment_id
+  )
+SELECT
+  "FlowPairsSegments"."flowId",
+  "FlowPairsSegments"."flowSegmentId",
+  merged_line
+FROM
+  "FlowPairsSegments"
+  JOIN merged_per_segment ON "FlowPairsSegments"."flowSegmentId" = merged_per_segment.segment_id;
