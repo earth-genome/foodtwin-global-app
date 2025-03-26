@@ -97,7 +97,6 @@ const getPathTrips = (
         const accDistance = accumulator.accDistance;
         const accDistanceRatio = accDistance / path.totalDistance;
         const timestamp = timestampStart + accDistanceRatio * timestampDelta;
-
         return {
           accDistance: accDistance + path.distances[currentIndex],
           waypoints: [
@@ -134,7 +133,6 @@ const fetcher = (url: string) =>
           coordinates: lineString,
           ...getDistances(lineString),
         }));
-
         return flowPaths.map((flowPath) => {
           return getPathTrips(
             flowPath,
@@ -148,9 +146,7 @@ const fetcher = (url: string) =>
           );
         });
       });
-
       const exampleFlow = flowGeometries[0];
-
       return {
         exampleFlow,
         trips: trips.flat(),
@@ -164,7 +160,10 @@ const fetcher = (url: string) =>
 const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
   const { data, error, isLoading } = useSWR<AreaFlowsResponse>(
     `/api/areas/${areaId}/flows`,
-    fetcher
+    fetcher,
+    {
+      keepPreviousData: true,
+    }
   );
   const [currentTime, setCurrentTime] = useState(0);
   useAnimationFrame((e) => setCurrentTime(e.time));
