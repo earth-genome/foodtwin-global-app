@@ -451,7 +451,6 @@ export const globeViewMachine = createMachine(
 
         if (mapRef) {
           const m = mapRef.getMap();
-          m.setLayoutProperty("foodgroups-layer", "visibility", "visible");
           m.setLayoutProperty("selected-area-overlay", "visibility", "visible");
         }
 
@@ -464,7 +463,6 @@ export const globeViewMachine = createMachine(
 
         if (mapRef) {
           const m = mapRef.getMap();
-          m.setLayoutProperty("foodgroups-layer", "visibility", "visible");
           m.setLayoutProperty("selected-area-overlay", "visibility", "none");
         }
 
@@ -479,7 +477,6 @@ export const globeViewMachine = createMachine(
         const m = mapRef.getMap();
 
         // Disable unwanted layers
-        m.setLayoutProperty("foodgroups-layer", "visibility", "none");
         m.setLayoutProperty("area-population-fill", "visibility", "none");
 
         const destinationAreaBbox = bbox(currentArea.destinationAreasBbox);
@@ -538,7 +535,6 @@ export const globeViewMachine = createMachine(
 
         if (mapRef && currentArea) {
           const m = mapRef.getMap();
-          m.setLayoutProperty("foodgroups-layer", "visibility", "none");
 
           const destinationAreaBbox = bbox(currentArea.destinationAreasBbox);
           const combinedBboxes = combineBboxes([

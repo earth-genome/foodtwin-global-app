@@ -12,7 +12,6 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import MapPopup from "@/app/components/map-popup";
 
 import { MachineContext, MachineProvider } from "./state";
-import EdgeLayer from "./layers/edges";
 import Legend from "./legend";
 import FoodGroupsLayer from "./layers/foodgroups";
 import AreaLayers from "./layers/areas";
@@ -75,6 +74,9 @@ function GlobeInner() {
   );
   const currentArea = MachineContext.useSelector(
     (state) => state.context.currentArea
+  );
+  const isWorldView = MachineContext.useSelector(
+    (state) => state.context.viewType === "world"
   );
 
   const handleMouseMove = useCallback((event: MapMouseEvent) => {
@@ -174,8 +176,7 @@ function GlobeInner() {
           tiles={[`${VECTOR_TILES_URL}/areas/{z}/{x}/{y}.pbf`]}
         ></Source>
 
-        <FoodGroupsLayer />
-        <EdgeLayer />
+        {isWorldView && <FoodGroupsLayer />}
         <AreaLayers />
         <PortsLayer />
         {currentArea && <AreaFlowsLayer areaId={currentArea.id} />}
