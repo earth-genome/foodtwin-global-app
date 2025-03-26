@@ -108,7 +108,7 @@ const getPathTrips = (
     );
 
     const colorHex =
-      FoodGroupColors[flow.foodGroupSlug as keyof typeof FoodGroupColors];
+      FoodGroupColors[flow.level3FoodGroupSlug as keyof typeof FoodGroupColors];
     const color = hexToRgb(colorHex.slice(1));
     trips.push({
       waypoints: waypointsAccumulator.waypoints,
