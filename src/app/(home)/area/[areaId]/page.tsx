@@ -5,7 +5,7 @@ import { EItemType } from "@/types/components";
 import ScrollTracker from "./scroll-tracker";
 import { PageSection, SectionHeader } from "@/app/components/page-section";
 import { Metric, MetricRow } from "@/app/components/metric";
-import { AreaMeta, IndicatorColumn } from "../../../../../prisma/seed/nodes";
+import { AreaMeta } from "../../../../../prisma/seed/nodes";
 import { FoodGroup } from "@prisma/client";
 import { ListBars, Sankey } from "@/app/components/charts";
 import { formatKeyIndicator } from "@/utils/numbers";
@@ -46,14 +46,6 @@ interface ExportFlow {
   name: string;
   iso3: string;
   type: "MARITIME" | "PORT" | "INLAND_PORT" | "RAIL_STATION" | "ADMIN";
-}
-
-interface Indicators {
-  totalPopulation: number;
-  ruralPopulation: number;
-  elderlyPopulation: number;
-  childBearingPopulation: number;
-  under5Population: number;
 }
 
 function findParent(id: number, foodGroups: FoodGroup[]) {
@@ -177,88 +169,34 @@ const AreaPage = async ({
     return redirect("/not-found");
   }
 
-  const [
-    foodGroupExports,
-    foodGroups,
-    inBoundFlows,
-    outboundFlows,
-    outboundAreas,
-  ] = await Promise.all([
-    prisma.flow.groupBy({
-      where: {
-        fromAreaId: area.id,
-      },
-      by: ["foodGroupId"],
-      _sum: {
-        value: true,
-      },
-    }),
-    prisma.foodGroup.findMany(),
-    prisma.$queryRawUnsafe(`
+  const [foodGroupExports, foodGroups, inBoundFlows, outboundFlows] =
+    await Promise.all([
+      prisma.flow.groupBy({
+        where: {
+          fromAreaId: area.id,
+        },
+        by: ["foodGroupId"],
+        _sum: {
+          value: true,
+        },
+      }),
+      prisma.foodGroup.findMany(),
+      prisma.$queryRawUnsafe(`
       SELECT sum(value)
         FROM "Flow"
         WHERE "toAreaId" = '${area.id}'
         GROUP BY "toAreaId";
     `),
-    prisma.$queryRawUnsafe(
-      `SELECT "toAreaId", "Area".name, ST_AsText(ST_Transform("Area".centroid, 4326)), sum(value) as value, "Area".meta->>'iso3' as iso3
+      prisma.$queryRawUnsafe(
+        `SELECT "toAreaId", "Area".name, ST_AsText(ST_Transform("Area".centroid, 4326)), sum(value) as value, "Area".meta->>'iso3' as iso3
         FROM "Flow"
         JOIN "Area" ON "Flow"."toAreaId" = "Area"."id"
         WHERE "Flow"."fromAreaId" = '${area.id}'
         GROUP BY "toAreaId", "Area".name, "Area".centroid, "Area".meta
         ORDER BY value DESC;
     `
-    ),
-    prisma.area.findMany({
-      select: {
-        id: true,
-        name: true,
-        meta: true,
-      },
-      where: {
-        flowsTo: {
-          some: {
-            fromAreaId: area.id,
-          },
-        },
-      },
-    }),
-  ]);
-
-  const indicators: Indicators = [area, ...outboundAreas].reduce<Indicators>(
-    (sum, { meta }) => {
-      if (!meta) return sum;
-
-      /*
-       * In the following we are ignoring errors with meta objects. We should
-       * look into making the indicators as area columns to avoid this.
-       * See: https://github.com/earth-genome/foodtwin-global-app/issues/91
-       */
-
-      return {
-        // @ts-expect-error - we should avoid using meta keys directly
-        totalPopulation: sum.totalPopulation + meta[IndicatorColumn.TOTALPOP],
-        // @ts-expect-error - we should avoid using meta keys directly
-        ruralPopulation: sum.ruralPopulation + meta[IndicatorColumn.NUM_RURAL],
-        elderlyPopulation:
-          // @ts-expect-error - we should avoid using meta keys directly
-          sum.elderlyPopulation + meta[IndicatorColumn.NUM_ELDERLY],
-        childBearingPopulation:
-          // @ts-expect-error - we should avoid using meta keys directly
-          sum.childBearingPopulation + meta[IndicatorColumn.NUM_F_CHILDBEARING],
-        under5Population:
-          // @ts-expect-error - we should avoid using meta keys directly
-          sum.under5Population + meta[IndicatorColumn.NUM_UNDER5],
-      };
-    },
-    {
-      totalPopulation: 0,
-      ruralPopulation: 0,
-      elderlyPopulation: 0,
-      childBearingPopulation: 0,
-      under5Population: 0,
-    }
-  );
+      ),
+    ]);
 
   const foodGroupAgg = foodGroupExports.reduce(
     (agg: IFoodGroupAggObj, group): IFoodGroupAggObj => {

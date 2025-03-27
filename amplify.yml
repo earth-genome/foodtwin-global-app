@@ -6,6 +6,7 @@ frontend:
   phases:
     preBuild:
       commands:
+        - nvm install
         - npm install -g pnpm
         - pnpm install
     build:
