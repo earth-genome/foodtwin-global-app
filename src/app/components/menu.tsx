@@ -71,7 +71,7 @@ function Menu() {
                 </p>
                 <Button
                   onClick={() => setIsOpen(false)}
-                  className="mt-4 font-header bg-accent-warm-400 text-white rounded"
+                  className="mt-8 font-header bg-accent-warm-400 text-white rounded"
                 >
                   Explore Food Flows
                 </Button>
@@ -114,6 +114,12 @@ function Menu() {
                     </li>
                   </ul>
                 </p>
+                <Button
+                  onClick={() => setIsOpen(false)}
+                  className="mt-8 font-header bg-accent-warm-400 text-white rounded"
+                >
+                  Explore Food Flows
+                </Button>
               </Tab>
               <Tab key="data-insights" title="Data and Insights">
                 <h2 className="mt-8 font-header text-sm tracking-wide uppercase">
@@ -150,6 +156,12 @@ function Menu() {
                   infrastructure, and trade relationships. You can learn more
                   about the model here.
                 </p>
+                <Button
+                  onClick={() => setIsOpen(false)}
+                  className="mt-8 font-header bg-accent-warm-400 text-white rounded"
+                >
+                  Explore Food Flows
+                </Button>
               </Tab>
             </Tabs>
           </div>
