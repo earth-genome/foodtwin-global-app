@@ -43,7 +43,7 @@ function Menu() {
                 panel: "pt-8",
               }}
             >
-              <Tab key="flows" title="Overview">
+              <Tab key="overview" title="Overview">
                 <h2 className="mt-8 font-header text-sm tracking-wide uppercase">
                   1. Understanding Global Food Flows
                 </h2>
@@ -76,7 +76,7 @@ function Menu() {
                   Explore Food Flows
                 </Button>
               </Tab>
-              <Tab key="disruptions" title="How To Use">
+              <Tab key="how-to-use" title="How To Use">
                 <h2 className="mt-8 font-header text-sm tracking-wide uppercase">
                   2. Interacting with the Map
                 </h2>
@@ -115,7 +115,7 @@ function Menu() {
                   </ul>
                 </p>
               </Tab>
-              <Tab key="about" title="Data and Insights">
+              <Tab key="data-insights" title="Data and Insights">
                 <h2 className="mt-8 font-header text-sm tracking-wide uppercase">
                   3. Understanding the Data
                 </h2>
