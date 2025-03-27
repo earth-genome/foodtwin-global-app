@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { FeatureCollection } from "geojson";
 
 interface FlowGeometryRow {
   fromAreaId: string;
@@ -22,13 +23,13 @@ interface FlowRow {
 
 export interface FromToFlowsResponse {
   flows: FlowRow[];
-  flowGeometries: FlowGeometryRow[];
+  flowGeometriesGeojson: FeatureCollection;
 }
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
-) {
+): Promise<NextResponse<FromToFlowsResponse>> {
   const { id } = params;
 
   const flows = await prisma.$queryRaw<FlowRow[]>`
@@ -59,7 +60,10 @@ export async function GET(
   if (toAreaIds.length === 0) {
     return NextResponse.json({
       flows,
-      flowGeometries: [],
+      flowGeometriesGeojson: {
+        type: "FeatureCollection",
+        features: [],
+      },
     });
   }
 
@@ -74,11 +78,20 @@ export async function GET(
       "fromAreaId" = ${id} AND "toAreaId" IN (${Prisma.join(toAreaIds)});
   `;
 
+  const flowGeometriesGeojson: FeatureCollection = {
+    type: "FeatureCollection",
+    features: flowGeometries.map((f) => ({
+      type: "Feature",
+      properties: {
+        fromAreaId: f.fromAreaId,
+        toAreaId: f.toAreaId,
+      },
+      geometry: JSON.parse(f.geojson),
+    })),
+  };
+
   return NextResponse.json({
     flows,
-    flowGeometries: flowGeometries.map((f) => ({
-      ...f,
-      geojson: JSON.parse(f.geojson),
-    })),
+    flowGeometriesGeojson,
   });
 }
