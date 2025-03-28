@@ -65,12 +65,13 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
   return (
     <Source id="source_id" type="geojson" data={data?.flowGeometriesGeojson}>
       <Layer
-        id="layer_id"
+        id="area-flows"
         type="line"
         source="source_id"
         layout={{
           "line-join": "round",
           "line-cap": "round",
+          visibility: "none",
         }}
         paint={{
           "line-color": ["get", "color"],
