@@ -12,12 +12,12 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import MapPopup from "@/app/components/map-popup";
 
 import { MachineContext, MachineProvider } from "./state";
-import EdgeLayer from "./layers/edges";
 import Legend from "./legend";
 import FoodGroupsLayer from "./layers/foodgroups";
 import AreaLayers from "./layers/areas";
 import PortsLayer from "./layers/ports";
 import { AREA_SOURCE_ID, AREA_VIEW_BOUNDS_PADDING } from "./constants";
+import AreaFlowsLayer from "./layers/area-flows";
 import { EItemType } from "@/types/components";
 
 // Environment variables used in this component
@@ -174,9 +174,9 @@ function GlobeInner() {
         ></Source>
 
         <FoodGroupsLayer />
-        <EdgeLayer />
         <AreaLayers />
         <PortsLayer />
+        {currentArea && <AreaFlowsLayer areaId={currentArea.id} />}
 
         {mapPopup && <MapPopup {...mapPopup} />}
         {currentArea && (
