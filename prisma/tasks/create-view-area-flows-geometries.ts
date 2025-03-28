@@ -12,7 +12,6 @@ const BATCH_SIZE = 15;
 const CONCURRENCY_LEVEL = 50;
 
 // Create a limiter instance
-console.log({ pLimit });
 const limit = pLimit(CONCURRENCY_LEVEL);
 
 // Helper function to process a single batch based on offset
