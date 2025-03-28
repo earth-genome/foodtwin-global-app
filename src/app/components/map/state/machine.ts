@@ -452,6 +452,7 @@ export const globeViewMachine = createMachine(
         if (mapRef) {
           const m = mapRef.getMap();
           m.setLayoutProperty("selected-area-overlay", "visibility", "visible");
+          m.setLayoutProperty("foodgroups-layer", "visibility", "visible");
         }
 
         return {
@@ -478,6 +479,7 @@ export const globeViewMachine = createMachine(
 
         // Disable unwanted layers
         m.setLayoutProperty("area-population-fill", "visibility", "none");
+        m.setLayoutProperty("foodgroups-layer", "visibility", "none");
 
         const destinationAreaBbox = bbox(currentArea.destinationAreasBbox);
         const destinationPortsBbox = bbox(currentArea.destinationPorts);
@@ -577,6 +579,7 @@ export const globeViewMachine = createMachine(
             0.9,
           ]);
           m.setLayoutProperty("area-population-fill", "visibility", "visible");
+          m.setLayoutProperty("foodgroups-layer", "visibility", "none");
 
           const legend: Legend = {
             type: "population",
@@ -684,6 +687,9 @@ export const globeViewMachine = createMachine(
 
           mapRef.resize();
           mapRef.fitBounds(worldViewState.bounds);
+          mapRef
+            .getMap()
+            .setLayoutProperty("foodgroups-layer", "visibility", "visible");
         }
 
         return {

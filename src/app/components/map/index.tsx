@@ -75,9 +75,6 @@ function GlobeInner() {
   const currentArea = MachineContext.useSelector(
     (state) => state.context.currentArea
   );
-  const isWorldView = MachineContext.useSelector(
-    (state) => state.context.viewType === "world"
-  );
 
   const handleMouseMove = useCallback((event: MapMouseEvent) => {
     actorRef.send({
@@ -176,7 +173,7 @@ function GlobeInner() {
           tiles={[`${VECTOR_TILES_URL}/areas/{z}/{x}/{y}.pbf`]}
         ></Source>
 
-        {isWorldView && <FoodGroupsLayer />}
+        <FoodGroupsLayer />
         <AreaLayers />
         <PortsLayer />
         {currentArea && <AreaFlowsLayer areaId={currentArea.id} />}
