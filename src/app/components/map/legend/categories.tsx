@@ -31,7 +31,7 @@ export default function CategoriesLegend() {
         </div>
       </div>
       <div className="p-4 flex-grow">
-        <h3 className="mb-2 font-bold">Calories production</h3>
+        <h3 className="mb-2 font-bold">Calorie production variance</h3>
         <div className="flex gap-4 items-center">
           <span>Low</span>
           <span className="border border-neutral-400 w-[4px] h-[4px] rounded-[2px]" />
