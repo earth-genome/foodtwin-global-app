@@ -2,45 +2,26 @@ import { CircleLayerSpecification } from "mapbox-gl";
 import { Layer, Source } from "react-map-gl";
 
 const foodgroupsStyle = {
-  "circle-emissive-strength": 1,
   "circle-color": [
     "match",
     ["get", "max_food_group"],
-    "cereals-excluding-beer",
+    "grains",
     "#F28E2B",
-    "aquatic-products-other",
-    "#E15759",
     "treenuts",
     "#9C755F",
-    "spices",
-    "#BAB0AC",
-    "starchy-roots",
+    ["starchy_roots"],
     "#4E79A7",
-    "stimulants",
+    "other",
     "#BAB0AC",
-    "milk-excluding-butter",
-    "#BAB0AC",
-    "animal-fats",
-    "#EDC948",
-    "meat",
-    "#E15759",
-    "fruits-excluding-wine",
+    "fruits",
     "#FF9DA7",
-    "sugar-crops",
-    "#BAB0AC",
-    "vegetable-oils",
+    "oils_and_oilseed",
     "#EDC948",
-    "eggs",
-    "#BAB0AC",
-    "alcoholic-beverages",
-    "#BAB0AC",
-    "oilcrops",
-    "#EDC948",
+    "dairy_and_eggs",
+    "#76B7B2",
     "vegetables",
     "#59A14F",
-    "fish-seafood",
-    "#E15759",
-    "offals",
+    "meat_and_fish",
     "#E15759",
     "pulses",
     "#B07AA1",
@@ -50,22 +31,32 @@ const foodgroupsStyle = {
     "interpolate",
     ["exponential", 1.99],
     ["zoom"],
+    1,
+    [
+      "interpolate",
+      ["linear"],
+      ["get", "max_food_group_value"],
+      -2572,
+      0.04,
+      53567,
+      0.4,
+    ],
     3,
     [
       "interpolate",
       ["linear"],
       ["get", "max_food_group_value"],
-      -2963,
-      0.1,
+      -2572,
+      0.09,
       53567,
-      1,
+      0.9,
     ],
     12,
     [
       "interpolate",
       ["linear"],
       ["get", "max_food_group_value"],
-      -2963,
+      -2572,
       1,
       53567,
       200,
@@ -78,12 +69,12 @@ function FoodGroupsLayer() {
     <Source
       id="foodgroups-source"
       type="vector"
-      url="mapbox://devseed.dlel0qkq"
+      url="mapbox://plotline.cndbsry2"
     >
       <Layer
         id="foodgroups-layer"
         type="circle"
-        source-layer="foodgroup2max"
+        source-layer="prod_overview"
         paint={foodgroupsStyle as CircleLayerSpecification["paint"]}
       />
     </Source>
