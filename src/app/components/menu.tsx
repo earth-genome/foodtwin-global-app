@@ -15,11 +15,11 @@ function Menu() {
       className={`absolute top-0 ${leftPosition} bottom-0 z-50 flex transition-left overflow-hidden`}
     >
       <div
-        className="w-screen h-screen flex-shrink-0 flex gap-4 box-border bg-neutral-100/50 backdrop-blur"
+        className="w-screen h-screen flex-shrink-0 flex gap-4 box-border bg-neutral-100/50 backdrop-blur overflow-y-auto"
         aria-hidden={!isOpen}
       >
         <div className="flex-grow">
-          <div className="max-w-128 mx-auto pt-12">
+          <div className="max-w-128 mx-auto py-12">
             <Image
               src="/logos/landscape.svg"
               alt="Food Twin"
@@ -164,7 +164,7 @@ function Menu() {
             </Tabs>
           </div>
         </div>
-        <div className="border-l-1 border-ink/10 p-4 flex">
+        <div className="border-l-1 border-ink/10 p-4 flex sticky top-0">
           <div className="m-auto">
             <Button
               isIconOnly
