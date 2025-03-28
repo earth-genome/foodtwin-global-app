@@ -86,7 +86,15 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
         }}
         paint={{
           "line-color": ["get", "color"],
-          "line-width": 2,
+          "line-width": [
+            "interpolate",
+            ["linear"],
+            ["get", "value"],
+            0,
+            2,
+            50000000000,
+            20,
+          ],
         }}
       />
     </Source>
