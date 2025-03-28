@@ -51,7 +51,7 @@ export async function GET(
     WHERE
       "Flow"."fromAreaId" = ${id}
     ORDER BY
-      "Flow"."value" DESC  
+      "Flow"."value" DESC
     LIMIT 5;
   `;
 

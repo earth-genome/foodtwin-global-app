@@ -4,12 +4,13 @@ import useSWR from "swr";
 import { Layer, Source } from "react-map-gl";
 import { FromToFlowsResponse } from "@/app/api/areas/[id]/flows/route";
 import { FoodGroupColors } from "../../../../../tailwind.config";
+import { Feature } from "geojson";
 
 const fetcher = (url: string) =>
   fetch(url)
     .then((res) => res.json())
-    .then((data: FromToFlowsResponse) => {
-      const flowGeometries = data.flows.map((flow, i) => {
+    .then((data: FromToFlowsResponse): FromToFlowsResponse => {
+      const flowGeometries = data.flows.map((flow) => {
         const flowPairGeometry = data.flowGeometriesGeojson.features.find(
           (feature) =>
             feature?.properties?.fromAreaId === flow.fromAreaId &&
@@ -31,7 +32,7 @@ const fetcher = (url: string) =>
               value: flow.value,
               foodGroupId: flow.foodGroupId,
             },
-          };
+          } as Feature;
         }
         return null;
       });
@@ -40,7 +41,7 @@ const fetcher = (url: string) =>
         ...data,
         flowGeometriesGeojson: {
           type: "FeatureCollection",
-          features: flowGeometries.filter((f) => f),
+          features: flowGeometries.filter((f) => !!f),
         },
       };
     })
