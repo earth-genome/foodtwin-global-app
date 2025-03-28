@@ -50,18 +50,18 @@ function Menu() {
                 <p className="text-md leading-7 mt-8">
                   Food Twin Map visualizes the complex network of food
                   production and distribution across the globe. The map shows:
-                  <ul className="list-disc pl-8 mt-8 space-y-1">
-                    <li>Where different food groups are produced</li>
-                    <li>
-                      How food travels between regions through various transport
-                      routes
-                    </li>
-                    <li>
-                      The nutritional impact on populations Key economic
-                      indicators related to agriculture
-                    </li>
-                  </ul>
                 </p>
+                <ul className="list-disc pl-8 mt-8 space-y-1">
+                  <li>Where different food groups are produced</li>
+                  <li>
+                    How food travels between regions through various transport
+                    routes
+                  </li>
+                  <li>
+                    The nutritional impact on populations Key economic
+                    indicators related to agriculture
+                  </li>
+                </ul>
                 <p className="text-md leading-7 mt-8">
                   The data is based on a model developed in collaboration by
                   Earth Genome and Better Planet Lab. This model incorporates
@@ -80,40 +80,38 @@ function Menu() {
                 <h2 className="mt-8 font-header text-sm tracking-wide uppercase">
                   2. Interacting with the Map
                 </h2>
-                <p className="text-md leading-7 mt-8">
-                  <ul className="list-disc pl-8 mt-8 space-y-1">
+                <ul className="list-disc pl-8 mt-8 space-y-1">
+                  <li>
+                    Click on any region to see detailed information about food
+                    production, transportation routes, and impact.
+                  </li>
+                  <li>
+                    Navigate between views using the tab sections on area pages
+                    to see:
+                  </li>
+                  <ul className="list-disc pl-8">
                     <li>
-                      Click on any region to see detailed information about food
-                      production, transportation routes, and impact.
+                      <b>Food Produced:</b> Types and quantities of food groups
+                      produced in the area
                     </li>
                     <li>
-                      Navigate between views using the tab sections on area
-                      pages to see:
-                    </li>
-                    <ul className="list-disc pl-8">
-                      <li>
-                        <b>Food Produced:</b> Types and quantities of food
-                        groups produced in the area
-                      </li>
-                      <li>
-                        <b>Food Transportation:</b> How food moves between
-                        regions through different routes
-                      </li>
-                      <li>
-                        <b>Impact on People:</b> Nutritional values and
-                        population metrics
-                      </li>
-                    </ul>
-                    <li>
-                      Use the search button in the top right to find specific
-                      regions or food groups.
+                      <b>Food Transportation:</b> How food moves between regions
+                      through different routes
                     </li>
                     <li>
-                      Hover over map elements to see tooltip information about
-                      areas, ports, and transport routes.
+                      <b>Impact on People:</b> Nutritional values and population
+                      metrics
                     </li>
                   </ul>
-                </p>
+                  <li>
+                    Use the search button in the top right to find specific
+                    regions or food groups.
+                  </li>
+                  <li>
+                    Hover over map elements to see tooltip information about
+                    areas, ports, and transport routes.
+                  </li>
+                </ul>
                 <Button
                   onClick={() => setIsOpen(false)}
                   className="mt-8 font-header bg-accent-warm-400 text-white rounded"
@@ -128,28 +126,28 @@ function Menu() {
                 <p className="text-md leading-7 mt-8">
                   The Food Twin Map integrates multiple data sources to create a
                   comprehensive view of global food systems:
-                  <ul className="list-disc pl-8 mt-8 space-y-1">
-                    <li>
-                      <b>Food Groups:</b> Categorized into major groups
-                      including grains, fruits, vegetables, dairy, meat & fish,
-                      pulses, oils, and more.
-                    </li>
-                    <li>
-                      <b>Transportation Routes:</b> Shows how food moves via
-                      road, rail, and waterways between producing areas and
-                      destinations.
-                    </li>
-                    <li>
-                      <b>Impact Metrics:</b> Nutritional values (calories,
-                      protein, iron, vitamin A) and how they relate to
-                      population needs.
-                    </li>
-                    <li>
-                      <b>Economic Indicators:</b> GDP, agricultural sector
-                      contribution, and Human Development Index for context.
-                    </li>
-                  </ul>
                 </p>
+                <ul className="list-disc pl-8 mt-8 space-y-1">
+                  <li>
+                    <b>Food Groups:</b> Categorized into major groups including
+                    grains, fruits, vegetables, dairy, meat & fish, pulses,
+                    oils, and more.
+                  </li>
+                  <li>
+                    <b>Transportation Routes:</b> Shows how food moves via road,
+                    rail, and waterways between producing areas and
+                    destinations.
+                  </li>
+                  <li>
+                    <b>Impact Metrics:</b> Nutritional values (calories,
+                    protein, iron, vitamin A) and how they relate to population
+                    needs.
+                  </li>
+                  <li>
+                    <b>Economic Indicators:</b> GDP, agricultural sector
+                    contribution, and Human Development Index for context.
+                  </li>
+                </ul>
                 <p className="text-md mt-8">
                   The underlying flow model was developed using methodology that
                   estimates food movement patterns based on production capacity,
