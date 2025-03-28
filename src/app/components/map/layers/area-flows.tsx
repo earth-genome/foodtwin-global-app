@@ -4,7 +4,6 @@ import useSWR from "swr";
 import { Layer, Source } from "react-map-gl";
 import { FromToFlowsResponse } from "@/app/api/areas/[id]/flows/route";
 import { FoodGroupColors } from "../../../../../tailwind.config";
-import { lineOffset } from "@turf/turf";
 
 const fetcher = (url: string) =>
   fetch(url)
@@ -22,21 +21,9 @@ const fetcher = (url: string) =>
               flow.level3FoodGroupSlug as keyof typeof FoodGroupColors
             ];
 
-          const geometryType = flowPairGeometry.geometry.type;
           return {
             type: "Feature",
-            geometry:
-              geometryType === "LineString"
-                ? lineOffset(
-                    {
-                      type: "Feature",
-                      geometry: flowPairGeometry.geometry,
-                      properties: {},
-                    },
-                    10 * (i + 1),
-                    { units: "kilometers" }
-                  ).geometry
-                : flowPairGeometry.geometry,
+            geometry: flowPairGeometry.geometry,
             properties: {
               fromAreaId: flow.fromAreaId,
               toAreaId: flow.toAreaId,
