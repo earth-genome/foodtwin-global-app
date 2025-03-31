@@ -3,46 +3,13 @@
 import useSWR from "swr";
 import { Layer, Source } from "react-map-gl";
 import { FromToFlowsResponse } from "@/app/api/areas/[id]/flows/route";
-import { FoodGroupColors } from "../../../../../tailwind.config";
-import { Feature } from "geojson";
 
 const fetcher = (url: string) =>
   fetch(url)
     .then((res) => res.json())
     .then((data: FromToFlowsResponse): FromToFlowsResponse => {
-      const flowGeometries = data.flows.map((flow) => {
-        const flowPairGeometry = data.flowGeometriesGeojson.features.find(
-          (feature) =>
-            feature?.properties?.fromAreaId === flow.fromAreaId &&
-            feature.properties.toAreaId === flow.toAreaId
-        );
-        if (flowPairGeometry?.geometry) {
-          const colorHex =
-            FoodGroupColors[
-              flow.level3FoodGroupSlug as keyof typeof FoodGroupColors
-            ];
-
-          return {
-            type: "Feature",
-            geometry: flowPairGeometry.geometry,
-            properties: {
-              fromAreaId: flow.fromAreaId,
-              toAreaId: flow.toAreaId,
-              color: colorHex,
-              value: flow.value,
-              foodGroupId: flow.foodGroupId,
-            },
-          } as Feature;
-        }
-        return null;
-      });
-
       return {
         ...data,
-        flowGeometriesGeojson: {
-          type: "FeatureCollection",
-          features: flowGeometries.filter((f) => !!f),
-        },
       };
     })
     .catch((error) => {
@@ -62,8 +29,42 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
 
   if (error || isLoading || !data) return null;
 
+  const maxTotalValue = Math.max(
+    ...data.flowGeometriesGeojson.features.map(
+      (feature) => feature.properties?.totalValue || 0
+    )
+  );
+  const minTotalValue = Math.min(
+    ...data.flowGeometriesGeojson.features.map(
+      (feature) => feature.properties?.totalValue || 0
+    )
+  );
+
   return (
     <Source id="source_id" type="geojson" data={data?.flowGeometriesGeojson}>
+      <Layer
+        id="area-flows-outline"
+        type="line"
+        source="source_id"
+        layout={{
+          "line-join": "round",
+          "line-cap": "round",
+          visibility: "visible", // or controlled via props
+        }}
+        paint={{
+          "line-color": "#000000",
+          "line-opacity": 0.4,
+          "line-width": [
+            "interpolate",
+            ["linear"],
+            ["get", "totalValue"],
+            minTotalValue,
+            3,
+            maxTotalValue,
+            10,
+          ],
+        }}
+      />
       <Layer
         id="area-flows"
         type="line"
@@ -71,19 +72,19 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
         layout={{
           "line-join": "round",
           "line-cap": "round",
-          visibility: "none",
+          visibility: "visible",
         }}
         paint={{
-          "line-color": "#ffffff",
-          "line-opacity": 0.7,
+          "line-color": "#ffffff", // or your actual color logic
+          "line-opacity": 0.9,
           "line-width": [
             "interpolate",
             ["linear"],
-            ["get", "value"],
-            0,
-            2,
-            50000000000,
-            50,
+            ["get", "totalValue"],
+            minTotalValue,
+            1,
+            maxTotalValue,
+            8,
           ],
         }}
       />
