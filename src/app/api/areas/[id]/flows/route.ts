@@ -12,13 +12,7 @@ interface FlowGeometryRow {
 interface FlowRow {
   fromAreaId: string;
   toAreaId: string;
-  value: number;
-  foodGroupId: number;
-  foodGroupSlug: string;
-  level2FoodGroupId: number | null;
-  level2FoodGroupSlug: string | null;
-  level3FoodGroupId: number | null;
-  level3FoodGroupSlug: string | null;
+  totalValue: number;
 }
 
 export interface FromToFlowsResponse {
@@ -36,23 +30,17 @@ export async function GET(
     SELECT
       "Flow"."fromAreaId",
       "Flow"."toAreaId",
-      "Flow"."value",
-      "Flow"."foodGroupId",
-      "FoodGroup"."slug" as "foodGroupSlug",
-      "Level2FoodGroup"."id" as "level2FoodGroupId",
-      "Level2FoodGroup"."slug" as "level2FoodGroupSlug",
-      "Level3FoodGroup"."id" as "level3FoodGroupId",
-      "Level3FoodGroup"."slug" as "level3FoodGroupSlug"
+      sum("Flow"."value") as "totalValue"
     FROM
       "Flow"
-      JOIN "FoodGroup" ON "Flow"."foodGroupId" = "FoodGroup"."id"
-      LEFT JOIN "FoodGroup" AS "Level2FoodGroup" ON "FoodGroup"."parentId" = "Level2FoodGroup"."id"
-      LEFT JOIN "FoodGroup" AS "Level3FoodGroup" ON "Level2FoodGroup"."parentId" = "Level3FoodGroup"."id"
     WHERE
       "Flow"."fromAreaId" = ${id}
+    GROUP BY
+      "Flow"."fromAreaId",
+      "Flow"."toAreaId"
     ORDER BY
-      "Flow"."value" DESC
-    LIMIT 100;
+      "totalValue" DESC
+    LIMIT 250;
   `;
 
   const toAreaIds = flows.map((f) => f.toAreaId);
@@ -85,6 +73,8 @@ export async function GET(
       properties: {
         fromAreaId: f.fromAreaId,
         toAreaId: f.toAreaId,
+        totalValue: flows.find((flow) => flow.toAreaId === f.toAreaId)
+          ?.totalValue,
       },
       geometry: JSON.parse(f.geojson),
     })),
