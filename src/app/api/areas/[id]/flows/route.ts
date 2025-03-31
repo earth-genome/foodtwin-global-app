@@ -52,7 +52,7 @@ export async function GET(
       "Flow"."fromAreaId" = ${id}
     ORDER BY
       "Flow"."value" DESC
-    LIMIT 100;
+    LIMIT 500;
   `;
 
   const toAreaIds = flows.map((f) => f.toAreaId);
