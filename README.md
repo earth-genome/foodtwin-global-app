@@ -10,7 +10,6 @@ To set up the development environment for this website, you'll need to install t
 
 - [Node](http://nodejs.org/) (see version in [.nvmrc](./.nvmrc)) (To manage multiple node versions we recommend [nvm](https://github.com/creationix/nvm))
 - [pnpm](https://pnpm.io/installation)
-- [Docker](https://www.docker.com/)
 - [GDAL](https://gdal.org/)
 - [PostgreSQL](https://www.postgresql.org/)
 
@@ -48,12 +47,6 @@ Install Node modules:
 
 ```sh
 pnpm install
-```
-
-Start database server:
-
-```sh
-docker-compose up
 ```
 
 Apply migrations and ingest seed data:
