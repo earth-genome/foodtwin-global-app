@@ -90,12 +90,12 @@ model Flow {
 }
 
 model FlowGeometry {
-  id         BigInt                                    @id @default(autoincrement())
-  fromArea   Area                                      @relation("FlowGeometry_FromArea", fields: [fromAreaId], references: [id])
+  id         BigInt                                         @id @default(autoincrement())
+  fromArea   Area                                           @relation("FlowGeometry_FromArea", fields: [fromAreaId], references: [id])
   fromAreaId String
-  toArea     Area                                      @relation("FlowGeometry_ToArea", fields: [toAreaId], references: [id])
+  toArea     Area                                           @relation("FlowGeometry_ToArea", fields: [toAreaId], references: [id])
   toAreaId   String
-  geometry   Unsupported("geometry(LineString, 4326)")
+  geometry   Unsupported("geometry(MultiLineString, 4326)")
   areaId     String?
 
   @@index([fromAreaId, toAreaId], name: "flow_geometry_pair_idx")
