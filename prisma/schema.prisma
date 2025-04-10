@@ -53,7 +53,7 @@ model Edge {
   id_str       String
   distance     Float
   type         EdgeType
-  geom         Unsupported("geometry(MultiLineString, 3857)")
+  geom         Unsupported("geometry(MultiLineString, 4326)")
   fromNode     Node                                           @relation("FromNode", fields: [fromNodeId], references: [id])
   fromNodeId   String
   toNode       Node                                           @relation("ToNode", fields: [toNodeId], references: [id])
