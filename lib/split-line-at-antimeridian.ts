@@ -19,9 +19,10 @@ export function splitLineAtAntimeridian(line: LineString): MultiLineString {
 
     const lonDiff = coord2[0] - coord1[0];
 
+    // Check if the line crosses the antimeridian
     if (Math.abs(lonDiff) > 180) {
-      // Crossing detected
-      const crossingLon = lonDiff > 0 ? 180 : -180;
+      // Determine which side of the antimeridian the line crosses
+      const crossingLon = lonDiff > 0 ? -180 : 180;
 
       // Calculate approximate latitude at crossing
       const latAtCrossing =
@@ -33,9 +34,8 @@ export function splitLineAtAntimeridian(line: LineString): MultiLineString {
       segments.push(currentSegment);
 
       // Start a new segment on the other side, starting from the crossing point
-      currentSegment = [
-        [crossingLon + Math.sign(lonDiff) * -360, latAtCrossing],
-      ];
+      const newLon = crossingLon === 180 ? -180 : 180;
+      currentSegment = [[newLon, latAtCrossing]];
     } else {
       currentSegment.push(coord2);
     }
