@@ -61,7 +61,7 @@ interface FlowData {
 let memoryDb: Database;
 let edgesId: Record<string, number>;
 let existingFlowGeometriesIds: Set<string>;
-const newFlowGeometries: Map<
+const newFlowGeometries = new Map<
   string,
   {
     edges: number[];
@@ -69,7 +69,7 @@ const newFlowGeometries: Map<
     toAreaId: string;
     sourceFlowId: bigint;
   }
-> = new Map();
+>();
 
 export const ingestFlows = async (
   prisma: PrismaClient,
@@ -448,6 +448,10 @@ async function ingestFlowFile(
   await fs.remove(expandedFilePath);
   await fs.remove(flowsTempFile);
   log("Cleaned up temporary csv files...");
+
+  // Clear the newFlowGeometries Map after we've inserted all geometries
+  newFlowGeometries.clear();
+  log("Cleared newFlowGeometries Map...");
 }
 async function cascadeDeleteFoodGroupFlows(
   prisma: PrismaClient,
