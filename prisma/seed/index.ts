@@ -37,9 +37,6 @@ async function ingestData() {
     await ingestFoodGroups(prisma);
     await ingestFlows(prisma);
 
-    await prisma.$executeRaw`REFRESH MATERIALIZED VIEW "EdgeFlowAggregation"`;
-    log("Refreshed materialized view.");
-
     await prisma.$executeRaw`VACUUM FULL ANALYZE`;
     log("Vacuumed database.");
   } catch (error) {
