@@ -8,13 +8,30 @@ import { ingestFoodGroups } from "./foodgroups";
 import { ingestNodes } from "./nodes";
 import { ingestFlows } from "./flows";
 import { ingestEdges } from "./edges";
-import { POSTGRES_CONNECTION_STRING, SEED_DATA_PATH } from "./config";
+import {
+  POSTGRES_CONNECTION_STRING,
+  SEED_DATA_PATH,
+  IS_DEVELOPMENT,
+  CLOVES_FOOD_GROUP,
+  INGESTION_MODE,
+} from "./config";
 
 const prisma = new PrismaClient();
+
+async function cleanupFlows(prisma: PrismaClient) {
+  log("Cleaning up flows...");
+  await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
+  await prisma.$executeRaw`TRUNCATE "FlowGeometry" RESTART IDENTITY CASCADE`;
+  log("Flows cleanup completed");
+}
 
 async function ingestData() {
   const ingestStartTime = Date.now();
   log(`Preparing to seed data to '${POSTGRES_CONNECTION_STRING}'`);
+  log(`Running in ingestion mode: ${INGESTION_MODE}`);
+  if (IS_DEVELOPMENT) {
+    log("Running in development mode - will only ingest cloves data");
+  }
 
   try {
     if (!SEED_DATA_PATH) {
@@ -32,13 +49,40 @@ async function ingestData() {
     }
 
     await optimizeDb(prisma);
-    await ingestNodes(prisma);
-    await ingestEdges(prisma);
-    await ingestFoodGroups(prisma);
-    await ingestFlows(prisma);
 
-    await prisma.$executeRaw`VACUUM FULL ANALYZE`;
-    log("Vacuumed database.");
+    // Always clean up flows before any ingestion
+    await cleanupFlows(prisma);
+
+    // Infrastructure ingestion (nodes, edges, and food groups)
+    if (INGESTION_MODE === "all" || INGESTION_MODE === "infra") {
+      log("Ingesting infrastructure data (nodes, edges, and food groups)...");
+      await ingestNodes(prisma);
+      await ingestEdges(prisma);
+      await ingestFoodGroups(prisma);
+    }
+
+    // Flows ingestion
+    if (
+      INGESTION_MODE === "all" ||
+      INGESTION_MODE === "flows" ||
+      INGESTION_MODE === "cloves"
+    ) {
+      if (INGESTION_MODE === "cloves" || IS_DEVELOPMENT) {
+        const clovesGroup = await prisma.foodGroup.findFirst({
+          where: { name: CLOVES_FOOD_GROUP },
+        });
+
+        if (!clovesGroup) {
+          throw new Error(`Cloves food group not found in database`);
+        }
+
+        log("Ingesting cloves flows only...");
+        await ingestFlows(prisma, [clovesGroup]);
+      } else {
+        log("Ingesting all flows...");
+        await ingestFlows(prisma);
+      }
+    }
   } catch (error) {
     console.error("Error ingesting data:", error);
   } finally {

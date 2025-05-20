@@ -13,6 +13,25 @@ export const SEED_DATA_PATH = path.resolve(
   process.env.SEED_DATA_PATH as string
 );
 
+// Development mode flag
+export const IS_DEVELOPMENT = process.env.NODE_ENV === "development";
+
+// Food group constants
+export const CLOVES_FOOD_GROUP = "Cloves";
+
+// Ingestion mode flags
+export type IngestionMode = "all" | "infra" | "flows" | "cloves";
+
+export const INGESTION_MODE = (process.env.INGESTION_MODE ||
+  "all") as IngestionMode;
+
+// Validate ingestion mode
+if (!["all", "infra", "flows", "cloves"].includes(INGESTION_MODE)) {
+  throw new Error(
+    `Invalid INGESTION_MODE: ${INGESTION_MODE}. Must be one of: all, infra, flows, cloves`
+  );
+}
+
 const DEMOGRAPHIC_DATA_PATH = path.join(SEED_DATA_PATH, "Demographic Data");
 const INFRASTRUCTURE_DATA_PATH = path.join(SEED_DATA_PATH, "Infrastructure");
 const MARITIME_INFRASTRUCTURE_DATA_PATH = path.join(

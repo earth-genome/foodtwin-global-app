@@ -71,7 +71,10 @@ const newFlowGeometries: Map<
   }
 > = new Map();
 
-export const ingestFlows = async (prisma: PrismaClient) => {
+export const ingestFlows = async (
+  prisma: PrismaClient,
+  specificFoodGroups?: { id: number; name: string }[]
+) => {
   memoryDb = await open({
     filename: ":memory:",
     driver: sqlite3.Database,
@@ -107,19 +110,21 @@ export const ingestFlows = async (prisma: PrismaClient) => {
     {} as Record<string, number>
   ) as Record<string, number>;
 
-  const foodGroups = await prisma.foodGroup.findMany({
-    select: {
-      id: true,
-      name: true,
-    },
-    where: {
-      level: 1,
-    },
-    orderBy: {
-      name: "asc",
-    },
-    skip: SKIP_FOOD_GROUPS,
-  });
+  const foodGroups =
+    specificFoodGroups ||
+    (await prisma.foodGroup.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+      where: {
+        level: 1,
+      },
+      orderBy: {
+        name: "asc",
+      },
+      skip: SKIP_FOOD_GROUPS,
+    }));
 
   log(`Listing available flow files...`);
   const allFlowFiles = (await listFilesRecursively(FLOWS_FOLDER)).filter(
@@ -444,7 +449,6 @@ async function ingestFlowFile(
   await fs.remove(flowsTempFile);
   log("Cleaned up temporary csv files...");
 }
-
 async function cascadeDeleteFoodGroupFlows(
   prisma: PrismaClient,
   foodGroupId: number,
