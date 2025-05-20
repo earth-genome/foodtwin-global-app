@@ -1,6 +1,5 @@
 import fs from "fs-extra";
 import path from "path";
-import pLimit from "p-limit";
 import { execa } from "execa";
 import { parse } from "csv-parse";
 import { Prisma, PrismaClient } from "@prisma/client";
@@ -15,12 +14,8 @@ import {
 } from "./config";
 import { splitLineAtAntimeridian } from "../../lib/split-line-at-antimeridian";
 
-const BATCH_SIZE = 500;
-const WORKER_COUNT = 5;
 const TRANSACTION_TIMEOUT = 60 * 60 * 1000;
 const SKIP_FOOD_GROUPS = 0; // Skip food groups that have already been ingested
-
-const limit = pLimit(WORKER_COUNT);
 
 const filesIngestLog = path.resolve(SEED_DATA_PATH, "file_ingest_log.txt");
 export function logFileIngest(message: Error | string) {
@@ -51,6 +46,16 @@ interface FoodGroupFile {
     id: number;
     name: string;
   };
+}
+
+interface FlowData {
+  from_id_admin: string;
+  to_id_admin: string;
+  flow_value: string;
+  path_num?: string;
+  segment_order?: string;
+  mode?: string;
+  paths?: string;
 }
 
 let memoryDb: Database;
@@ -121,16 +126,14 @@ export const ingestFlows = async (prisma: PrismaClient) => {
     (filePath: string) => {
       const filename = path.basename(filePath);
       return (
-        filename.startsWith("Flows_Sugar cane") && filename.endsWith(".csv.gz")
+        filename.startsWith("Flows_") &&
+        (filename.endsWith(".csv.gz") || filename.endsWith(".parquet"))
       );
     }
   );
 
-  // log("Clearing all flows...");
-  // await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
-
-  // log(`Dropping indexes for FlowSegmentEdges`);
-  // await dropFlowSegmentEdgesIndexes(prisma);
+  log("Clearing all flows...");
+  await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
 
   // Process each food group
   for (const foodGroup of foodGroups) {
@@ -157,6 +160,7 @@ export const ingestFlows = async (prisma: PrismaClient) => {
       const normalizedFilename = filename
         .replace("Flows_", "")
         .replace(".csv.gz", "")
+        .replace(".parquet", "")
         .replace(/[\u00A0\s]+/g, " ")
         .replace(/_/g, " ") // replace underscores with spaces
         .trim();
@@ -179,12 +183,37 @@ export const ingestFlows = async (prisma: PrismaClient) => {
     for (const filePath of foodGroupFiles) {
       log(`Ingesting flows for ${foodGroup.name} from ${filePath}...`);
       try {
+        // If it's a parquet file, convert it to CSV first
+        let csvPath = filePath;
+        if (filePath.endsWith(".parquet")) {
+          csvPath = filePath.replace(".parquet", ".csv");
+          await execa("python3", [
+            "-c",
+            `
+import pandas as pd
+# Read parquet with full precision
+df = pd.read_parquet("${filePath}")
+# Ensure flow_value is written with full precision
+df['flow_value'] = df['flow_value'].astype('float64')
+# Write CSV with maximum precision
+df.to_csv("${csvPath}", index=False, float_format='%.10f')
+            `,
+          ]);
+          log("Converted parquet to CSV with full numeric precision...");
+        }
+
         await ingestFlowFile(prisma, {
-          path: filePath,
-          size: fs.statSync(filePath).size,
+          path: csvPath,
+          size: fs.statSync(csvPath).size,
           foodGroup,
         });
         logFileIngest(`Ingested flows for ${foodGroup.name} from ${filePath}`);
+
+        // Clean up temporary CSV if it was converted from parquet
+        if (filePath.endsWith(".parquet")) {
+          await fs.remove(csvPath);
+          log("Cleaned up temporary CSV file...");
+        }
       } catch (error) {
         logFileIngest(
           `Error ingesting flows for ${foodGroup.name} from ${filePath}`
@@ -195,9 +224,6 @@ export const ingestFlows = async (prisma: PrismaClient) => {
 
     log(`Completed ingestion for ${foodGroup.name}`);
   }
-
-  log("Recreating indexes for FlowSegmentEdges");
-  await createFlowSegmentEdgesIndexes(prisma);
 };
 
 async function ingestFlowFile(
@@ -208,6 +234,7 @@ async function ingestFlowFile(
   log(`Ingesting flows for ${foodGroup.id} - ${foodGroup.name}...`);
 
   let filePath = foodGroupFile.path;
+  let expandedFilePath = "";
 
   let flowType: FlowType;
 
@@ -225,12 +252,15 @@ async function ingestFlowFile(
     throw new Error(`Unknown flow type for file ${filePath}`);
   }
 
-  const expandedFilePath = foodGroupFile.path.replace(".gz", "");
-  await execa(`gunzip -c "${foodGroupFile.path}" > "${expandedFilePath}"`, {
-    shell: true, // Use shell mode to support shell syntax like redirection
-  });
-  filePath = expandedFilePath;
-  log("Expanded file...");
+  // Only gunzip if the file is gzipped
+  if (filePath.endsWith(".gz")) {
+    expandedFilePath = foodGroupFile.path.replace(".gz", "");
+    await execa(`gunzip -c "${foodGroupFile.path}" > "${expandedFilePath}"`, {
+      shell: true, // Use shell mode to support shell syntax like redirection
+    });
+    filePath = expandedFilePath;
+    log("Expanded file...");
+  }
 
   const flowsTempFile = path.join(SEED_DATA_PATH, `flows_${foodGroup.id}.csv`);
   await fs.remove(flowsTempFile);
@@ -267,7 +297,7 @@ async function ingestFlowFile(
 
     readStream
       .pipe(parseStream)
-      .on("data", async (row) => {
+      .on("data", async (row: FlowData) => {
         try {
           const flowCompositeId = `${row.from_id_admin}-${row.to_id_admin}-${foodGroup.id}-${flowType}-${row.flow_value}`;
 
@@ -286,7 +316,7 @@ async function ingestFlowFile(
             ?.replace(/['"[\]\s]/g, "")
             .split(",")
             .map((path: string) => edgesId[path])
-            .filter((edgeId: string | undefined) => edgeId)
+            .filter((edgeId): edgeId is number => typeof edgeId === "number")
             .join(",");
 
           // Append edges to flowGeometries
@@ -316,7 +346,7 @@ async function ingestFlowFile(
               row.to_id_admin,
               parseFloat(row.flow_value),
               csvRowMode,
-              parseInt(csvRowSegmentOrder),
+              parseInt(csvRowSegmentOrder || "0"),
               pathsCsv,
             ]
           );
@@ -420,33 +450,8 @@ async function cascadeDeleteFoodGroupFlows(
   foodGroupId: number,
   foodGroupName: string
 ) {
-  // Make sure indexes exists otherwise the delete will be slow
-  await createFlowSegmentEdgesIndexes(prisma);
-
   await prisma.$transaction(
     async (tx) => {
-      // Delete FlowSegmentEdges
-      await tx.$executeRaw`
-        DELETE FROM "FlowSegmentEdges"
-        WHERE "flowSegmentId" IN (
-          SELECT "FlowSegment".id
-          FROM "FlowSegment"
-          JOIN "Flow" ON "FlowSegment"."flowId" = "Flow".id
-          WHERE "Flow"."foodGroupId" = ${foodGroupId}
-        )
-      `;
-      log(`Deleted FlowSegmentEdges for ${foodGroupName}...`);
-
-      // Delete FlowSegments
-      await tx.$executeRaw`
-        DELETE FROM "FlowSegment"
-        WHERE "flowId" IN (
-          SELECT id FROM "Flow"
-          WHERE "foodGroupId" = ${foodGroupId}
-        )
-      `;
-      log(`Deleted FlowSegments for ${foodGroupName}...`);
-
       // Delete Flows
       await tx.$executeRaw`
         DELETE FROM "Flow"
@@ -460,53 +465,4 @@ async function cascadeDeleteFoodGroupFlows(
   );
 
   log(`Completed cascading delete for ${foodGroupName}`);
-}
-
-async function createFlowSegmentEdgesIndexes(prisma: PrismaClient) {
-  await prisma.$executeRaw`
-    CREATE INDEX IF NOT EXISTS "FlowSegmentEdges_edgeId_idx"
-      ON public."FlowSegmentEdges" USING btree
-      ("edgeId" ASC NULLS LAST)
-      TABLESPACE pg_default;
-  `;
-
-  await prisma.$executeRaw`
-    CREATE INDEX IF NOT EXISTS "FlowSegmentEdges_flowSegmentId_idx"
-      ON public."FlowSegmentEdges" USING btree
-      ("flowSegmentId" ASC NULLS LAST)
-      TABLESPACE pg_default;
-  `;
-
-  await prisma.$executeRaw`
-    CREATE INDEX IF NOT EXISTS "Flow_foodGroupId_idx"
-    ON "Flow" ("foodGroupId");
-  `;
-
-  await prisma.$executeRaw`
-    CREATE INDEX IF NOT EXISTS "FlowSegment_flowId_idx"
-    ON "FlowSegment" ("flowId");
-  `;
-
-  log("Indexes created for FlowSegmentEdges");
-}
-
-// Function to drop indexes
-async function dropFlowSegmentEdgesIndexes(prisma: PrismaClient) {
-  await prisma.$executeRaw`
-    DROP INDEX IF EXISTS public."FlowSegmentEdges_edgeId_idx";
-  `;
-
-  await prisma.$executeRaw`
-    DROP INDEX IF EXISTS public."FlowSegmentEdges_flowSegmentId_idx";
-  `;
-
-  await prisma.$executeRaw`
-    DROP INDEX IF EXISTS "Flow_foodGroupId_idx";
-  `;
-
-  await prisma.$executeRaw`
-    DROP INDEX IF EXISTS "FlowSegment_flowId_idx";
-  `;
-
-  log("Indexes dropped for FlowSegmentEdges");
 }
