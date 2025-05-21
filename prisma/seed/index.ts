@@ -21,7 +21,6 @@ const prisma = new PrismaClient();
 async function cleanupFlows(prisma: PrismaClient) {
   log("Cleaning up flows...");
   await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
-  await prisma.$executeRaw`TRUNCATE "FlowGeometry" RESTART IDENTITY CASCADE`;
   log("Flows cleanup completed");
 }
 

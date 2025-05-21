@@ -61,7 +61,7 @@ interface FlowData {
 
 let memoryDb: Database;
 let edgesId: Record<string, number>;
-let existingFlowGeometriesIds: Set<string>;
+
 const newFlowGeometries = new Map<
   string,
   {
@@ -80,19 +80,6 @@ export const ingestFlows = async (
     filename: ":memory:",
     driver: sqlite3.Database,
   });
-
-  // Load existing flow geometries ids into memory
-  const existingGeometriesQueryResult = (await prisma.$queryRaw`
-    SELECT 
-      CAST("fromAreaId" AS TEXT) || '_' || CAST("toAreaId" AS TEXT) AS id_str
-    FROM "FlowGeometry"
-  `) as { id_str: string }[];
-
-  existingFlowGeometriesIds = new Set(
-    existingGeometriesQueryResult.map(
-      (geometry: { id_str: string }) => geometry.id_str
-    )
-  );
 
   // Edges are loaded into memory to avoid multiple queries
   const edges = await prisma.edge.findMany({
@@ -249,6 +236,19 @@ async function ingestFlowFile(
   const { foodGroup } = foodGroupFile;
   log(`Ingesting flows for ${foodGroup.id} - ${foodGroup.name}...`);
 
+  // Query existing flow geometries for this run
+  const existingGeometriesQueryResult = (await prisma.$queryRaw`
+    SELECT 
+      CAST("fromAreaId" AS TEXT) || '_' || CAST("toAreaId" AS TEXT) AS id_str
+    FROM "FlowGeometry"
+  `) as { id_str: string }[];
+
+  const existingFlowGeometriesIds = new Set(
+    existingGeometriesQueryResult.map(
+      (geometry: { id_str: string }) => geometry.id_str
+    )
+  );
+
   let filePath = foodGroupFile.path;
   let expandedFilePath = "";
 
@@ -303,7 +303,7 @@ async function ingestFlowFile(
 
           const flowId = generateNumericId(flowCompositeId);
 
-          const flowGeometryId = `${row.from_id_admin}-${row.to_id_admin}`;
+          const flowGeometryId = `${row.from_id_admin}_${row.to_id_admin}`;
           const csvRowSegmentOrder = row.path_num || row.segment_order;
 
           const csvRowMode = row.mode || "unknown";
@@ -394,6 +394,12 @@ async function ingestFlowFile(
   await flowsTempFileWriteStream.close();
 
   for (const [newFlowGeometryId, newFlowGeometryData] of newFlowGeometries) {
+    // Query again to ensure we have the latest geometries (in case of race conditions)
+    if (existingFlowGeometriesIds.has(newFlowGeometryId)) {
+      log(`Skipping existing flow geometry for ${newFlowGeometryId}`);
+      continue;
+    }
+
     const newFlowGeometryEdges = (await prisma.$queryRaw<
       { id: number; geojson: string }[]
     >`
@@ -402,6 +408,14 @@ async function ingestFlowFile(
       WHERE "id" IN (${Prisma.join(newFlowGeometryData.edges)})
       AND "id" IS NOT NULL;
     `) as unknown as { id: number; geojson: string }[];
+
+    // Skip if no valid edges found
+    if (newFlowGeometryEdges.length === 0) {
+      log(
+        `No valid edges found for flow geometry ${newFlowGeometryId}, skipping...`
+      );
+      continue;
+    }
 
     // Merge the geometries into a single linestring
     const mergedEdgesLinestring = newFlowGeometryData.edges
@@ -422,22 +436,46 @@ async function ingestFlowFile(
         { type: "LineString", coordinates: [] }
       );
 
+    // Skip if no coordinates were found
+    if (mergedEdgesLinestring.coordinates.length === 0) {
+      log(
+        `No coordinates found for flow geometry ${newFlowGeometryId}, skipping...`
+      );
+      continue;
+    }
+
     const mergedEdgesMultiLineString = splitLineAtAntimeridian(
       mergedEdgesLinestring
     );
     const mergedGeometryString = JSON.stringify(mergedEdgesMultiLineString);
 
-    // insert the new flow geometry
-    await prisma.$executeRaw`
-      INSERT INTO "FlowGeometry" ("fromAreaId", "toAreaId", "geometry")
-      VALUES (
-        ${newFlowGeometryData.fromAreaId},
-        ${newFlowGeometryData.toAreaId},        
-        ST_SetSRID(ST_GeomFromGeoJSON(${mergedGeometryString}), 4326)
-      );
-    `;
-    existingFlowGeometriesIds.add(newFlowGeometryId);
-    log(`Inserted new flow geometry for ${newFlowGeometryId}`);
+    try {
+      // insert the new flow geometry
+      await prisma.$executeRaw`
+        INSERT INTO "FlowGeometry" ("fromAreaId", "toAreaId", "geometry")
+        VALUES (
+          ${newFlowGeometryData.fromAreaId},
+          ${newFlowGeometryData.toAreaId},        
+          ST_SetSRID(ST_GeomFromGeoJSON(${mergedGeometryString}), 4326)
+        );
+      `;
+      existingFlowGeometriesIds.add(newFlowGeometryId);
+      log(`Inserted new flow geometry for ${newFlowGeometryId}`);
+    } catch (error) {
+      // If we get a unique constraint violation, the geometry was inserted by another process
+      // Just add it to our set and continue
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "23505"
+      ) {
+        log(
+          `Flow geometry ${newFlowGeometryId} already exists in database, skipping...`
+        );
+        existingFlowGeometriesIds.add(newFlowGeometryId);
+      } else {
+        throw error;
+      }
+    }
   }
 
   await fs.remove(expandedFilePath);
@@ -448,6 +486,8 @@ async function ingestFlowFile(
   newFlowGeometries.clear();
   log("Cleared newFlowGeometries Map...");
 }
+
+// Restore cascadeDeleteFoodGroupFlows
 async function cascadeDeleteFoodGroupFlows(
   prisma: PrismaClient,
   foodGroupId: number,
