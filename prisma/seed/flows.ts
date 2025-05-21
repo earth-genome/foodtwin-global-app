@@ -46,6 +46,7 @@ interface FoodGroupFile {
     id: number;
     name: string;
   };
+  flowType: FlowType;
 }
 
 interface FlowData {
@@ -129,10 +130,16 @@ export const ingestFlows = async (
   log(`Listing available flow files...`);
   const allFlowFiles = (await listFilesRecursively(FLOWS_FOLDER)).filter(
     (filePath: string) => {
+      // Skip the AdditionalFiles directory entirely
+      if (filePath.includes("/AdditionalFiles/")) {
+        return false;
+      }
       const filename = path.basename(filePath);
+      // Only include files from foodgroup1 directories
       return (
         filename.startsWith("Flows_") &&
-        (filename.endsWith(".csv.gz") || filename.endsWith(".parquet"))
+        filename.endsWith(".csv.gz") &&
+        filePath.includes("/foodgroup1/")
       );
     }
   );
@@ -149,6 +156,10 @@ export const ingestFlows = async (
     const expandedCsvFlowFiles = (
       await listFilesRecursively(FLOWS_FOLDER)
     ).filter((filePath: string) => {
+      // Skip the AdditionalFiles directory entirely
+      if (filePath.includes("/AdditionalFiles/")) {
+        return false;
+      }
       const filename = path.basename(filePath);
       return filename.startsWith("Flows_") && filename.endsWith(".csv");
     });
@@ -158,26 +169,50 @@ export const ingestFlows = async (
     }
 
     // Find all files for this food group
-    const foodGroupFiles = allFlowFiles.filter((filePath: string) => {
-      const filename = path.basename(filePath);
+    const foodGroupFiles = allFlowFiles
+      .filter((filePath: string) => {
+        const filename = path.basename(filePath);
 
-      // First normalize any special spaces to regular spaces
-      const normalizedFilename = filename
-        .replace("Flows_", "")
-        .replace(".csv.gz", "")
-        .replace(".parquet", "")
-        .replace(/[\u00A0\s]+/g, " ")
-        .replace(/_/g, " ") // replace underscores with spaces
-        .trim();
-      const normalizedFoodGroup = foodGroup.name
-        .replace(/[\u00A0\s]+/g, " ") // Normalize spaces
-        .trim();
+        // First normalize any special spaces to regular spaces
+        const normalizedFilename = filename
+          .replace("Flows_", "")
+          .replace(".csv.gz", "")
+          .replace(/[\u00A0\s]+/g, " ")
+          .replace(/_/g, " ") // replace underscores with spaces
+          .trim();
+        const normalizedFoodGroup = foodGroup.name
+          .replace(/[\u00A0\s]+/g, " ") // Normalize spaces
+          .trim();
 
-      const encodedFilename = encodeURIComponent(normalizedFilename);
-      const encodedFoodGroup = encodeURIComponent(normalizedFoodGroup);
+        const encodedFilename = encodeURIComponent(normalizedFilename);
+        const encodedFoodGroup = encodeURIComponent(normalizedFoodGroup);
 
-      return encodedFilename === encodedFoodGroup;
-    });
+        return encodedFilename === encodedFoodGroup;
+      })
+      .map((filePath) => {
+        // Determine flow type based on the directory structure
+        let flowType: FlowType;
+        if (filePath.includes("/Sea_Domestic/")) {
+          flowType = FlowType.SEA_DOMESTIC;
+        } else if (filePath.includes("/Sea_ReExports/")) {
+          flowType = FlowType.SEA_REEXPORT;
+        } else if (filePath.includes("/Land_Domestic/")) {
+          flowType = FlowType.LAND_DOMESTIC;
+        } else if (filePath.includes("/Land_ReExports/")) {
+          flowType = FlowType.LAND_REEXPORT;
+        } else if (filePath.includes("/Within_Country/")) {
+          flowType = FlowType.WITHIN_COUNTRY;
+        } else {
+          throw new Error(`Unknown flow type for file ${filePath}`);
+        }
+
+        return {
+          path: filePath,
+          size: fs.statSync(filePath).size,
+          foodGroup,
+          flowType,
+        };
+      });
 
     if (foodGroupFiles.length === 0) {
       log(`No flow files found for ${foodGroup.name}`);
@@ -185,43 +220,18 @@ export const ingestFlows = async (
     }
 
     // Process each file for this food group
-    for (const filePath of foodGroupFiles) {
-      log(`Ingesting flows for ${foodGroup.name} from ${filePath}...`);
+    for (const foodGroupFile of foodGroupFiles) {
+      log(
+        `Ingesting flows for ${foodGroup.name} from ${foodGroupFile.path}...`
+      );
       try {
-        // If it's a parquet file, convert it to CSV first
-        let csvPath = filePath;
-        if (filePath.endsWith(".parquet")) {
-          csvPath = filePath.replace(".parquet", ".csv");
-          await execa("python3", [
-            "-c",
-            `
-import pandas as pd
-# Read parquet with full precision
-df = pd.read_parquet("${filePath}")
-# Ensure flow_value is written with full precision
-df['flow_value'] = df['flow_value'].astype('float64')
-# Write CSV with maximum precision
-df.to_csv("${csvPath}", index=False, float_format='%.10f')
-            `,
-          ]);
-          log("Converted parquet to CSV with full numeric precision...");
-        }
-
-        await ingestFlowFile(prisma, {
-          path: csvPath,
-          size: fs.statSync(csvPath).size,
-          foodGroup,
-        });
-        logFileIngest(`Ingested flows for ${foodGroup.name} from ${filePath}`);
-
-        // Clean up temporary CSV if it was converted from parquet
-        if (filePath.endsWith(".parquet")) {
-          await fs.remove(csvPath);
-          log("Cleaned up temporary CSV file...");
-        }
+        await ingestFlowFile(prisma, foodGroupFile, foodGroupFile.flowType);
+        logFileIngest(
+          `Ingested flows for ${foodGroup.name} from ${foodGroupFile.path}`
+        );
       } catch (error) {
         logFileIngest(
-          `Error ingesting flows for ${foodGroup.name} from ${filePath}`
+          `Error ingesting flows for ${foodGroup.name} from ${foodGroupFile.path}`
         );
         logFileIngest(error as Error);
       }
@@ -233,29 +243,14 @@ df.to_csv("${csvPath}", index=False, float_format='%.10f')
 
 async function ingestFlowFile(
   prisma: PrismaClient,
-  foodGroupFile: FoodGroupFile
+  foodGroupFile: FoodGroupFile,
+  flowType: FlowType
 ) {
   const { foodGroup } = foodGroupFile;
   log(`Ingesting flows for ${foodGroup.id} - ${foodGroup.name}...`);
 
   let filePath = foodGroupFile.path;
   let expandedFilePath = "";
-
-  let flowType: FlowType;
-
-  if (filePath.includes("Sea_Domestic")) {
-    flowType = FlowType.SEA_DOMESTIC;
-  } else if (filePath.includes("Sea_ReExports")) {
-    flowType = FlowType.SEA_REEXPORT;
-  } else if (filePath.includes("Land_Domestic")) {
-    flowType = FlowType.LAND_DOMESTIC;
-  } else if (filePath.includes("Land_ReExports")) {
-    flowType = FlowType.LAND_REEXPORT;
-  } else if (filePath.includes("Within_Country")) {
-    flowType = FlowType.WITHIN_COUNTRY;
-  } else {
-    throw new Error(`Unknown flow type for file ${filePath}`);
-  }
 
   // Only gunzip if the file is gzipped
   if (filePath.endsWith(".gz")) {
