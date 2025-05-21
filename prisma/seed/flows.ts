@@ -236,6 +236,13 @@ async function ingestFlowFile(
   const { foodGroup } = foodGroupFile;
   log(`Ingesting flows for ${foodGroup.id} - ${foodGroup.name}...`);
 
+  // Check if the file is too large to ingest
+  const fileSize = fs.statSync(foodGroupFile.path).size;
+  const sizeMB = fileSize / (1024 * 1024);
+  if (sizeMB > FLOW_FILE_SIZE_LIMIT_MB) {
+    log(`Skipping large file (${sizeMB.toFixed(1)}MB)`);
+    return;
+  }
   // Query existing flow geometries for this run
   const existingGeometriesQueryResult = (await prisma.$queryRaw`
     SELECT 

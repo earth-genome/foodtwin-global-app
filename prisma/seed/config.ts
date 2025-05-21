@@ -2,9 +2,6 @@ import path from "path";
 
 export const POSTGRES_CONNECTION_STRING = process.env.DATABASE_URL;
 
-export const FLOW_FILE_SIZE_LIMIT =
-  parseInt(process.env.FLOW_FILE_SIZE_LIMIT_MB as string) * 1024 * 1024;
-
 export const PUBLIC_PATH = path.resolve(process.env.PUBLIC_PATH || "public");
 
 export const TILES_PATH = path.join(PUBLIC_PATH, "tiles");
