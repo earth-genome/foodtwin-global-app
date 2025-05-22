@@ -59,9 +59,9 @@ export async function GET(
     SELECT
       "fromAreaId",
       "toAreaId",
-      ST_AsGeoJSON(ST_LineMerge("geom"), 4326) as "geojson"
+      ST_AsGeoJSON(ST_LineMerge("geometry"), 4326) as "geojson"
     FROM
-      "FlowPairsGeometries"
+      "FlowGeometry"
     WHERE
       "fromAreaId" = ${id} AND "toAreaId" IN (${Prisma.join(toAreaIds)});
   `;
