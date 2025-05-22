@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 interface IScrollTracker {
   children: React.ReactNode;
@@ -8,6 +8,7 @@ interface IScrollTracker {
 
 function ScrollTracker({ children }: IScrollTracker) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const pathname = usePathname();
 
   const [ref, setRef] = useState<HTMLDivElement>();
@@ -40,6 +41,24 @@ function ScrollTracker({ children }: IScrollTracker) {
       resizeObserver.disconnect();
     };
   }, [ref]);
+
+  // Scroll to the section if the query param is set.
+  // IMPORTANT: This must be done after the section is resized to ensure
+  // that the scroll position is correct.
+  useLayoutEffect(() => {
+    if (!ref) return;
+    const sectionId = searchParams.get("view");
+    if (sectionId) {
+      const section = ref.querySelector(`#${sectionId}`);
+      if (section) {
+        section.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+          inline: "nearest",
+        });
+      }
+    }
+  }, [searchParams, ref]);
 
   useEffect(() => {
     if (!ref) return;
