@@ -39,3 +39,7 @@ docker/
 seed-data/
 
 public/tiles
+
+.venv/
+dumps/
+.cursor/
