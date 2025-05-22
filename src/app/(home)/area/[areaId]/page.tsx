@@ -296,7 +296,7 @@ const AreaPage = async ({
       ) : (
         <ScrollTracker>
           <PageSection id={EAreaViewType.production}>
-            <SectionHeader label="Food Produced" />
+            <SectionHeader label="Food Supplied" />
             <MetricRow>
               <Metric
                 label="Food exported outside the region"
