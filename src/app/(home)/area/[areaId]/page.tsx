@@ -15,6 +15,7 @@ import Link from "next/link";
 
 import foodgroupNutrition from "./foodgroup-nutrition";
 import { FoodGroupColors } from "../../../../../tailwind.config";
+import { ScrollSection } from "./scroll-section";
 
 const SANKEY_LINKS_COUNT = 5;
 const SANKEY_HEIGHT = 600;
@@ -295,7 +296,7 @@ const AreaPage = async ({
         </PageSection>
       ) : (
         <ScrollTracker>
-          <PageSection id={EAreaViewType.production}>
+          <ScrollSection id={EAreaViewType.production}>
             <SectionHeader label="Food Supplied" />
             <MetricRow>
               <Metric
@@ -345,8 +346,8 @@ const AreaPage = async ({
                   : undefined,
               }))}
             />
-          </PageSection>
-          <PageSection id={EAreaViewType.transportation}>
+          </ScrollSection>
+          <ScrollSection id={EAreaViewType.transportation}>
             <SectionHeader label="Food Transportation" />
             <MetricRow>
               <Metric
@@ -366,8 +367,8 @@ const AreaPage = async ({
               area={area}
               outboundFlows={outboundFlows as ExportFlow[]}
             />
-          </PageSection>
-          <PageSection id={EAreaViewType.impact} className="pb-8">
+          </ScrollSection>
+          <ScrollSection id={EAreaViewType.impact} className="pb-8">
             <SectionHeader label="Impact on people" />
             <MetricRow>
               <Metric
@@ -401,7 +402,7 @@ const AreaPage = async ({
                 decimalPlaces={0}
               />
             </MetricRow>
-          </PageSection>
+          </ScrollSection>
         </ScrollTracker>
       )}
     </>
