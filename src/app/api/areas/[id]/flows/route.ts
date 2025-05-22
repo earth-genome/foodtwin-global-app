@@ -3,6 +3,9 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { FeatureCollection } from "geojson";
 
+const GEOMETRY_SIMPLIFICATION_TOLERANCE = 0.01;
+const COORDINATE_PRECISION_GRID = 0.01;
+
 interface FlowGeometryRow {
   fromAreaId: string;
   toAreaId: string;
@@ -59,7 +62,15 @@ export async function GET(
     SELECT
       "fromAreaId",
       "toAreaId",
-      ST_AsGeoJSON(ST_LineMerge("geometry"), 4326) as "geojson"
+      ST_AsGeoJSON(
+        ST_ReducePrecision(
+          ST_SimplifyPreserveTopology(
+            ST_LineMerge("geometry"),
+            ${GEOMETRY_SIMPLIFICATION_TOLERANCE}
+          ),
+          ${COORDINATE_PRECISION_GRID}
+        )
+      , 4326) as "geojson"
     FROM
       "FlowGeometry"
     WHERE
