@@ -45,29 +45,34 @@ function ScrollTracker({ children }: IScrollTracker) {
     if (!ref) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        const sorted = entries
-          .filter(({ isIntersecting }) => isIntersecting)
-          .sort((a, b) => a.intersectionRatio - b.intersectionRatio);
+        const sorted = entries.filter(
+          ({ isIntersecting, intersectionRatio }) =>
+            isIntersecting && intersectionRatio > 0
+        );
 
-        const activeSection = sorted[0];
-        if (activeSection) {
-          const sectionId = activeSection.target.getAttribute("id");
-          if (sectionId !== currentSection.current) {
-            currentSection.current = sectionId;
-            router.push(`${pathname}#${sectionId}`);
+        const hitHeading = sorted[0]?.target as HTMLElement | undefined;
+        if (hitHeading) {
+          const activeSection = findParentBeforeRoot(hitHeading, ref);
+
+          if (activeSection) {
+            const sectionId = activeSection.getAttribute("id");
+            if (sectionId !== currentSection.current) {
+              currentSection.current = sectionId;
+              router.push(`${pathname}?view=${sectionId}`);
+            }
           }
         }
       },
       {
-        threshold: 0.5,
+        rootMargin: "0px 0px -90% 0px",
+        root: ref,
       }
     );
 
-    const children = ref.children || [];
+    const children = ref.querySelectorAll("[data-section-heading]");
     for (let i = 0, len = children.length; i < len; i++) {
       observer.observe(children[i]);
     }
-
     return () => {
       observer.disconnect();
     };
@@ -81,3 +86,13 @@ function ScrollTracker({ children }: IScrollTracker) {
 }
 
 export default ScrollTracker;
+
+const findParentBeforeRoot = (
+  el: HTMLElement | null,
+  root: HTMLElement
+): HTMLElement | null => {
+  if (!el) return null;
+  if (el === root) return null;
+  if (el.parentElement === root) return el;
+  return findParentBeforeRoot(el.parentElement, root);
+};

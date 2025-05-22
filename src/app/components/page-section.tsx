@@ -14,7 +14,9 @@ interface ISectionHeader {
 export function SectionHeader({ label, tooltip }: ISectionHeader) {
   return (
     <div className="flex items-center text-neutral-700 mb-8">
-      <h2 className="flex-grow font-header uppercase">{label}</h2>
+      <h2 className="flex-grow font-header uppercase" data-section-heading>
+        {label}
+      </h2>
       {tooltip && (
         <Tooltip
           content={

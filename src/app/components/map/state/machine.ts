@@ -20,6 +20,33 @@ import {
   AREA_VIEW_BOUNDS_PADDING,
 } from "../constants";
 
+const getViewFromUrl = () => {
+  const params = new URLSearchParams(window.location.search);
+  const val = EAreaViewType[params.get("view") as keyof typeof EAreaViewType];
+  return (val || null) as EAreaViewType | null;
+};
+
+export const parseViewUrl = () => {
+  // Parse area view URLs
+  const pathname = window.location.pathname;
+  if (pathname.startsWith("/area/")) {
+    const [, , areaId] = pathname.split("/");
+
+    const areaViewType = getViewFromUrl() || EAreaViewType.production;
+
+    return {
+      viewType: EViewType.area,
+      currentAreaId: areaId,
+      currentAreaViewType: areaViewType,
+    };
+  }
+
+  // default to world view
+  return {
+    viewType: EViewType.world,
+  };
+};
+
 export enum EViewType {
   world = "world",
   area = "area",
@@ -282,34 +309,7 @@ export const globeViewMachine = createMachine(
   },
   {
     actions: {
-      "action:parseUrl": assign(() => {
-        // Parse area view URLs
-        const pathname = window.location.pathname;
-        if (pathname.startsWith("/area/")) {
-          const [, , areaId] = pathname.split("/");
-
-          let areaViewType = null;
-
-          if (pathname.includes("#transportation")) {
-            areaViewType = EAreaViewType.transportation;
-          } else if (pathname.includes("#impact")) {
-            areaViewType = EAreaViewType.impact;
-          } else {
-            areaViewType = EAreaViewType.production;
-          }
-
-          return {
-            viewType: EViewType.area,
-            currentAreaId: areaId,
-            currentAreaViewType: areaViewType,
-          };
-        }
-
-        // default to world view
-        return {
-          viewType: EViewType.world,
-        };
-      }),
+      "action:parseUrl": assign(parseViewUrl),
 
       "action:setMapRef": assign(({ event }) => {
         assertEvent(event, "event:map:mount");
@@ -720,13 +720,13 @@ export const globeViewMachine = createMachine(
         return context.currentArea?.destinationAreas.length === 0;
       },
       "guard:isAreaProductionView": () => {
-        return window.location.hash === `#${EAreaViewType.production}`;
+        return getViewFromUrl() === EAreaViewType.production;
       },
       "guard:isAreaTransportationView": () => {
-        return window.location.hash === `#${EAreaViewType.transportation}`;
+        return getViewFromUrl() === EAreaViewType.transportation;
       },
       "guard:isAreaImpactView": () => {
-        return window.location.hash === `#${EAreaViewType.impact}`;
+        return getViewFromUrl() === EAreaViewType.impact;
       },
       "guard:isCurrentAreaLoaded": ({ context }) => {
         return context.currentArea?.id === context.currentAreaId;
