@@ -41,7 +41,7 @@ export function SectionHeader({ label, tooltip }: ISectionHeader) {
   );
 }
 
-interface IPageSection {
+export interface IPageSection {
   id: string;
   children: React.ReactNode;
   className?: string;
