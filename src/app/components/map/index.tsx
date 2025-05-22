@@ -19,6 +19,7 @@ import PortsLayer from "./layers/ports";
 import { AREA_SOURCE_ID, AREA_VIEW_BOUNDS_PADDING } from "./constants";
 import AreaFlowsLayer from "./layers/area-flows";
 import { EItemType } from "@/types/components";
+import AreaParticlesLayer from "./layers/particles";
 
 // Environment variables used in this component
 
@@ -176,7 +177,8 @@ function GlobeInner() {
         <FoodGroupsLayer />
         <AreaLayers />
         <PortsLayer />
-        {currentArea && <AreaFlowsLayer areaId={currentArea.id} />}
+        {/* {currentArea && <AreaFlowsLayer areaId={currentArea.id} />} */}
+        {currentArea && <AreaParticlesLayer areaId={currentArea.id} />}
 
         {mapPopup && <MapPopup {...mapPopup} />}
         {currentArea && (

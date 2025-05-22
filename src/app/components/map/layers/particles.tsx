@@ -1,19 +1,20 @@
 "use client";
 
 import useSWR from "swr";
-import { useMemo, useState } from "react";
+import { useEffect,  useState } from "react";
 import { Color, DeckProps } from "@deck.gl/core";
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { useControl } from "react-map-gl";
 import { distance, point } from "@turf/turf";
-import { Flow, FlowGeometry, Path, Trip, Waypoint } from "@/types/data";
+import { Flow,  Path, Trip, Waypoint } from "@/types/data";
 import { hexToRgb } from "@/utils/general";
 import useAnimationFrame from "@/hooks/useAnimationFrame";
 import { FoodGroupColors } from "../../../../../tailwind.config";
 import { Position } from "geojson";
+import { FromToFlowsResponse } from "@/app/api/areas/[id]/flows/route";
 
-const TRAIL_LENGTH = 0.15;
+const TRAIL_LENGTH = 0.07;
 const WIDTH_MIN_PIXELS = 2.5;
 
 interface DataType {
@@ -49,39 +50,47 @@ const getDistances = (coordinates: Position[]) => {
   };
 };
 
-const numParticlesMultiplicator = 0.000001;
+const numParticlesMultiplier = 0.000001;
 const fromTimestamp = 0;
 const toTimeStamp = 100;
 const intervalHumanize = 0.5; // Randomize particle start time (0: emitted at regular intervals; 1: emitted at "fully" random intervals)
 const speedKps = 100; // Speed in km per second
 const speedKpsHumanize = 0.5; // Randomize particles trajectory speed (0: stable duration; 1: can be 0 or 2x the speed)
-const maxParticles = 500;
+// const maxParticles = 300;
+
+const getParticleSpeed = (zoomMultiplier: number) => {
+  const speedZoomMultiplier = (3 - zoomMultiplier + 2) / 3;
+  const baseSpeedKps = speedKps * speedZoomMultiplier;
+  const humanizeSpeedKps =
+    (Math.random() - 0.5) * 2 * baseSpeedKps * speedKpsHumanize;
+  return baseSpeedKps + humanizeSpeedKps;
+};
 
 const getPathTrips = (
   path: Path,
-  flow: Flow,
-  zoomMultiplier: number
+  flow: Pick<Flow, "value" | "foodGroupSlug">,
+  zoomMultiplier: number,
+  maxParticles: number
 ): Trip[] => {
   const numParticles = Math.min(
-    flow.value * numParticlesMultiplicator,
+    flow.value * numParticlesMultiplier,
     maxParticles
   );
 
-  const speedZoomMultiplier = (3 - zoomMultiplier + 2) / 3;
-  const baseSpeedKps = speedKps * speedZoomMultiplier;
-
+  //
+  // REVIEW CALCULATIONS
+  // vvvvvvvvvvvvvvvvvvvv
+  //
   const d = toTimeStamp - fromTimestamp;
-  // const numParticles = (path.totalDistance / 1000) * numParticlesPer1000K;
+  // Interval is the time between each particle.
   const interval = d / numParticles;
 
   const trips = [];
 
   for (let i = 0; i < numParticles; i++) {
-    const humanizeSpeedKps =
-      (Math.random() - 0.5) * 2 * baseSpeedKps * speedKpsHumanize;
-    const humanizedSpeedKps = baseSpeedKps + humanizeSpeedKps;
+    const particleSpeedKps = getParticleSpeed(zoomMultiplier);
 
-    const baseDuration = path.totalDistance / humanizedSpeedKps;
+    const baseDuration = path.totalDistance / particleSpeedKps;
 
     const humanizeInterval =
       (Math.random() - 0.5) * 2 * interval * intervalHumanize;
@@ -108,54 +117,52 @@ const getPathTrips = (
     );
 
     const colorHex =
-      FoodGroupColors[flow.level3FoodGroupSlug as keyof typeof FoodGroupColors];
+      FoodGroupColors[flow.foodGroupSlug as keyof typeof FoodGroupColors];
+
     const color = hexToRgb(colorHex.slice(1));
+
     trips.push({
       waypoints: waypointsAccumulator.waypoints,
       color: [...color, 255] as Color,
       foodGroup: "Grain",
     });
   }
+
+  //
+  // ^^^^^^^^^^^^^^^^^^^^
+  // REVIEW CALCULATIONS
+  //
   return trips;
 };
-
-interface FlowResponse {
-  flows: Flow[];
-  flowGeometries: FlowGeometry[];
-}
 
 const fetcher = (url: string) =>
   fetch(url)
     .then((res) => res.json())
-    .then(({ flows, flowGeometries }: FlowResponse) => {
-      const trips = flows.flatMap((flow) => {
-        const flowGeometry = flowGeometries.find(({ fromAreaId, toAreaId }) => {
-          return fromAreaId === flow.fromAreaId && toAreaId === flow.toAreaId;
-        });
+    .then(({ flowGeometriesGeojson }: FromToFlowsResponse) => {
+      console.log("flowGeometries", flowGeometriesGeojson);
 
-        if (!flowGeometry) {
-          return [];
-        }
+      const flowsCount = flowGeometriesGeojson.features.reduce(
+        (acc, f) => acc + f.properties.flows.length,
+        0
+      );
 
-        const multiLinestring = flowGeometry.geojson.coordinates;
-        const flowPaths: Path[] = multiLinestring.map((lineString) => ({
-          coordinates: lineString,
-          ...getDistances(lineString),
-        }));
-        return flowPaths.map((flowPath) => {
-          return getPathTrips(
-            flowPath,
-            {
-              ...flow,
-              valuesRatiosByFoodGroup: [0.2, 0.2, 0.2, 0.2, 0.2],
-              routeGeometry: flowGeometry.geojson,
-            },
-            1
+      const maxParticlesPerFlow = Math.floor(500 / flowsCount);
+
+      const data = flowGeometriesGeojson.features
+        // .slice(0, 1)
+        .map((f) => {
+          const flowPath = {
+            coordinates: f.geometry.coordinates,
+            ...getDistances(f.geometry.coordinates),
+          };
+          return f.properties.flows.flatMap((flow) =>
+            getPathTrips(flowPath, flow, 1, maxParticlesPerFlow)
           );
-        });
-      });
+        })
+        .flat();
 
-      return trips.flat();
+      console.log("data", data);
+      return data;
     })
     .catch((error) => {
       // eslint-disable-next-line no-console
@@ -163,7 +170,7 @@ const fetcher = (url: string) =>
       throw error;
     });
 
-const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
+const AreaParticlesLayer = ({ areaId }: { areaId: string }) => {
   const { data, error, isLoading } = useSWR<Trip[]>(
     `/api/areas/${areaId}/flows`,
     fetcher,
@@ -171,16 +178,8 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
       keepPreviousData: true,
     }
   );
-  const [currentTime, setCurrentTime] = useState(0);
-  useAnimationFrame((e) => setCurrentTime(e.time));
 
-  const loopLength = 100;
-  const currentFrame = useMemo(() => {
-    const animationSpeed = 1;
-    const animationSpeedZoom = 1;
-    const speed = animationSpeed * animationSpeedZoom;
-    return (currentTime * speed) % loopLength;
-  }, [currentTime]);
+  const currentFrame = useFrame(20);
 
   if (!data) {
     return null;
@@ -208,4 +207,35 @@ const AreaFlowsLayer = ({ areaId }: { areaId: string }) => {
   return <DeckGLOverlay layers={[tripsLayer]} />;
 };
 
-export default AreaFlowsLayer;
+export default AreaParticlesLayer;
+
+const useFrame = (fps: number) => {
+  const [frame, setFrame] = useState(0);
+
+  const loopLength = 100;
+  useEffect(() => {
+    let prev = 0;
+
+    let rafId: number;
+    let frame = 0;
+    function tick(time: number) {
+      const delta = time - prev;
+
+      if (delta > 1000 / fps) {
+        frame++;
+        setFrame(frame % loopLength);
+        prev = time;
+      }
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    tick(0);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  return frame;
+};
