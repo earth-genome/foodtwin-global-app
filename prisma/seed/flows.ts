@@ -16,6 +16,7 @@ import { splitLineAtAntimeridian } from "../../lib/split-line-at-antimeridian";
 
 const TRANSACTION_TIMEOUT = 60 * 60 * 1000;
 const SKIP_FOOD_GROUPS = 0; // Skip food groups that have already been ingested
+const FLOW_FILE_SIZE_LIMIT_MB = 10;
 
 const filesIngestLog = path.resolve(SEED_DATA_PATH, "file_ingest_log.txt");
 export function logFileIngest(message: Error | string) {
