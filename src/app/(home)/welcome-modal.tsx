@@ -44,7 +44,7 @@ export default function WelcomeModal() {
             </div>
             <p className="text-sm tracking-tight">
               Discover where food is produced and how it travels around the
-              world by selecting any region, port, or transport route.
+              world by selecting any region.
             </p>
           </div>
           <Button
