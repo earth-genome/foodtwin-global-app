@@ -7,10 +7,7 @@ import { useAnimationFrame } from "./use-animation";
 import { DeckProps } from "@deck.gl/core";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { useControl } from "react-map-gl";
-import useSWR from "swr";
-import { fetchParticlePaths } from "./fetch";
-import { ensure2DCoordinates } from "./utils";
-import { generateTripPath } from "./trip-generator";
+import { useTrips } from "./trips/use-trips";
 
 function DeckGLOverlay(props: DeckProps) {
   const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay(props));
@@ -20,26 +17,9 @@ function DeckGLOverlay(props: DeckProps) {
 
 const ParticlesLayer = () => {
   const currentFrame = useAnimationFrame();
-  const { data: pathsData, isLoading } = useSWR(
-    "particle-paths",
-    fetchParticlePaths
-  );
+  const { particleData, isLoading } = useTrips();
 
-  if (isLoading || !pathsData) return null;
-
-  const particleData: ParticleDataWithTimestamps[] = pathsData.features.map(
-    (feature) => {
-      const { path, timestamps } = generateTripPath(
-        feature.geometry.coordinates.map(ensure2DCoordinates),
-        10000
-      );
-      return {
-        path,
-        timestamps,
-        color: PARTICLE_CONFIG.appearance.color,
-      };
-    }
-  );
+  if (isLoading || !particleData) return null;
 
   const tripsLayer = new TripsLayer({
     id: "flow-particles",

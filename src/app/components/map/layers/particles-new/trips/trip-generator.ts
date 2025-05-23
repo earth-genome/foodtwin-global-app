@@ -1,6 +1,6 @@
-import { Coordinate, TripPoint, TripPath } from "./types";
+import { Coordinate, TripPoint, TripPath } from "../types";
 import * as turf from "@turf/turf";
-import { PARTICLE_CONFIG } from "./config";
+import { PARTICLE_CONFIG } from "../config";
 
 function generateEvenlySpacedPoints(
   path: Coordinate[],
