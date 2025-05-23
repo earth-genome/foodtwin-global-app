@@ -28,11 +28,60 @@ function generateEvenlySpacedPoints(
   return points;
 }
 
+function findOptimalSpacing(
+  path: Coordinate[],
+  initialSpacing: number
+): number {
+  const line = turf.lineString(path);
+  const length = turf.length(line, { units: "meters" });
+
+  // Start with initial spacing
+  let currentSpacing = initialSpacing;
+  let iterations = 0;
+
+  while (iterations < PARTICLE_CONFIG.tripGeneration.maxIterations) {
+    const numPoints = Math.ceil(length / currentSpacing);
+
+    // If we're within limits, we're done
+    if (
+      numPoints <= PARTICLE_CONFIG.tripGeneration.maxPoints &&
+      currentSpacing >= PARTICLE_CONFIG.tripGeneration.minSpacing
+    ) {
+      return currentSpacing;
+    }
+
+    // If we have too many points, increase spacing
+    if (numPoints > PARTICLE_CONFIG.tripGeneration.maxPoints) {
+      currentSpacing = Math.min(
+        PARTICLE_CONFIG.tripGeneration.maxSpacing,
+        Math.ceil(length / PARTICLE_CONFIG.tripGeneration.maxPoints)
+      );
+    }
+    // If spacing is too small, increase it
+    else if (currentSpacing < PARTICLE_CONFIG.tripGeneration.minSpacing) {
+      currentSpacing = Math.min(
+        PARTICLE_CONFIG.tripGeneration.maxSpacing,
+        currentSpacing * 2
+      );
+    }
+    // If we've hit max spacing, we're done
+    else if (currentSpacing >= PARTICLE_CONFIG.tripGeneration.maxSpacing) {
+      return currentSpacing;
+    }
+
+    iterations++;
+  }
+
+  // If we've hit max iterations, return the best we've got
+  return currentSpacing;
+}
+
 export function generateTripPath(
   path: Coordinate[],
-  spacing = 10000
+  initialSpacing = PARTICLE_CONFIG.tripGeneration.initialSpacing
 ): TripPath {
-  const tripPoints = generateEvenlySpacedPoints(path, spacing);
+  const optimalSpacing = findOptimalSpacing(path, initialSpacing);
+  const tripPoints = generateEvenlySpacedPoints(path, optimalSpacing);
   return {
     path: tripPoints.map((p) => p.coordinates),
     timestamps: tripPoints.map((p) => p.timestamp),

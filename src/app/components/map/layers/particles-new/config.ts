@@ -14,4 +14,12 @@ export const PARTICLE_CONFIG = {
     jointRounded: true,
     color: [0, 122, 255, 255] as Color,
   },
+
+  tripGeneration: {
+    maxPoints: 50, // Maximum number of points per trip
+    minSpacing: 1000, // Minimum spacing in meters (1km)
+    maxSpacing: 100000, // Maximum spacing in meters (100km)
+    initialSpacing: 10000, // Default initial spacing in meters (10km)
+    maxIterations: 10, // Maximum iterations for finding optimal spacing
+  },
 } as const;
