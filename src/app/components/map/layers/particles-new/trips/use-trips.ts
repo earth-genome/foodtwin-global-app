@@ -1,6 +1,6 @@
 import useSWR from "swr";
 import { fetchParticlePaths } from "../fetch";
-import { generateTripPath } from "./trip-generator";
+import { generateTripPath } from "./trip-path";
 import { ensure2DCoordinates } from "../utils";
 import { ParticleDataWithTimestamps } from "../types";
 import { FeatureCollection, LineString } from "geojson";
