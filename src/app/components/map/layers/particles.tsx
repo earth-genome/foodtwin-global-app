@@ -1,15 +1,14 @@
 "use client";
 
 import useSWR from "swr";
-import { useEffect,  useState } from "react";
+import { useEffect, useState } from "react";
 import { Color, DeckProps } from "@deck.gl/core";
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { useControl } from "react-map-gl";
 import { distance, point } from "@turf/turf";
-import { Flow,  Path, Trip, Waypoint } from "@/types/data";
+import { Flow, Path, Trip, Waypoint } from "@/types/data";
 import { hexToRgb } from "@/utils/general";
-import useAnimationFrame from "@/hooks/useAnimationFrame";
 import { FoodGroupColors } from "../../../../../tailwind.config";
 import { Position } from "geojson";
 import { FromToFlowsResponse } from "@/app/api/areas/[id]/flows/route";
@@ -56,7 +55,6 @@ const toTimeStamp = 100;
 const intervalHumanize = 0.5; // Randomize particle start time (0: emitted at regular intervals; 1: emitted at "fully" random intervals)
 const speedKps = 100; // Speed in km per second
 const speedKpsHumanize = 0.5; // Randomize particles trajectory speed (0: stable duration; 1: can be 0 or 2x the speed)
-// const maxParticles = 300;
 
 const getParticleSpeed = (zoomMultiplier: number) => {
   const speedZoomMultiplier = (3 - zoomMultiplier + 2) / 3;
@@ -139,8 +137,6 @@ const fetcher = (url: string) =>
   fetch(url)
     .then((res) => res.json())
     .then(({ flowGeometriesGeojson }: FromToFlowsResponse) => {
-      console.log("flowGeometries", flowGeometriesGeojson);
-
       const flowsCount = flowGeometriesGeojson.features.reduce(
         (acc, f) => acc + f.properties.flows.length,
         0
@@ -149,7 +145,6 @@ const fetcher = (url: string) =>
       const maxParticlesPerFlow = Math.floor(500 / flowsCount);
 
       const data = flowGeometriesGeojson.features
-        // .slice(0, 1)
         .map((f) => {
           const flowPath = {
             coordinates: f.geometry.coordinates,
@@ -161,7 +156,6 @@ const fetcher = (url: string) =>
         })
         .flat();
 
-      console.log("data", data);
       return data;
     })
     .catch((error) => {
