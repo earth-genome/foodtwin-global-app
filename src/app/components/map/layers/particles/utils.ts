@@ -1,4 +1,4 @@
-import { Coordinate } from "./config";
+import { Coordinate } from "./types";
 
 /**
  * Ensures coordinates are in 2D format by taking only the first two elements

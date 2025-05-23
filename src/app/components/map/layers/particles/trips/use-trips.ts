@@ -20,8 +20,6 @@ import { generateTripPath } from "./trip-path";
 import { ensure2DCoordinates } from "../utils";
 import { ParticleDataWithTimestamps } from "../types";
 import { PARTICLE_CONFIG } from "../config";
-import { FoodGroupColors } from "../../../../../../../tailwind.config";
-import { hexToRgba } from "@/utils/general";
 import { getFoodGroupColor } from "@/utils/general";
 
 // Helper to determine the number of particles for a flow, scaled by value

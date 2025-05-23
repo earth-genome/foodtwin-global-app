@@ -18,7 +18,7 @@ import AreaLayers from "./layers/areas";
 import PortsLayer from "./layers/ports";
 import { AREA_SOURCE_ID, AREA_VIEW_BOUNDS_PADDING } from "./constants";
 import { EItemType } from "@/types/components";
-import ParticlesLayer from "./layers/particles-new";
+import ParticlesLayer from "./layers/particles";
 
 // Environment variables used in this component
 
