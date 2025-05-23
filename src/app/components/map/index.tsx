@@ -17,9 +17,8 @@ import FoodGroupsLayer from "./layers/foodgroups";
 import AreaLayers from "./layers/areas";
 import PortsLayer from "./layers/ports";
 import { AREA_SOURCE_ID, AREA_VIEW_BOUNDS_PADDING } from "./constants";
-import AreaFlowsLayer from "./layers/area-flows";
 import { EItemType } from "@/types/components";
-import AreaParticlesLayer from "./layers/particles";
+import ParticlesLayer from "./layers/particles-new";
 
 // Environment variables used in this component
 
@@ -178,7 +177,9 @@ function GlobeInner() {
         <AreaLayers />
         <PortsLayer />
         {/* {currentArea && <AreaFlowsLayer areaId={currentArea.id} />} */}
-        {currentArea && <AreaParticlesLayer areaId={currentArea.id} />}
+        {/* Commenting out the complex particles layer for now */}
+        {/* {currentArea && <AreaParticlesLayer areaId={currentArea.id} />} */}
+        <ParticlesLayer />
 
         {mapPopup && <MapPopup {...mapPopup} />}
         {currentArea && (
