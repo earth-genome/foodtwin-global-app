@@ -4,22 +4,19 @@ import { TripsLayer } from "@deck.gl/geo-layers";
 import { PARTICLE_CONFIG } from "./config";
 import { ParticleDataWithTimestamps } from "./types";
 import { useAnimationFrame } from "./use-animation";
-import { DeckProps } from "@deck.gl/core";
-import { MapboxOverlay } from "@deck.gl/mapbox";
-import { useControl } from "react-map-gl";
 import { useTrips } from "./trips/use-trips";
+import { DeckGLOverlay } from "./layers/deck-gl-overlay";
+import { FlowPathsLayer } from "./layers/flow-paths-layer";
 
-function DeckGLOverlay(props: DeckProps) {
-  const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay(props));
-  overlay.setProps(props);
-  return null;
+interface ParticlesLayerProps {
+  areaId: string;
 }
 
-const ParticlesLayer = () => {
+const ParticlesLayer = ({ areaId }: ParticlesLayerProps) => {
   const currentFrame = useAnimationFrame();
-  const { particleData, isLoading } = useTrips();
+  const { particleData, pathsData, isLoading } = useTrips(areaId);
 
-  if (isLoading || !particleData) return null;
+  if (isLoading || !particleData || !pathsData) return null;
 
   const tripsLayer = new TripsLayer({
     id: "flow-particles",
@@ -35,7 +32,12 @@ const ParticlesLayer = () => {
     jointRounded: PARTICLE_CONFIG.appearance.jointRounded,
   });
 
-  return <DeckGLOverlay layers={[tripsLayer]} />;
+  return (
+    <>
+      <FlowPathsLayer pathsData={pathsData} />
+      <DeckGLOverlay layers={[tripsLayer]} />
+    </>
+  );
 };
 
 export default ParticlesLayer;

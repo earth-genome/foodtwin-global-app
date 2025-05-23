@@ -179,7 +179,7 @@ function GlobeInner() {
         {/* {currentArea && <AreaFlowsLayer areaId={currentArea.id} />} */}
         {/* Commenting out the complex particles layer for now */}
         {/* {currentArea && <AreaParticlesLayer areaId={currentArea.id} />} */}
-        <ParticlesLayer />
+        {currentArea && <ParticlesLayer areaId={currentArea.id} />}
 
         {mapPopup && <MapPopup {...mapPopup} />}
         {currentArea && (

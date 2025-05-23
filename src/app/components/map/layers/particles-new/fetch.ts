@@ -1,91 +1,68 @@
-import { FeatureCollection, LineString } from "geojson";
+import { FeatureCollection, LineString, Feature } from "geojson";
+import { FromToFlowsResponse } from "@/app/api/areas/[id]/flows/route";
+import { distance, point } from "@turf/turf";
 
-// Simple mock data with 5 LineStrings that can be used for particle animation
-const MOCK_PATHS: FeatureCollection<LineString> = {
-  type: "FeatureCollection",
-  features: [
-    {
-      type: "Feature",
-      properties: {
-        id: "path1",
-      },
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [-3.7038, 40.4168],
-          [-0.1278, 51.5074],
-          [2.3522, 48.8566],
-          [4.3517, 50.8503],
-        ],
-      },
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: "path2",
-      },
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [-3.7038, 40.4168],
-          [-74.006, 40.7128],
-          [-79.3832, 43.6532],
-          [-75.6972, 45.4215],
-        ],
-      },
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: "path3",
-      },
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [-3.7038, 40.4168],
-          [2.3522, 48.8566],
-          [4.3517, 50.8503],
-          [12.4964, 41.9028],
-        ],
-      },
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: "path4",
-      },
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [-3.7038, 40.4168],
-          [55.2708, 25.2048],
-          [72.8777, 19.076],
-          [77.1025, 28.7041],
-        ],
-      },
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: "path5",
-      },
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [-3.7038, 40.4168],
-          [-46.6333, -23.5505],
-          [-58.3816, -34.6037],
-          [-70.6483, -33.4489],
-        ],
-      },
-    },
-  ],
+interface Path {
+  coordinates: [number, number][];
+  distances: number[];
+  totalDistance: number;
+}
+
+interface FlowFeatureProperties {
+  fromAreaId: string;
+  toAreaId: string;
+  path: Path;
+}
+
+const getDistances = (coordinates: [number, number][]) => {
+  const distances = [];
+  for (let i = 1; i < coordinates.length; i++) {
+    const waypoint = coordinates[i];
+    const prevWaypoint = coordinates[i - 1];
+    const dist = distance(point(prevWaypoint), point(waypoint));
+    distances.push(dist);
+  }
+
+  const totalDistance = distances.reduce((a, b) => a + b, 0);
+  return {
+    distances,
+    totalDistance,
+  };
 };
 
-export async function fetchParticlePaths(): Promise<
-  FeatureCollection<LineString>
-> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return MOCK_PATHS;
+export async function fetchParticlePaths(
+  areaId: string
+): Promise<FeatureCollection<LineString, FlowFeatureProperties>> {
+  const response = await fetch(`/api/areas/${areaId}/flows`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch flows");
+  }
+
+  const { flowGeometriesGeojson }: FromToFlowsResponse = await response.json();
+
+  const features: Feature<LineString, FlowFeatureProperties>[] =
+    flowGeometriesGeojson.features.map((feature) => {
+      const path: Path = {
+        coordinates: feature.geometry.coordinates as [number, number][],
+        ...getDistances(feature.geometry.coordinates as [number, number][]),
+      };
+
+      return {
+        type: "Feature" as const,
+        properties: {
+          fromAreaId: feature.properties.fromAreaId,
+          toAreaId: feature.properties.toAreaId,
+          path,
+        },
+        geometry: {
+          type: "LineString" as const,
+          coordinates: path.coordinates,
+        },
+      };
+    });
+
+  return {
+    type: "FeatureCollection" as const,
+    features,
+  };
 }

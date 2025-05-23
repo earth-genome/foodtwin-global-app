@@ -4,13 +4,16 @@ import { generateTripPath } from "./trip-generator";
 import { ensure2DCoordinates } from "../utils";
 import { ParticleDataWithTimestamps } from "../types";
 import { PARTICLE_CONFIG } from "../config";
+import { FeatureCollection, LineString } from "geojson";
 
-export function useTrips() {
+export function useTrips(areaId: string) {
   const {
     data: pathsData,
     isLoading,
     error,
-  } = useSWR("particle-paths", fetchParticlePaths);
+  } = useSWR(areaId ? `particle-paths-${areaId}` : null, () =>
+    fetchParticlePaths(areaId)
+  );
 
   const particleData: ParticleDataWithTimestamps[] | undefined =
     pathsData?.features.map((feature) => {
@@ -26,6 +29,7 @@ export function useTrips() {
 
   return {
     particleData,
+    pathsData: pathsData as FeatureCollection<LineString> | undefined,
     isLoading,
     error,
   };
