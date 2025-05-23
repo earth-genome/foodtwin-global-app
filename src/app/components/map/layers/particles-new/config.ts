@@ -22,4 +22,11 @@ export const PARTICLE_CONFIG = {
     initialSpacing: 10000, // Default initial spacing in meters (10km)
     maxIterations: 10, // Maximum iterations for finding optimal spacing
   },
+
+  particleCountScaling: {
+    minParticles: 1,
+    maxParticles: 10,
+    minLengthKm: 400,
+    maxLengthKm: 40000,
+  },
 } as const;
