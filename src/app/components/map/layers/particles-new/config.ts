@@ -28,5 +28,6 @@ export const PARTICLE_CONFIG = {
     maxParticles: 10,
     minLengthKm: 400,
     maxLengthKm: 40000,
+    maxParticlesPerFoodGroupPerGeometry: 10,
   },
 } as const;

@@ -8,10 +8,15 @@ interface Path {
   totalDistance: number;
 }
 
-interface FlowFeatureProperties {
+export interface FlowFeatureProperties {
   fromAreaId: string;
   toAreaId: string;
   path: Path;
+  flows?: {
+    value: number;
+    foodGroupId: number;
+    foodGroupSlug: string;
+  }[];
 }
 
 const getDistances = (coordinates: [number, number][]) => {
@@ -53,6 +58,7 @@ export async function fetchParticlePaths(
           fromAreaId: feature.properties.fromAreaId,
           toAreaId: feature.properties.toAreaId,
           path,
+          flows: feature.properties.flows,
         },
         geometry: {
           type: "LineString" as const,
