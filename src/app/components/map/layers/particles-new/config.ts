@@ -1,7 +1,5 @@
 import { Color } from "@deck.gl/core";
 
-export type Coordinate = [number, number];
-
 export const PARTICLE_CONFIG = {
   animation: {
     fps: 20, // Controls how smooth the animation is
