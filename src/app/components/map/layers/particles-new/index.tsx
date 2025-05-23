@@ -7,14 +7,9 @@ import { useAnimationFrame } from "./use-animation";
 import { DeckProps } from "@deck.gl/core";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { useControl } from "react-map-gl";
-
-// Convert config paths to particle data format
-const TEST_DATA: ParticleData[] = PARTICLE_CONFIG.testData.paths.map(
-  (path) => ({
-    path: [path.from, path.to],
-    color: path.color,
-  })
-);
+import useSWR from "swr";
+import { fetchParticlePaths } from "./fetch";
+import { ensure2DCoordinates } from "./utils";
 
 function DeckGLOverlay(props: DeckProps) {
   const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay(props));
@@ -24,10 +19,22 @@ function DeckGLOverlay(props: DeckProps) {
 
 const ParticlesLayer = () => {
   const currentFrame = useAnimationFrame();
+  const { data: pathsData, isLoading } = useSWR(
+    "particle-paths",
+    fetchParticlePaths
+  );
+
+  if (isLoading || !pathsData) return null;
+
+  // Transform GeoJSON paths to particle data format
+  const particleData: ParticleData[] = pathsData.features.map((feature) => ({
+    path: feature.geometry.coordinates.map(ensure2DCoordinates),
+    color: PARTICLE_CONFIG.appearance.color,
+  }));
 
   const tripsLayer = new TripsLayer({
     id: "flow-particles",
-    data: TEST_DATA,
+    data: particleData,
     getPath: (d: ParticleData) => d.path,
     getTimestamps: () => [0, 100],
     getColor: (d: ParticleData) => d.color,

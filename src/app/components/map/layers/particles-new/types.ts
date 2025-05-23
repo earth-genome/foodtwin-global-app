@@ -5,9 +5,3 @@ export interface ParticleData {
   path: Coordinate[];
   color: Color;
 }
-
-export interface ParticlePath {
-  from: Coordinate;
-  to: Coordinate;
-  color: Color;
-}

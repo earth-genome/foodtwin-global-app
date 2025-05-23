@@ -14,15 +14,6 @@ export const PARTICLE_CONFIG = {
     fadeTrail: true,
     capRounded: true,
     jointRounded: true,
-  },
-
-  testData: {
-    paths: [
-      {
-        from: [-74.006, 40.7128] as Coordinate, // NY
-        to: [28.9784, 41.0082] as Coordinate, // Istanbul
-        color: [255, 0, 0, 255] as Color,
-      },
-    ],
+    color: [0, 122, 255, 255] as Color,
   },
 } as const;
