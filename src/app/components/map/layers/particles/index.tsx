@@ -7,6 +7,8 @@ import { useAnimationFrame } from "./use-animation";
 import { useTrips } from "./trips/use-trips";
 import { DeckGLOverlay } from "./layers/deck-gl-overlay";
 import { FlowPathsLayer } from "./layers/flow-paths-layer";
+import { MachineContext } from "../../state";
+import { EAreaViewType } from "../../state/machine";
 
 interface ParticlesLayerProps {
   areaId: string;
@@ -15,8 +17,17 @@ interface ParticlesLayerProps {
 const ParticlesLayer = ({ areaId }: ParticlesLayerProps) => {
   const currentFrame = useAnimationFrame();
   const { particleData, pathsData, isLoading } = useTrips(areaId);
+  const areaViewType = MachineContext.useSelector(
+    (state) => state.context.currentAreaViewType
+  );
 
-  if (isLoading || !particleData || !pathsData) return null;
+  if (
+    isLoading ||
+    !particleData ||
+    !pathsData ||
+    areaViewType !== EAreaViewType.transportation
+  )
+    return null;
 
   const tripsLayer = new TripsLayer({
     id: "flow-particles",
