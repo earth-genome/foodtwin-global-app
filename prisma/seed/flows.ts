@@ -13,6 +13,7 @@ import {
   SEED_DATA_PATH,
 } from "./config";
 import { splitLineAtAntimeridian } from "../../lib/split-line-at-antimeridian";
+import { getEdgesId } from "./utils/get-edges-id";
 
 const TRANSACTION_TIMEOUT = 60 * 60 * 1000;
 const SKIP_FOOD_GROUPS = 0; // Skip food groups that have already been ingested
@@ -61,12 +62,11 @@ interface FlowData {
 }
 
 let memoryDb: Database;
-let edgesId: Record<string, number>;
 
 const newFlowGeometries = new Map<
   string,
   {
-    edges: number[];
+    edges: string[];
     fromAreaId: string;
     toAreaId: string;
     sourceFlowId: bigint;
@@ -81,23 +81,6 @@ export const ingestFlows = async (
     filename: ":memory:",
     driver: sqlite3.Database,
   });
-
-  // Edges are loaded into memory to avoid multiple queries
-  const edges = await prisma.edge.findMany({
-    select: {
-      id: true,
-      id_str: true,
-    },
-  });
-
-  // Map edges string ids to numeric ids
-  edgesId = edges.reduce(
-    (acc, { id, id_str }) => {
-      acc[id_str] = id;
-      return acc;
-    },
-    {} as Record<string, number>
-  ) as Record<string, number>;
 
   const foodGroups =
     specificFoodGroups ||
@@ -319,24 +302,23 @@ async function ingestFlowFile(
           const flowSegmentId = generateNumericId(
             `${flowCompositeId}-${csvRowMode}-${csvRowSegmentOrder}`
           );
-          // Discard paths not present in edges table, which should be roads edges not displayed in the map
-          const pathsCsv = row.paths
-            ?.replace(/['"[\]\s]/g, "")
-            .split(",")
-            .map((path: string) => edgesId[path])
-            .filter((edgeId): edgeId is number => typeof edgeId === "number")
-            .join(",");
 
           // Append edges to flowGeometries
-          if (!existingFlowGeometriesIds.has(flowGeometryId) && pathsCsv) {
+          if (!existingFlowGeometriesIds.has(flowGeometryId)) {
             const newFlowGeometry = newFlowGeometries.get(flowGeometryId);
-            const newEdges = pathsCsv.split(",").map(Number);
+
+            const newEdgesIdStr =
+              row.paths?.replace(/['"[\]\s]/g, "").split(",") || [];
+
+            log(
+              `[FlowIngestion] Processing flow geometry ${flowGeometryId} with ${newEdgesIdStr.length} edges`
+            );
 
             if (newFlowGeometry && newFlowGeometry.sourceFlowId === flowId) {
-              newFlowGeometry.edges.push(...newEdges);
+              newFlowGeometry.edges.push(...newEdgesIdStr);
             } else {
               newFlowGeometries.set(flowGeometryId, {
-                edges: newEdges,
+                edges: newEdgesIdStr,
                 fromAreaId: row.from_id_admin,
                 toAreaId: row.to_id_admin,
                 sourceFlowId: flowId,
@@ -345,7 +327,7 @@ async function ingestFlowFile(
           }
 
           await memoryDb.run(
-            "INSERT INTO data (food_group_id, flow_id, flow_segment_id, from_id_admin, to_id_admin, flow_value, mode, segment_order, paths_string) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO data (food_group_id, flow_id, flow_segment_id, from_id_admin, to_id_admin, flow_value, mode, segment_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             [
               foodGroup.id,
               flowId.toString(),
@@ -355,7 +337,6 @@ async function ingestFlowFile(
               parseFloat(row.flow_value),
               csvRowMode,
               parseInt(csvRowSegmentOrder || "0"),
-              pathsCsv,
             ]
           );
         } catch (error) {
@@ -404,29 +385,52 @@ async function ingestFlowFile(
   for (const [newFlowGeometryId, newFlowGeometryData] of newFlowGeometries) {
     // Query again to ensure we have the latest geometries (in case of race conditions)
     if (existingFlowGeometriesIds.has(newFlowGeometryId)) {
-      log(`Skipping existing flow geometry for ${newFlowGeometryId}`);
+      log(
+        `[FlowGeometry] Skipping existing flow geometry for ${newFlowGeometryId}`
+      );
       continue;
     }
+
+    log(
+      `[FlowGeometry] Processing flow geometry ${newFlowGeometryId} with ${newFlowGeometryData.edges.length} edges`
+    );
+
+    let edgesIds: number[] = [];
+    try {
+      edgesIds = await getEdgesId(prisma, newFlowGeometryData.edges);
+    } catch (error) {
+      log(
+        `[FlowGeometry] Error getting edges IDs for flow geometry ${newFlowGeometryId}, skipping...`
+      );
+      continue;
+    }
+    log(
+      `[FlowGeometry] Retrieved ${edgesIds.length} edge IDs for flow geometry ${newFlowGeometryId}`
+    );
 
     const newFlowGeometryEdges = (await prisma.$queryRaw<
       { id: number; geojson: string }[]
     >`
       SELECT "id", ST_AsGeoJSON(geom) AS geojson
       FROM "Edge"
-      WHERE "id" IN (${Prisma.join(newFlowGeometryData.edges)})
+      WHERE "id" IN (${Prisma.join(edgesIds)})
       AND "id" IS NOT NULL;
     `) as unknown as { id: number; geojson: string }[];
+
+    log(
+      `[FlowGeometry] Found ${newFlowGeometryEdges.length} valid edges in database for flow geometry ${newFlowGeometryId}`
+    );
 
     // Skip if no valid edges found
     if (newFlowGeometryEdges.length === 0) {
       log(
-        `No valid edges found for flow geometry ${newFlowGeometryId}, skipping...`
+        `[FlowGeometry] No valid edges found for flow geometry ${newFlowGeometryId}, skipping...`
       );
       continue;
     }
 
     // Merge the geometries into a single linestring
-    const mergedEdgesLinestring = newFlowGeometryData.edges
+    const mergedEdgesLinestring = edgesIds
       .map((edgeId) => newFlowGeometryEdges.find((edge) => edge.id === edgeId))
       .filter((edge) => edge !== undefined)
       .map((edge) => JSON.parse(edge.geojson))
