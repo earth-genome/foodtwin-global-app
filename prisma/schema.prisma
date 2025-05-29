@@ -66,6 +66,7 @@ model Edge {
   @@index([fromNodeId])
   @@index([toNodeId])
   @@index([fromNodeId, toNodeId])
+  @@index([id_str])
 }
 
 enum FlowType {
