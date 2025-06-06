@@ -8,7 +8,7 @@ export const PARTICLE_CONFIG = {
 
   appearance: {
     trailLength: 5,
-    widthMinPixels: 5,
+    widthMinPixels: 2,
     fadeTrail: true,
     capRounded: true,
     jointRounded: true,

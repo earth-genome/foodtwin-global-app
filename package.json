@@ -1,6 +1,6 @@
 {
-  "name": "global",
-  "version": "0.1.0",
+  "name": "global-food-twin",
+  "version": "1.0.0",
   "private": true,
   "engines": {
     "node": ">=20.0.0 <21.0.0"
