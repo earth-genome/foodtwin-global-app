@@ -25,9 +25,9 @@ export const PARTICLE_CONFIG = {
 
   particleCountScaling: {
     minParticles: 1,
-    maxParticles: 10,
+    maxParticles: 7,
     minLengthKm: 400,
     maxLengthKm: 40000,
-    maxParticlesPerFoodGroupPerGeometry: 10,
+    maxParticlesPerFoodGroupPerGeometry: 3,
   },
 } as const;
