@@ -49,7 +49,7 @@ export interface IPageSection {
 
 export function PageSection({ id, children, className = "" }: IPageSection) {
   return (
-    <div id={id} className={`p-4 ${className}`}>
+    <div id={id} className={`py-8 px-6 ${className}`}>
       {children}
     </div>
   );
