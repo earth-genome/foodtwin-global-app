@@ -148,6 +148,7 @@ function GlobeInner() {
         mapboxAccessToken={mapboxAccessToken}
         ref={mapRef}
         initialViewState={worldViewState}
+        minZoom="2" // to avoid duplicate continents
         onClick={onClick}
         onLoad={() => {
           actorRef.send({
