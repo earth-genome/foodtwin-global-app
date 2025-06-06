@@ -106,11 +106,13 @@ export const ingestFlows = async (
         return false;
       }
       const filename = path.basename(filePath);
-      // Only include files from foodgroup1 directories
+      // Include files from foodgroup1 directories OR Land directories
       return (
         filename.startsWith("Flows_") &&
         filename.endsWith(".csv.gz") &&
-        filePath.includes("/foodgroup1/")
+        (filePath.includes("/foodgroup1/") ||
+          filePath.includes("/Land_Domestic/") ||
+          filePath.includes("/Land_ReExports/"))
       );
     }
   );
