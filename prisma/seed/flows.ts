@@ -12,17 +12,22 @@ import {
   FLOWS_FOLDER,
   POSTGRES_CONNECTION_STRING,
   SEED_DATA_PATH,
+  INGESTION_MODE,
 } from "./config";
 import { splitLineAtAntimeridian } from "../../lib/split-line-at-antimeridian";
 import { getEdgesId } from "./utils/get-edges-id";
 
 const TRANSACTION_TIMEOUT = 60 * 60 * 1000;
 const SKIP_FOOD_GROUPS = 0; // Skip food groups that have already been ingested
+const MAX_CONCURRENT_GEOMETRIES = 30;
 
 // Create flow-specific logger
-const flowLogger = createFlowLogger();
+const flowLogger = createFlowLogger(INGESTION_MODE);
 export const logFileIngest = (message: Error | string) => {
   flowLogger.logError(message);
+};
+export const logFileMessage = (message: string) => {
+  flowLogger.log(message);
 };
 
 enum FlowType {
@@ -90,6 +95,11 @@ export const ingestFlows = async (
       skip: SKIP_FOOD_GROUPS,
     }));
 
+  // Log ingestion start to file
+  logFileMessage(
+    `🚀 Starting flow ingestion for ${foodGroups.length} food groups (Mode: ${INGESTION_MODE})`
+  );
+
   log(`Listing available flow files...`);
   const allFlowFiles = (await listFilesRecursively(FLOWS_FOLDER)).filter(
     (filePath: string) => {
@@ -109,12 +119,23 @@ export const ingestFlows = async (
     }
   );
 
+  logFileMessage(`📁 Found ${allFlowFiles.length} flow files to process`);
+
   log("Clearing all flows...");
   await prisma.$executeRaw`TRUNCATE "Flow" RESTART IDENTITY CASCADE`;
 
   // Process each food group
+  let completedFoodGroups = 0;
+  let totalErrors = 0;
+
   for (const foodGroup of foodGroups) {
+    const foodGroupStartTime = Date.now();
+
     log(`Clearing flows for ${foodGroup.name}`);
+    logFileMessage(
+      `🗂️ Starting processing for food group: ${foodGroup.name} (${completedFoodGroups + 1}/${foodGroups.length})`
+    );
+
     await cascadeDeleteFoodGroupFlows(prisma, foodGroup.id, foodGroup.name);
 
     // Clear any expanded csv flow files from previous runs before starting
@@ -181,29 +202,69 @@ export const ingestFlows = async (
 
     if (foodGroupFiles.length === 0) {
       log(`No flow files found for ${foodGroup.name}`);
+      logFileMessage(`⚠️ No flow files found for ${foodGroup.name} - skipping`);
       continue;
     }
 
+    logFileMessage(
+      `📄 Found ${foodGroupFiles.length} files for ${foodGroup.name}`
+    );
+
     // Process each file for this food group
+    let foodGroupErrors = 0;
+    let processedFiles = 0;
+
     for (const foodGroupFile of foodGroupFiles) {
       log(
         `Ingesting flows for ${foodGroup.name} from ${foodGroupFile.path}...`
       );
+      logFileMessage(
+        `📥 Processing file ${processedFiles + 1}/${foodGroupFiles.length}: ${path.basename(foodGroupFile.path)}`
+      );
+
       try {
         await ingestFlowFile(prisma, foodGroupFile, foodGroupFile.flowType);
-        logFileIngest(
-          `Ingested flows for ${foodGroup.name} from ${foodGroupFile.path}`
+        logFileMessage(
+          `✅ Successfully processed file: ${path.basename(foodGroupFile.path)} for ${foodGroup.name}`
         );
+        processedFiles++;
       } catch (error) {
+        foodGroupErrors++;
+        totalErrors++;
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         logFileIngest(
-          `Error ingesting flows for ${foodGroup.name} from ${foodGroupFile.path}`
+          `❌ ERROR processing ${path.basename(foodGroupFile.path)} for ${foodGroup.name}: ${errorMessage}`
         );
         logFileIngest(error as Error);
       }
     }
 
+    const foodGroupDuration = (
+      (Date.now() - foodGroupStartTime) /
+      1000 /
+      60
+    ).toFixed(2);
+    completedFoodGroups++;
+
+    // Log food group completion to file
+    if (foodGroupErrors === 0) {
+      logFileMessage(
+        `🎉 COMPLETED food group: ${foodGroup.name} - ${processedFiles}/${foodGroupFiles.length} files processed successfully in ${foodGroupDuration} minutes`
+      );
+    } else {
+      logFileMessage(
+        `⚠️ COMPLETED food group: ${foodGroup.name} with ${foodGroupErrors} errors - ${processedFiles}/${foodGroupFiles.length} files processed in ${foodGroupDuration} minutes`
+      );
+    }
+
     log(`Completed ingestion for ${foodGroup.name}`);
   }
+
+  // Log final summary to file
+  logFileMessage(
+    `🏁 FLOW INGESTION SUMMARY: ${completedFoodGroups}/${foodGroups.length} food groups processed with ${totalErrors} total errors`
+  );
 };
 
 async function ingestFlowFile(
@@ -393,114 +454,126 @@ async function ingestFlowFile(
     // Continue without the optimization if edge loading fails
   }
 
-  for (const [newFlowGeometryId, newFlowGeometryData] of newFlowGeometries) {
-    // Query again to ensure we have the latest geometries (in case of race conditions)
-    if (existingFlowGeometriesIds.has(newFlowGeometryId)) {
-      log(
-        `[FlowGeometry] Skipping existing flow geometry for ${newFlowGeometryId}`
-      );
-      continue;
-    }
+  const geometryEntries = Array.from(newFlowGeometries.entries());
 
-    log(
-      `[FlowGeometry] Processing flow geometry ${newFlowGeometryId} with ${newFlowGeometryData.edges.length} edges`
-    );
+  logFileMessage(
+    `Starting parallel processing of ${geometryEntries.length} flow geometries with ${MAX_CONCURRENT_GEOMETRIES} concurrent workers`
+  );
 
-    let edgesIds: number[] = [];
+  for (let i = 0; i < geometryEntries.length; i += MAX_CONCURRENT_GEOMETRIES) {
+    const batch = geometryEntries.slice(i, i + MAX_CONCURRENT_GEOMETRIES);
 
-    // Use pre-loaded edge IDs if available, otherwise fall back to individual lookup
-    if (edgeIdMap.size > 0) {
-      edgesIds = newFlowGeometryData.edges
-        .map((edge) => edgeIdMap.get(edge))
-        .filter((id): id is number => id !== undefined);
-
-      if (edgesIds.length !== newFlowGeometryData.edges.length) {
-        log(
-          `[FlowGeometry] Warning: Only found ${edgesIds.length}/${newFlowGeometryData.edges.length} edges in pre-loaded cache for ${newFlowGeometryId}`
-        );
-
-        // Fall back to individual lookup for missing edges
-        try {
-          edgesIds = await getEdgesId(prisma, newFlowGeometryData.edges);
-        } catch (error) {
+    await Promise.all(
+      batch.map(async ([newFlowGeometryId, newFlowGeometryData]) => {
+        // Query again to ensure we have the latest geometries (in case of race conditions)
+        if (existingFlowGeometriesIds.has(newFlowGeometryId)) {
           log(
-            `[FlowGeometry] Error getting edges IDs for flow geometry ${newFlowGeometryId}, skipping...`
+            `[FlowGeometry] Skipping existing flow geometry for ${newFlowGeometryId}`
           );
-          continue;
+          return;
         }
-      }
-    } else {
-      // Fall back to original method if batch loading failed
-      try {
-        edgesIds = await getEdgesId(prisma, newFlowGeometryData.edges);
-      } catch (error) {
+
         log(
-          `[FlowGeometry] Error getting edges IDs for flow geometry ${newFlowGeometryId}, skipping...`
+          `[FlowGeometry] Processing flow geometry ${newFlowGeometryId} with ${newFlowGeometryData.edges.length} edges`
         );
-        continue;
-      }
-    }
 
-    log(
-      `[FlowGeometry] Retrieved ${edgesIds.length} edge IDs for flow geometry ${newFlowGeometryId}`
-    );
+        let edgesIds: number[] = [];
 
-    const newFlowGeometryEdges = (await prisma.$queryRaw<
-      { id: number; geojson: string }[]
-    >`
+        // Use pre-loaded edge IDs if available, otherwise fall back to individual lookup
+        if (edgeIdMap.size > 0) {
+          edgesIds = newFlowGeometryData.edges
+            .map((edge) => edgeIdMap.get(edge))
+            .filter((id): id is number => id !== undefined);
+
+          if (edgesIds.length !== newFlowGeometryData.edges.length) {
+            log(
+              `[FlowGeometry] Warning: Only found ${edgesIds.length}/${newFlowGeometryData.edges.length} edges in pre-loaded cache for ${newFlowGeometryId}`
+            );
+
+            // Fall back to individual lookup for missing edges
+            try {
+              edgesIds = await getEdgesId(prisma, newFlowGeometryData.edges);
+            } catch (error) {
+              log(
+                `[FlowGeometry] Error getting edges IDs for flow geometry ${newFlowGeometryId}, skipping...`
+              );
+              return;
+            }
+          }
+        } else {
+          // Fall back to original method if batch loading failed
+          try {
+            edgesIds = await getEdgesId(prisma, newFlowGeometryData.edges);
+          } catch (error) {
+            log(
+              `[FlowGeometry] Error getting edges IDs for flow geometry ${newFlowGeometryId}, skipping...`
+            );
+            return;
+          }
+        }
+
+        log(
+          `[FlowGeometry] Retrieved ${edgesIds.length} edge IDs for flow geometry ${newFlowGeometryId}`
+        );
+
+        const newFlowGeometryEdges = (await prisma.$queryRaw<
+          { id: number; geojson: string }[]
+        >`
       SELECT "id", ST_AsGeoJSON(geom) AS geojson
       FROM "Edge"
       WHERE "id" IN (${Prisma.join(edgesIds)})
       AND "id" IS NOT NULL;
     `) as unknown as { id: number; geojson: string }[];
 
-    log(
-      `[FlowGeometry] Found ${newFlowGeometryEdges.length} valid edges in database for flow geometry ${newFlowGeometryId}`
-    );
+        log(
+          `[FlowGeometry] Found ${newFlowGeometryEdges.length} valid edges in database for flow geometry ${newFlowGeometryId}`
+        );
 
-    // Skip if no valid edges found
-    if (newFlowGeometryEdges.length === 0) {
-      log(
-        `[FlowGeometry] No valid edges found for flow geometry ${newFlowGeometryId}, skipping...`
-      );
-      continue;
-    }
+        // Skip if no valid edges found
+        if (newFlowGeometryEdges.length === 0) {
+          log(
+            `[FlowGeometry] No valid edges found for flow geometry ${newFlowGeometryId}, skipping...`
+          );
+          return;
+        }
 
-    // Merge the geometries into a single linestring
-    const mergedEdgesLinestring = edgesIds
-      .map((edgeId) => newFlowGeometryEdges.find((edge) => edge.id === edgeId))
-      .filter((edge) => edge !== undefined)
-      .map((edge) => JSON.parse(edge.geojson))
-      .reduce(
-        (acc, edge) => {
-          const edgeCoordinates =
-            edge.type === "LineString"
-              ? edge.coordinates
-              : edge.coordinates.flat();
+        // Merge the geometries into a single linestring
+        const mergedEdgesLinestring = edgesIds
+          .map((edgeId) =>
+            newFlowGeometryEdges.find((edge) => edge.id === edgeId)
+          )
+          .filter((edge) => edge !== undefined)
+          .map((edge) => JSON.parse(edge.geojson))
+          .reduce(
+            (acc, edge) => {
+              const edgeCoordinates =
+                edge.type === "LineString"
+                  ? edge.coordinates
+                  : edge.coordinates.flat();
 
-          acc.coordinates.push(...edgeCoordinates);
+              acc.coordinates.push(...edgeCoordinates);
 
-          return acc;
-        },
-        { type: "LineString", coordinates: [] }
-      );
+              return acc;
+            },
+            { type: "LineString", coordinates: [] }
+          );
 
-    // Skip if no coordinates were found
-    if (mergedEdgesLinestring.coordinates.length === 0) {
-      log(
-        `No coordinates found for flow geometry ${newFlowGeometryId}, skipping...`
-      );
-      continue;
-    }
+        // Skip if no coordinates were found
+        if (mergedEdgesLinestring.coordinates.length === 0) {
+          log(
+            `No coordinates found for flow geometry ${newFlowGeometryId}, skipping...`
+          );
+          return;
+        }
 
-    const mergedEdgesMultiLineString = splitLineAtAntimeridian(
-      mergedEdgesLinestring
-    );
-    const mergedGeometryString = JSON.stringify(mergedEdgesMultiLineString);
+        const mergedEdgesMultiLineString = splitLineAtAntimeridian(
+          mergedEdgesLinestring
+        );
+        const mergedGeometryString = JSON.stringify(mergedEdgesMultiLineString);
 
-    try {
-      // insert the new flow geometry
-      await prisma.$executeRaw`
+        try {
+          // insert the new flow geometry
+          await prisma.$executeRaw`
         INSERT INTO "FlowGeometry" ("fromAreaId", "toAreaId", "geometry")
         VALUES (
           ${newFlowGeometryData.fromAreaId},
@@ -508,23 +581,25 @@ async function ingestFlowFile(
           ST_SetSRID(ST_GeomFromGeoJSON(${mergedGeometryString}), 4326)
         );
       `;
-      existingFlowGeometriesIds.add(newFlowGeometryId);
-      log(`Inserted new flow geometry for ${newFlowGeometryId}`);
-    } catch (error) {
-      // If we get a unique constraint violation, the geometry was inserted by another process
-      // Just add it to our set and continue
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "23505"
-      ) {
-        log(
-          `Flow geometry ${newFlowGeometryId} already exists in database, skipping...`
-        );
-        existingFlowGeometriesIds.add(newFlowGeometryId);
-      } else {
-        throw error;
-      }
-    }
+          existingFlowGeometriesIds.add(newFlowGeometryId);
+          log(`Inserted new flow geometry for ${newFlowGeometryId}`);
+        } catch (error) {
+          // If we get a unique constraint violation, the geometry was inserted by another process
+          // Just add it to our set and continue
+          if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "23505"
+          ) {
+            log(
+              `Flow geometry ${newFlowGeometryId} already exists in database, skipping...`
+            );
+            existingFlowGeometriesIds.add(newFlowGeometryId);
+          } else {
+            throw error;
+          }
+        }
+      })
+    );
   }
 
   await fs.remove(expandedFilePath);
