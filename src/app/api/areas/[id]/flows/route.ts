@@ -67,7 +67,7 @@ export async function GET(
       "foodGroupSlug"
     ORDER BY
       "totalValue" DESC
-    LIMIT 100
+    LIMIT 750
   `;
 
   const toAreaIds = flows.map((f) => f.toAreaId);
