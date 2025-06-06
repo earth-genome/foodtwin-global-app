@@ -16,7 +16,7 @@ export const PARTICLE_CONFIG = {
   },
 
   tripGeneration: {
-    maxPoints: 7, // Maximum number of points per trip
+    maxPoints: 5, // Maximum number of points per trip
     minSpacing: 1000, // Minimum spacing in meters (1km)
     maxSpacing: 100000, // Maximum spacing in meters (100km)
     initialSpacing: 10000, // Default initial spacing in meters (10km)
