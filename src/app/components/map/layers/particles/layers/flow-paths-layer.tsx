@@ -16,8 +16,9 @@ export function FlowPathsLayer({ pathsData }: FlowPathsLayerProps) {
         id="flow-paths-lines"
         type="line"
         paint={{
-          "line-color": "rgba(255, 255, 255, 0.5)",
-          "line-width": 5,
+          "line-color": "rgb(255, 255, 255)",
+          "line-width": 2.5,
+          "line-opacity": 0.5,
         }}
         layout={{
           "line-join": "round",
