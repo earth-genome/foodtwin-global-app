@@ -54,20 +54,18 @@ function Menu() {
                 <ul className="list-disc pl-8 mt-8 space-y-1">
                   <li>Where different food groups are produced</li>
                   <li>
-                    How food travels between regions through various transport
-                    routes
+                    How food travels between international regions through
+                    various transport routes
                   </li>
-                  <li>
-                    The nutritional impact on populations Key economic
-                    indicators related to agriculture
-                  </li>
+                  <li>The nutritional impact on populations</li>
+                  <li>Key economic indicators related to agriculture</li>
                 </ul>
                 <p className="text-md leading-7 mt-8">
                   The data is based on a model developed in collaboration by
-                  Earth Genome and Better Planet Lab. This model incorporates
-                  agricultural production statistics, trade data, and
-                  transportation infrastructure to estimate global food flows.
-                  You can learn more about this model here.
+                  Earth Genome and Better Planet Laboratory. This model
+                  incorporates agricultural production statistics, trade data,
+                  and transportation infrastructure to estimate global food
+                  flows. You can learn more about this model here
                 </p>
                 <Button
                   onClick={() => setIsOpen(false)}
@@ -83,7 +81,7 @@ function Menu() {
                 <ul className="list-disc pl-8 mt-8 space-y-1">
                   <li>
                     Click on any region to see detailed information about food
-                    production, transportation routes, and impact.
+                    supplied, transportation routes, and impact.
                   </li>
                   <li>
                     Navigate between views using the tab sections on area pages
@@ -91,8 +89,8 @@ function Menu() {
                   </li>
                   <ul className="list-disc pl-8">
                     <li>
-                      <b>Food Produced:</b> Types and quantities of food groups
-                      produced in the area
+                      <b>Food Supplied:</b> Types and quantities of food groups
+                      exported from the area to international destinations
                     </li>
                     <li>
                       <b>Food Transportation:</b> How food moves between regions

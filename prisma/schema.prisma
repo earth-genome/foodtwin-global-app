@@ -11,13 +11,15 @@ datasource db {
 }
 
 model Area {
-  id        String                                       @id
-  name      String
-  flowsFrom Flow[]                                       @relation("FromArea")
-  flowsTo   Flow[]                                       @relation("ToArea")
-  centroid  Unsupported("geometry(Point, 3857)")?
-  limits    Unsupported("geometry(MultiPolygon, 3857)")?
-  meta      Json?
+  id                 String                                       @id
+  name               String
+  flowsFrom          Flow[]                                       @relation("FromArea")
+  flowsTo            Flow[]                                       @relation("ToArea")
+  centroid           Unsupported("geometry(Point, 3857)")?
+  limits             Unsupported("geometry(MultiPolygon, 3857)")?
+  meta               Json?
+  flowGeometriesFrom FlowGeometry[]                               @relation("FlowGeometry_FromArea")
+  flowGeometriesTo   FlowGeometry[]                               @relation("FlowGeometry_ToArea")
 
   @@index([centroid], name: "centroid_idx", type: Gist)
   @@index([limits], name: "limits_idx", type: Gist)
@@ -53,7 +55,7 @@ model Edge {
   id_str       String
   distance     Float
   type         EdgeType
-  geom         Unsupported("geometry(MultiLineString, 3857)")
+  geom         Unsupported("geometry(MultiLineString, 4326)")
   fromNode     Node                                           @relation("FromNode", fields: [fromNodeId], references: [id])
   fromNodeId   String
   toNode       Node                                           @relation("ToNode", fields: [toNodeId], references: [id])
@@ -64,6 +66,7 @@ model Edge {
   @@index([fromNodeId])
   @@index([toNodeId])
   @@index([fromNodeId, toNodeId])
+  @@index([id_str])
 }
 
 enum FlowType {
@@ -85,6 +88,18 @@ model Flow {
   type        FlowType
   value       Float
   FlowSegment FlowSegment[]
+}
+
+model FlowGeometry {
+  id         BigInt                                         @id @default(autoincrement())
+  fromArea   Area                                           @relation("FlowGeometry_FromArea", fields: [fromAreaId], references: [id])
+  fromAreaId String
+  toArea     Area                                           @relation("FlowGeometry_ToArea", fields: [toAreaId], references: [id])
+  toAreaId   String
+  geometry   Unsupported("geometry(MultiLineString, 4326)")
+  areaId     String?
+
+  @@index([fromAreaId, toAreaId], name: "flow_geometry_pair_idx")
 }
 
 model FlowSegment {

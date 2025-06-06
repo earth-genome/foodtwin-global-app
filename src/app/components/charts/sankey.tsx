@@ -163,14 +163,16 @@ function Sankey({ height, width, data }: ISankey) {
           </div>
           {linkPopup.popupData && (
             <table className="text-sm w-[100%] border-separate border-spacing-2 mt-4">
-              {linkPopup.popupData.map(({ label, value, unit }) => (
-                <tr key={label}>
-                  <td className="text-neutral-600">{label}</td>
-                  <td className="text-right">
-                    {value} {unit}
-                  </td>
-                </tr>
-              ))}
+              <tbody>
+                {linkPopup.popupData.map(({ label, value, unit }) => (
+                  <tr key={label}>
+                    <td className="text-neutral-600">{label}</td>
+                    <td className="text-right">
+                      {value} {unit}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           )}
         </div>

@@ -17,8 +17,8 @@ import FoodGroupsLayer from "./layers/foodgroups";
 import AreaLayers from "./layers/areas";
 import PortsLayer from "./layers/ports";
 import { AREA_SOURCE_ID, AREA_VIEW_BOUNDS_PADDING } from "./constants";
-import AreaFlowsLayer from "./layers/area-flows";
 import { EItemType } from "@/types/components";
+import ParticlesLayer from "./layers/particles";
 
 // Environment variables used in this component
 
@@ -148,6 +148,8 @@ function GlobeInner() {
         mapboxAccessToken={mapboxAccessToken}
         ref={mapRef}
         initialViewState={worldViewState}
+        minZoom={2} // to avoid duplicate continents
+        maxZoom={8} // to avoid overzoom
         onClick={onClick}
         onLoad={() => {
           actorRef.send({
@@ -176,7 +178,10 @@ function GlobeInner() {
         <FoodGroupsLayer />
         <AreaLayers />
         <PortsLayer />
-        {currentArea && <AreaFlowsLayer areaId={currentArea.id} />}
+        {/* {currentArea && <AreaFlowsLayer areaId={currentArea.id} />} */}
+        {/* Commenting out the complex particles layer for now */}
+        {/* {currentArea && <AreaParticlesLayer areaId={currentArea.id} />} */}
+        {currentArea && <ParticlesLayer areaId={currentArea.id} />}
 
         {mapPopup && <MapPopup {...mapPopup} />}
         {currentArea && (

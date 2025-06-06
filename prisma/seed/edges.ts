@@ -25,7 +25,11 @@ export const ingestEdges = async (prisma: PrismaClient) => {
 
   await runOgr2Ogr(
     EDGES_MARITIME_PATH,
-    `-nln Edge -append -nlt MULTILINESTRING -lco GEOMETRY_NAME=geom -t_srs EPSG:3857 -sql "SELECT from_id || '-' || to_id AS id_str, from_id AS \\"fromNodeId\\", to_id AS \\"toNodeId\\", distance, 'MARITIME' AS type, geom FROM ${EDGES_MARITIME_TABLENAME}"`
+    `-nln Edge \
+    -append \
+    -nlt MULTILINESTRING \
+    -lco GEOMETRY_NAME=geom \
+    -sql "SELECT from_id || '-' || to_id AS id_str, from_id AS \\"fromNodeId\\", to_id AS \\"toNodeId\\", distance, 'MARITIME' AS type, geom FROM ${EDGES_MARITIME_TABLENAME}"`
   );
   log("Ingested maritime edges.");
 
@@ -150,7 +154,7 @@ export const ingestEdges = async (prisma: PrismaClient) => {
         to_node_id,
         0,
         'LAND' AS type,
-        ST_Transform(le.geometry, 3857) AS geom
+        ST_Transform(le.geometry, 4326) AS geom
     FROM
         land_edges_temp le
   `;

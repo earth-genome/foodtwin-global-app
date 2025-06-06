@@ -17,7 +17,7 @@ function getTypeLabel(itemType: EItemType) {
 
 function PageHeader({ title, itemType }: IPageHeader) {
   return (
-    <div className="bg-neutral-900 text-white p-4 flex gap-4 items-start">
+    <div className="bg-neutral-900 text-white p-6 flex gap-4 items-start">
       <div className="flex-grow">
         <div className="flex items-center gap-2 mb-4">
           <TypeIcon itemType={itemType} />
