@@ -4,6 +4,7 @@ import { execa } from "execa";
 import { parse } from "csv-parse";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { generateNumericId, listFilesRecursively, log } from "./utils";
+import { createFlowLogger } from "./utils/logger";
 
 import sqlite3 from "sqlite3";
 import { open, Database } from "sqlite";
@@ -19,19 +20,11 @@ const TRANSACTION_TIMEOUT = 60 * 60 * 1000;
 const SKIP_FOOD_GROUPS = 0; // Skip food groups that have already been ingested
 const FLOW_FILE_SIZE_LIMIT_MB = 10;
 
-const filesIngestLog = path.resolve(SEED_DATA_PATH, "file_ingest_log.txt");
-export function logFileIngest(message: Error | string) {
-  const currentTimestamp = new Date().toISOString();
-  const logMessage =
-    message instanceof Error
-      ? `${currentTimestamp}: ${message.stack}\n`
-      : `${currentTimestamp}: ${message}\n`;
-  // eslint-disable-next-line no-console
-  console.log(logMessage);
-
-  // Log to file
-  fs.appendFileSync(filesIngestLog, logMessage);
-}
+// Create flow-specific logger
+const flowLogger = createFlowLogger();
+export const logFileIngest = (message: Error | string) => {
+  flowLogger.logError(message);
+};
 
 enum FlowType {
   SEA_DOMESTIC = "SEA_DOMESTIC",
