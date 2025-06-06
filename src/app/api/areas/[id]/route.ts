@@ -103,7 +103,7 @@ export async function GET(
             ),
             ST_Transform("Node"."geom", 4326)
           ) ASC
-          LIMIT 10;
+          LIMIT 1;
         `,
     ])) as [
       { geojson: string }[],
