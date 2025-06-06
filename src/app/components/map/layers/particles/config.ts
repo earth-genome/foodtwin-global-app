@@ -2,7 +2,7 @@ import { Color } from "@deck.gl/core";
 
 export const PARTICLE_CONFIG = {
   animation: {
-    fps: 20, // Controls how smooth the animation is
+    fps: 15, // Controls how smooth the animation is
     loopLength: 100, // How many frames before the animation loops
   },
 
@@ -16,18 +16,18 @@ export const PARTICLE_CONFIG = {
   },
 
   tripGeneration: {
-    maxPoints: 50, // Maximum number of points per trip
-    minSpacing: 1000, // Minimum spacing in meters (1km)
-    maxSpacing: 100000, // Maximum spacing in meters (100km)
-    initialSpacing: 10000, // Default initial spacing in meters (10km)
-    maxIterations: 10, // Maximum iterations for finding optimal spacing
+    maxPoints: 2, // Maximum number of points per trip
+    minSpacing: 4000, // Minimum spacing in meters (1km)
+    maxSpacing: 1000000, // Maximum spacing in meters (100km)
+    initialSpacing: 100000, // Default initial spacing in meters (10km)
+    maxIterations: 5, // Maximum iterations for finding optimal spacing
   },
 
   particleCountScaling: {
     minParticles: 1,
-    maxParticles: 10,
+    maxParticles: 2,
     minLengthKm: 400,
     maxLengthKm: 40000,
-    maxParticlesPerFoodGroupPerGeometry: 10,
+    maxParticlesPerFoodGroupPerGeometry: 2,
   },
 } as const;
