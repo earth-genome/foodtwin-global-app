@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { FeatureCollection, LineString } from "geojson";
+import { FeatureCollection, LineString, MultiLineString } from "geojson";
 
 const GEOMETRY_SIMPLIFICATION_TOLERANCE = 1;
 const COORDINATE_PRECISION_GRID = 0.01;
@@ -21,7 +21,7 @@ interface FlowRow {
 }
 
 type FlowGeometryGeojson = FeatureCollection<
-  LineString,
+  LineString | MultiLineString,
   {
     fromAreaId: string;
     toAreaId: string;
