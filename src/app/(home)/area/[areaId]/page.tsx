@@ -335,6 +335,8 @@ const AreaPage = async ({
               />
             </MetricRow>
 
+            <div className="border-b border-neutral-200 mx-0 my-8" />
+
             <ListBars
               showPercentage
               formatType="weight"
