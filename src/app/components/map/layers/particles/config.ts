@@ -2,7 +2,7 @@ import { Color } from "@deck.gl/core";
 
 export const PARTICLE_CONFIG = {
   animation: {
-    fps: 30, // Controls how smooth the animation is
+    fps: 15, // Controls how smooth the animation is
     loopLength: 100, // How many frames before the animation loops
   },
 
