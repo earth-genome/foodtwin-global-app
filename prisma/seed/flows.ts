@@ -227,6 +227,9 @@ async function ingestFlowFile(
     )
   );
 
+  // Set to collect all unique edges for batch loading
+  const allUniqueEdges = new Set<string>();
+
   let filePath = foodGroupFile.path;
   let expandedFilePath = "";
 
@@ -296,6 +299,9 @@ async function ingestFlowFile(
 
             const newEdgesIdStr =
               row.paths?.replace(/['"[\]\s]/g, "").split(",") || [];
+
+            // Collect all unique edges for batch loading
+            newEdgesIdStr.forEach((edge) => allUniqueEdges.add(edge));
 
             log(
               `[FlowIngestion] Processing flow geometry ${flowGeometryId} with ${newEdgesIdStr.length} edges`
@@ -369,6 +375,24 @@ async function ingestFlowFile(
 
   await flowsTempFileWriteStream.close();
 
+  // Batch load all edge IDs to avoid repeated database queries
+  log(`Loading ${allUniqueEdges.size} unique edges from database...`);
+  const edgeIdMap = new Map<string, number>();
+
+  try {
+    const allUniqueEdgesArray = Array.from(allUniqueEdges);
+    const edgeIds = await getEdgesId(prisma, allUniqueEdgesArray);
+
+    allUniqueEdgesArray.forEach((edgeStr, index) => {
+      edgeIdMap.set(edgeStr, edgeIds[index]);
+    });
+
+    log(`Successfully loaded ${edgeIdMap.size} edge IDs`);
+  } catch (error) {
+    log(`Error loading edge IDs: ${error}`);
+    // Continue without the optimization if edge loading fails
+  }
+
   for (const [newFlowGeometryId, newFlowGeometryData] of newFlowGeometries) {
     // Query again to ensure we have the latest geometries (in case of race conditions)
     if (existingFlowGeometriesIds.has(newFlowGeometryId)) {
@@ -383,14 +407,40 @@ async function ingestFlowFile(
     );
 
     let edgesIds: number[] = [];
-    try {
-      edgesIds = await getEdgesId(prisma, newFlowGeometryData.edges);
-    } catch (error) {
-      log(
-        `[FlowGeometry] Error getting edges IDs for flow geometry ${newFlowGeometryId}, skipping...`
-      );
-      continue;
+
+    // Use pre-loaded edge IDs if available, otherwise fall back to individual lookup
+    if (edgeIdMap.size > 0) {
+      edgesIds = newFlowGeometryData.edges
+        .map((edge) => edgeIdMap.get(edge))
+        .filter((id): id is number => id !== undefined);
+
+      if (edgesIds.length !== newFlowGeometryData.edges.length) {
+        log(
+          `[FlowGeometry] Warning: Only found ${edgesIds.length}/${newFlowGeometryData.edges.length} edges in pre-loaded cache for ${newFlowGeometryId}`
+        );
+
+        // Fall back to individual lookup for missing edges
+        try {
+          edgesIds = await getEdgesId(prisma, newFlowGeometryData.edges);
+        } catch (error) {
+          log(
+            `[FlowGeometry] Error getting edges IDs for flow geometry ${newFlowGeometryId}, skipping...`
+          );
+          continue;
+        }
+      }
+    } else {
+      // Fall back to original method if batch loading failed
+      try {
+        edgesIds = await getEdgesId(prisma, newFlowGeometryData.edges);
+      } catch (error) {
+        log(
+          `[FlowGeometry] Error getting edges IDs for flow geometry ${newFlowGeometryId}, skipping...`
+        );
+        continue;
+      }
     }
+
     log(
       `[FlowGeometry] Retrieved ${edgesIds.length} edge IDs for flow geometry ${newFlowGeometryId}`
     );
