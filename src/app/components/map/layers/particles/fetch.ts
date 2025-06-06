@@ -35,6 +35,52 @@ const getDistances = (coordinates: [number, number][]) => {
   };
 };
 
+const createPath = (coordinates: [number, number][]): Path => {
+  try {
+    const distanceData = getDistances(coordinates);
+    return {
+      coordinates,
+      ...distanceData,
+    };
+  } catch (error) {
+    // Return safe fallback if distance calculation fails
+    return {
+      coordinates,
+      distances: [],
+      totalDistance: 0,
+    };
+  }
+};
+
+const createLineStringFeature = (
+  coordinates: [number, number][],
+  properties: {
+    fromAreaId: string;
+    toAreaId: string;
+    flows: {
+      value: number;
+      foodGroupId: number;
+      foodGroupSlug: string;
+    }[];
+  }
+): Feature<LineString, FlowFeatureProperties> => {
+  const path = createPath(coordinates);
+
+  return {
+    type: "Feature",
+    properties: {
+      fromAreaId: properties.fromAreaId,
+      toAreaId: properties.toAreaId,
+      path,
+      flows: properties.flows,
+    },
+    geometry: {
+      type: "LineString",
+      coordinates,
+    },
+  };
+};
+
 export async function fetchParticlePaths(
   areaId: string
 ): Promise<FeatureCollection<LineString, FlowFeatureProperties>> {
@@ -45,30 +91,31 @@ export async function fetchParticlePaths(
 
   const { flowGeometriesGeojson }: FromToFlowsResponse = await response.json();
 
-  const features: Feature<LineString, FlowFeatureProperties>[] =
-    flowGeometriesGeojson.features.map((feature) => {
-      const path: Path = {
-        coordinates: feature.geometry.coordinates as [number, number][],
-        ...getDistances(feature.geometry.coordinates as [number, number][]),
-      };
+  const features: Feature<LineString, FlowFeatureProperties>[] = [];
 
-      return {
-        type: "Feature" as const,
-        properties: {
-          fromAreaId: feature.properties.fromAreaId,
-          toAreaId: feature.properties.toAreaId,
-          path,
-          flows: feature.properties.flows,
-        },
-        geometry: {
-          type: "LineString" as const,
-          coordinates: path.coordinates,
-        },
-      };
-    });
+  flowGeometriesGeojson.features.forEach((feature) => {
+    if (feature.geometry.type === "MultiLineString") {
+      // Convert each line in MultiLineString to separate LineString features
+      const multiLineFeatures = feature.geometry.coordinates.map(
+        (lineCoordinates) =>
+          createLineStringFeature(
+            lineCoordinates as [number, number][],
+            feature.properties
+          )
+      );
+      features.push(...multiLineFeatures);
+    } else {
+      // Handle single LineString
+      const lineStringFeature = createLineStringFeature(
+        feature.geometry.coordinates as [number, number][],
+        feature.properties
+      );
+      features.push(lineStringFeature);
+    }
+  });
 
   return {
-    type: "FeatureCollection" as const,
+    type: "FeatureCollection",
     features,
   };
 }
