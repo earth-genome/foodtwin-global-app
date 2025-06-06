@@ -37,7 +37,7 @@ function Bar({
   const formattedValue = formatKeyIndicator(value, formatType, decimalPlaces);
 
   return (
-    <div className="my-4">
+    <div className="mb-8">
       <div className="flex text-sm mb-1">
         <div className="flex-grow">
           <span aria-hidden="true" className="mr-2" style={{ color }}>
