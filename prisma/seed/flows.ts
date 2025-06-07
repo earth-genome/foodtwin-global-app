@@ -19,7 +19,7 @@ import { getEdgesId } from "./utils/get-edges-id";
 
 const TRANSACTION_TIMEOUT = 60 * 60 * 1000;
 const SKIP_FOOD_GROUPS = 0; // Skip food groups that have already been ingested
-const MAX_CONCURRENT_GEOMETRIES = 30;
+const MAX_CONCURRENT_GEOMETRIES = 500;
 
 // Create flow-specific logger
 const flowLogger = createFlowLogger(INGESTION_MODE);
