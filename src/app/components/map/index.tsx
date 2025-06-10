@@ -148,7 +148,7 @@ function GlobeInner() {
         mapboxAccessToken={mapboxAccessToken}
         ref={mapRef}
         initialViewState={worldViewState}
-        minZoom={2} // to avoid duplicate continents
+        minZoom={1.5} // to avoid duplicate continents
         maxZoom={8} // to avoid overzoom
         onClick={onClick}
         onLoad={() => {
