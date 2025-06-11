@@ -10,6 +10,10 @@ export const SEED_DATA_PATH = path.resolve(
   process.env.SEED_DATA_PATH as string
 );
 
+export const INGEST_LOGS_PATH = path.resolve(
+  process.env.INGEST_LOGS_PATH || path.join(process.cwd(), "logs")
+);
+
 // Development mode flag
 export const IS_DEVELOPMENT = process.env.NODE_ENV === "development";
 
