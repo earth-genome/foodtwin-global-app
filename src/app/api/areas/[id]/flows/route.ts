@@ -3,13 +3,10 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { FeatureCollection, LineString, MultiLineString } from "geojson";
 
-const GEOMETRY_SIMPLIFICATION_TOLERANCE = 1;
-const COORDINATE_PRECISION_GRID = 0.01;
-
 interface FlowGeometryRow {
   fromAreaId: string;
   toAreaId: string;
-  geojson: string;
+  geojson: LineString | MultiLineString;
 }
 
 interface FlowRow {
@@ -86,15 +83,7 @@ export async function GET(
     SELECT
       "fromAreaId",
       "toAreaId",
-      ST_AsGeoJSON(
-        ST_ReducePrecision(
-          ST_SimplifyPreserveTopology(
-            ST_LineMerge("geometry"),
-            ${GEOMETRY_SIMPLIFICATION_TOLERANCE}
-          ),
-          ${COORDINATE_PRECISION_GRID}
-        )
-      , 4326) as "geojson"
+      "geojson"::jsonb as "geojson"
     FROM
       "FlowGeometry"
     WHERE
@@ -119,7 +108,7 @@ export async function GET(
           toAreaId: f.toAreaId,
           flows: toAreaFlows,
         },
-        geometry: JSON.parse(f.geojson),
+        geometry: f.geojson as LineString | MultiLineString,
       };
     }),
   };

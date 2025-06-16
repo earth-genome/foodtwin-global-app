@@ -97,7 +97,7 @@ model FlowGeometry {
   toArea     Area                                           @relation("FlowGeometry_ToArea", fields: [toAreaId], references: [id])
   toAreaId   String
   geometry   Unsupported("geometry(MultiLineString, 4326)")
-  areaId     String?
+  geojson    Json?
 
   @@index([fromAreaId, toAreaId], name: "flow_geometry_pair_idx")
 }
