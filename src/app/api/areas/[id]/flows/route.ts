@@ -3,6 +3,13 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { FeatureCollection, LineString, MultiLineString } from "geojson";
 
+const PARTICLES_LAYER_MAX_TOP_FLOWS = Number(
+  process.env.NEXT_PUBLIC_PARTICLES_LAYER_MAX_TOP_FLOWS
+);
+const PARTICLES_LAYER_MAX_FLOW_GEOMETRIES = Number(
+  process.env.NEXT_PUBLIC_PARTICLES_LAYER_MAX_FLOW_GEOMETRIES
+);
+
 interface FlowGeometryRow {
   fromAreaId: string;
   toAreaId: string;
@@ -61,17 +68,16 @@ export async function GET(
       "Flow"."fromAreaId",
       "Flow"."toAreaId",
       fg3."id",
-      "foodGroupSlug"
+      fg3."slug"
     ORDER BY
       "totalValue" DESC
-    LIMIT 500
+    LIMIT ${PARTICLES_LAYER_MAX_TOP_FLOWS}
   `;
 
   const toAreaIds = flows.map((f) => f.toAreaId);
 
   if (toAreaIds.length === 0) {
     return NextResponse.json({
-      flows,
       flowGeometriesGeojson: {
         type: "FeatureCollection",
         features: [],
@@ -87,7 +93,9 @@ export async function GET(
     FROM
       "FlowGeometry"
     WHERE
-      "fromAreaId" = ${id} AND "toAreaId" IN (${Prisma.join(toAreaIds)});
+      "fromAreaId" = ${id} AND "toAreaId" IN (${Prisma.join(toAreaIds)})
+      AND "geojson" IS NOT NULL
+    LIMIT ${PARTICLES_LAYER_MAX_FLOW_GEOMETRIES}
   `;
 
   const flowGeometriesGeojson: FlowGeometryGeojson = {
