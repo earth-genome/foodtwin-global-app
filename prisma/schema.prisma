@@ -88,6 +88,12 @@ model Flow {
   type        FlowType
   value       Float
   FlowSegment FlowSegment[]
+
+  @@index([fromAreaId], name: "flow_from_area_idx")
+  @@index([toAreaId], name: "flow_to_area_idx")
+  @@index([foodGroupId], name: "flow_food_group_idx")
+  @@index([fromAreaId, foodGroupId], name: "flow_from_area_food_group_idx")
+  @@index([fromAreaId, toAreaId], name: "flow_from_to_area_idx")
 }
 
 model FlowGeometry {
