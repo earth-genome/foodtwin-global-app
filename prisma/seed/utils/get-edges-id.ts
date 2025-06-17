@@ -1,8 +1,5 @@
 import { Edge, PrismaClient } from "@prisma/client";
 
-/** Cache mapping edge string IDs to their numeric database IDs */
-let edgesId: Record<string, number> = {};
-
 /**
  * Creates a virtual edge between two nodes by making a straight line.
  * @param prisma - Prisma client
@@ -106,8 +103,9 @@ async function createVirtualEdge(
 }
 
 /**
- * Gets numeric database IDs for edge string IDs, using a cache to minimize DB queries.
+ * Gets numeric database IDs for edge string IDs.
  * Creates virtual edges for edges that don't exist in the database.
+ * @param prisma - Prisma client
  * @param edgesIdStr - Array of edge string IDs
  * @returns Array of corresponding numeric IDs in same order
  */
@@ -117,62 +115,58 @@ export async function getEdgesId(
 ): Promise<number[]> {
   if (!edgesIdStr.length) return [];
 
-  const missingIds = edgesIdStr.filter((id) => !edgesId[id]);
+  // Create a map to store the results
+  const edgeIdMap = new Map<string, number>();
 
-  if (missingIds.length > 0) {
-    const failedEdges: string[] = [];
+  // Query existing edges
+  const existingEdges = await prisma.edge.findMany({
+    select: {
+      id_str: true,
+      id: true,
+    },
+    where: {
+      id_str: { in: edgesIdStr },
+    },
+  });
 
-    const existingEdges = await prisma.edge.findMany({
-      select: {
-        id_str: true,
-        id: true,
-      },
-      where: {
-        id_str: { in: missingIds },
-      },
-    });
+  // Store existing edges in the map
+  existingEdges.forEach((edge) => {
+    edgeIdMap.set(edge.id_str, edge.id);
+  });
 
-    existingEdges.forEach((edge) => {
-      edgesId[edge.id_str] = edge.id;
-    });
+  // Find missing edges and try to create virtual ones
+  const missingIds = edgesIdStr.filter((id) => !edgeIdMap.has(id));
+  const failedEdges: string[] = [];
 
-    for (const missingId of missingIds) {
-      if (!edgesId[missingId]) {
-        try {
-          const [fromNodeId, toNodeId] = missingId.split("-");
-          if (!fromNodeId || !toNodeId) {
-            failedEdges.push(missingId);
-            continue;
-          }
-
-          const virtualEdge = await createVirtualEdge(
-            prisma,
-            fromNodeId,
-            toNodeId
-          );
-          edgesId[missingId] = virtualEdge.id;
-        } catch (error) {
-          failedEdges.push(missingId);
-        }
+  for (const missingId of missingIds) {
+    try {
+      const [fromNodeId, toNodeId] = missingId.split("-");
+      if (!fromNodeId || !toNodeId) {
+        failedEdges.push(missingId);
+        continue;
       }
-    }
 
-    edgesId = {
-      ...edgesId,
-      ...existingEdges.reduce(
-        (acc, edge) => {
-          acc[edge.id_str] = edge.id;
-          return acc;
-        },
-        {} as Record<string, number>
-      ),
-    };
-
-    const notFoundIds = missingIds.filter((id) => !edgesId[id]);
-    if (notFoundIds.length > 0) {
-      throw new Error("Edge IDs not found and could not create virtual edges.");
+      const virtualEdge = await createVirtualEdge(prisma, fromNodeId, toNodeId);
+      edgeIdMap.set(missingId, virtualEdge.id);
+    } catch (error) {
+      failedEdges.push(missingId);
     }
   }
 
-  return edgesIdStr.map((id) => edgesId[id]);
+  // Check if any edges are still missing
+  const notFoundIds = edgesIdStr.filter((id) => !edgeIdMap.has(id));
+  if (notFoundIds.length > 0) {
+    throw new Error(
+      `Edge IDs not found and could not create virtual edges: ${notFoundIds.join(", ")}`
+    );
+  }
+
+  // Return the IDs in the same order as requested
+  return edgesIdStr.map((id) => {
+    const edgeId = edgeIdMap.get(id);
+    if (edgeId === undefined) {
+      throw new Error(`Edge ID ${id} not found in map after processing`);
+    }
+    return edgeId;
+  });
 }
