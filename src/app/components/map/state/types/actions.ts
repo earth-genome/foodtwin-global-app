@@ -39,10 +39,6 @@ interface ActionSetCurrentArea {
   area: GeoJSON.Feature;
 }
 
-interface ActionSetAreaMapView {
-  type: "action:fitMapToCurrentAreaBounds";
-}
-
 interface ActionApplyDestinationAreaIdsToMap {
   type: "action:applyDestinationAreaIdsToMap";
 }
@@ -79,10 +75,6 @@ interface ActionResetAreaViewMap {
   type: "action:resetAreaViewMap";
 }
 
-interface ActionEnterAreaView {
-  type: "action:enterAreaView";
-}
-
 export type StateActions =
   | ActionParseUrl
   | ActionParseAreaSection
@@ -98,7 +90,5 @@ export type StateActions =
   | ActionExitTransportationAreaView
   | ActionEnterImpactAreaView
   | ActionExitImpactAreaView
-  | ActionSetAreaMapView
   | ActionEnterWorldMapView
-  | ActionResetAreaViewMap
-  | ActionEnterAreaView;
+  | ActionResetAreaViewMap;
