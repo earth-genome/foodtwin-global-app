@@ -79,10 +79,6 @@ interface ActionResetAreaViewMap {
   type: "action:resetAreaViewMap";
 }
 
-interface ActionEnterAreaView {
-  type: "action:enterAreaView";
-}
-
 export type StateActions =
   | ActionParseUrl
   | ActionParseAreaSection
@@ -100,5 +96,4 @@ export type StateActions =
   | ActionExitImpactAreaView
   | ActionSetAreaMapView
   | ActionEnterWorldMapView
-  | ActionResetAreaViewMap
-  | ActionEnterAreaView;
+  | ActionResetAreaViewMap;

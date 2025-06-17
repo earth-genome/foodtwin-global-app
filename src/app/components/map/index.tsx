@@ -15,7 +15,6 @@ import { MachineContext, MachineProvider } from "./state";
 import Legend from "./legend";
 import FoodGroupsLayer from "./layers/foodgroups";
 import AreaLayers from "./layers/areas";
-import PortsLayer from "./layers/ports";
 import { AREA_SOURCE_ID, AREA_VIEW_BOUNDS_PADDING } from "./constants";
 import { EItemType } from "@/types/components";
 import ParticlesLayer from "./layers/particles";
@@ -177,10 +176,6 @@ function GlobeInner() {
 
         <FoodGroupsLayer />
         <AreaLayers />
-        <PortsLayer />
-        {/* {currentArea && <AreaFlowsLayer areaId={currentArea.id} />} */}
-        {/* Commenting out the complex particles layer for now */}
-        {/* {currentArea && <AreaParticlesLayer areaId={currentArea.id} />} */}
         {currentArea && <ParticlesLayer areaId={currentArea.id} />}
 
         {mapPopup && <MapPopup {...mapPopup} />}
