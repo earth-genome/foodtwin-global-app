@@ -109,6 +109,34 @@ function GlobeInner() {
     });
   }, [pageIsMounting, mapIsMounting, pathname, params]);
 
+  // Handle container resize when side panel opens/closes
+  useEffect(() => {
+    const handleResize = () => {
+      if (mapRef.current) {
+        // Trigger map resize to ensure proper viewport calculations
+        mapRef.current.resize();
+      }
+    };
+
+    // Use ResizeObserver to detect container size changes
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (mapRef.current) {
+      const mapContainer = mapRef.current.getContainer();
+      if (mapContainer) {
+        resizeObserver.observe(mapContainer);
+      }
+    }
+
+    // Also listen for window resize as fallback
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [mapRef.current]);
+
   const onClick = useCallback((event: MapMouseEvent) => {
     if (mapRef.current) {
       const features = mapRef.current.queryRenderedFeatures(event.point, {
