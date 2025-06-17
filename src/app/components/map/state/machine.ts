@@ -1,4 +1,3 @@
-import { bbox } from "@turf/bbox";
 import { assign, createMachine, assertEvent, fromPromise } from "xstate";
 import { StateEvents } from "./types/events";
 import { StateActions } from "./types/actions";
@@ -12,13 +11,8 @@ import {
   FetchAreaResponse,
 } from "@/app/api/areas/[id]/route";
 import { worldViewState } from "..";
-import { combineBboxes } from "@/utils/geometries";
 import { Legend } from "../legend";
-import {
-  AREA_SOURCE_ID,
-  AREA_SOURCE_LAYER_ID,
-  AREA_VIEW_BOUNDS_PADDING,
-} from "../constants";
+import { AREA_SOURCE_ID, AREA_SOURCE_LAYER_ID } from "../constants";
 
 const getViewFromUrl = () => {
   const params = new URLSearchParams(window.location.search);
@@ -224,10 +218,7 @@ export const globeViewMachine = createMachine(
           },
         },
 
-        entry: [
-          "action:fitMapToCurrentAreaBounds",
-          "action:enterProductionAreaView",
-        ],
+        entry: ["action:enterProductionAreaView"],
 
         exit: "action:exitProductionAreaView",
       },
@@ -281,7 +272,6 @@ export const globeViewMachine = createMachine(
         },
 
         entry: [
-          "action:fitMapToCurrentAreaBounds",
           "action:enterImpactAreaView",
           "action:applyDestinationAreaIdsToMap",
         ],
@@ -296,8 +286,6 @@ export const globeViewMachine = createMachine(
             reenter: true,
           },
         },
-
-        entry: ["action:fitMapToCurrentAreaBounds"],
       },
     },
 
@@ -476,22 +464,6 @@ export const globeViewMachine = createMachine(
         m.setLayoutProperty("area-population-fill", "visibility", "none");
         m.setLayoutProperty("foodgroups-layer", "visibility", "none");
 
-        const destinationAreaBbox = bbox(currentArea.destinationAreasBbox);
-        const combinedBboxes = combineBboxes([
-          destinationAreaBbox,
-          bbox(currentArea.boundingBox),
-        ]);
-
-        mapRef.fitBounds(
-          [
-            [combinedBboxes[0], combinedBboxes[1]],
-            [combinedBboxes[2], combinedBboxes[3]],
-          ],
-          {
-            padding: AREA_VIEW_BOUNDS_PADDING,
-          }
-        );
-
         // Enable desired layers
         m.setLayoutProperty(
           "destination-areas-outline",
@@ -524,27 +496,6 @@ export const globeViewMachine = createMachine(
 
         if (mapRef && currentArea) {
           const m = mapRef.getMap();
-
-          const destinationAreaBbox = bbox(currentArea.destinationAreasBbox);
-          const combinedBboxes = combineBboxes([
-            destinationAreaBbox,
-            bbox(currentArea.boundingBox),
-          ]);
-
-          mapRef.fitBounds(
-            [
-              [combinedBboxes[0], combinedBboxes[1]],
-              [combinedBboxes[2], combinedBboxes[3]],
-            ],
-            {
-              padding: {
-                top: 100,
-                left: 100,
-                bottom: 100,
-                right: 100,
-              },
-            }
-          );
 
           // Build population scale
           const maxPopulation = Math.max(
@@ -627,36 +578,7 @@ export const globeViewMachine = createMachine(
           destinationAreasFeatureIds,
         };
       }),
-      "action:fitMapToCurrentAreaBounds": assign(({ context }) => {
-        const { mapRef, currentArea } = context;
 
-        if (!mapRef || !currentArea || !currentArea.boundingBox) {
-          return {};
-        }
-
-        mapRef.resize();
-
-        const bounds = bbox(currentArea.boundingBox);
-
-        mapRef.fitBounds(
-          [
-            [bounds[0], bounds[1]],
-            [bounds[2], bounds[3]],
-          ],
-          {
-            padding: {
-              top: 100,
-              left: 100,
-              bottom: 100,
-              right: 100,
-            },
-          }
-        );
-
-        return {
-          mapBounds: bounds,
-        };
-      }),
       "action:enterWorldMapView": assign(({ context }) => {
         const { mapRef, currentAreaFeature } = context;
 

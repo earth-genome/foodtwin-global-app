@@ -15,7 +15,7 @@ import { MachineContext, MachineProvider } from "./state";
 import Legend from "./legend";
 import FoodGroupsLayer from "./layers/foodgroups";
 import AreaLayers from "./layers/areas";
-import { AREA_SOURCE_ID, AREA_VIEW_BOUNDS_PADDING } from "./constants";
+import { AREA_SOURCE_ID } from "./constants";
 import { EItemType } from "@/types/components";
 import ParticlesLayer from "./layers/particles";
 
@@ -118,22 +118,6 @@ function GlobeInner() {
       if (features.length > 0) {
         const feature = features[0];
         if (feature?.properties) {
-          try {
-            const [minLng, minLat, maxLng, maxLat] = JSON.parse(
-              feature?.properties?.bbox
-            );
-            mapRef.current.fitBounds(
-              [
-                [minLng, minLat],
-                [maxLng, maxLat],
-              ],
-              { padding: AREA_VIEW_BOUNDS_PADDING }
-            );
-          } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error("Error parsing bbox", error);
-          }
-
           router.push(`/area/${feature.properties.id}`);
         }
       }
