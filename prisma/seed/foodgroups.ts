@@ -49,12 +49,15 @@ export const ingestFoodGroups = async (prisma: PrismaClient) => {
     UPDATE "FoodGroup"
     SET "slug" = REGEXP_REPLACE(
       REGEXP_REPLACE(
-        LOWER(
-          REGEXP_REPLACE(name, '[^a-zA-Z0-9\\s-]', '', 'g')
+        REGEXP_REPLACE(
+          LOWER(
+            REGEXP_REPLACE(name, '[^a-zA-Z0-9\\s-]', '', 'g')
+          ),
+          '\\s+', '-', 'g'
         ),
-        '\\s+', '-', 'g'
+        '-+', '-', 'g'
       ),
-      '-+', '-', 'g'
+      '^[-]+|[-]+$', '', 'g'
     )
   `;
 
